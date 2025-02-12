@@ -329,13 +329,81 @@ Qualifications:
         return suggestions;
     }
 
-    // Update handle generate click to use new analysis
+    // Handle generate click
     async function handleGenerate() {
         if (!validateInputs()) {
             return;
         }
 
-        await analyzeDocumentsAndGenerate();
+        showLoading(generateBtn, 'Generiere...');
+        
+        try {
+            // Extract text from uploaded PDFs
+            let resumeText = '';
+            let coverLetterText = '';
+            
+            if (resumeUpload.files[0]) {
+                resumeText = await extractTextFromPDF(resumeUpload.files[0]);
+            }
+            
+            if (coverLetterUpload.files[0]) {
+                coverLetterText = await extractTextFromPDF(coverLetterUpload.files[0]);
+            }
+
+            // Get job posting text
+            const jobPosting = jobPostingTextarea.value.trim();
+            
+            // Analyze documents with ChatGPT
+            const analysis = await analyzeWithChatGPT(jobPosting, resumeText, coverLetterText);
+            
+            // Generate suggestions for all sections
+            const suggestions = await generateCoverLetterSuggestions('all', jobPosting, analysis);
+            
+            // Apply suggestions to create a complete cover letter
+            let completeCoverLetter = '';
+            suggestions.forEach(suggestion => {
+                if (suggestion.section === 'recipient') {
+                    completeCoverLetter = suggestion.text + '\n\n';
+                } else if (suggestion.section === 'subject') {
+                    completeCoverLetter += suggestion.text + '\n\n';
+                } else if (suggestion.section === 'introduction') {
+                    completeCoverLetter += suggestion.text + '\n\n';
+                } else if (suggestion.section === 'main') {
+                    completeCoverLetter += suggestion.text + '\n\n';
+                } else if (suggestion.section === 'closing') {
+                    completeCoverLetter += suggestion.text + '\n\n';
+                }
+            });
+            
+            completeCoverLetter += 'Mit freundlichen Grüßen\n[Ihr Name]';
+
+            // Update the preview with the complete document
+            coverLetterPreview.innerHTML = `<div class="generated-content">
+                <h2 class="mb-4">Anschreiben</h2>
+                ${formatText(completeCoverLetter)}
+            </div>`;
+
+            resumePreview.innerHTML = `<div class="generated-content">
+                <h2 class="mb-4">Lebenslauf</h2>
+                ${formatText(resumeText)}
+            </div>`;
+            
+            showSuccess('Dokumente erfolgreich generiert!');
+            
+        } catch (error) {
+            showError('Fehler bei der Generierung: ' + error.message);
+            console.error('Generation error:', error);
+        } finally {
+            hideLoading(generateBtn, 'Generieren');
+        }
+    }
+
+    // Format text with proper HTML structure
+    function formatText(text) {
+        return text
+            .split('\n\n')
+            .map(paragraph => `<p class="mb-3">${paragraph.replace(/\n/g, '<br>')}</p>`)
+            .join('');
     }
 
     // Validate user inputs with detailed feedback
