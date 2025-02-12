@@ -46,16 +46,14 @@ document.addEventListener('DOMContentLoaded', function() {
             elements.apiKey.value = savedApiKey;
         }
         
-        // Generate Button
-        elements.generateBtn.addEventListener('click', handleGenerate);
-        
         // Suggestions Button
         elements.generateSuggestionsBtn.addEventListener('click', async () => {
-            showLoading(elements.generateSuggestionsBtn, 'Generiere...');
             try {
-                await generateSuggestionsForSection('all');
+                const apiKey = getApiKey();
+                showLoading(elements.generateSuggestionsBtn, 'Generiere...');
+                await generateSuggestionsForSection('all', apiKey);
             } catch (error) {
-                showError('Fehler bei der Generierung: ' + error.message);
+                showError(error.message);
             } finally {
                 hideLoading(elements.generateSuggestionsBtn, 'KI-Vorschläge');
             }
@@ -64,12 +62,13 @@ document.addEventListener('DOMContentLoaded', function() {
         // Einzelne Abschnitts-Buttons
         document.querySelectorAll('.suggest-btn').forEach(btn => {
             btn.addEventListener('click', async (e) => {
-                const section = e.target.dataset.section;
-                showLoading(e.target, 'Generiere...');
                 try {
-                    await generateSuggestionsForSection(section);
+                    const apiKey = getApiKey();
+                    const section = e.target.dataset.section;
+                    showLoading(e.target, 'Generiere...');
+                    await generateSuggestionsForSection(section, apiKey);
                 } catch (error) {
-                    showError('Fehler bei der Generierung: ' + error.message);
+                    showError(error.message);
                 } finally {
                     hideLoading(e.target, 'Vorschläge');
                 }
@@ -79,6 +78,23 @@ document.addEventListener('DOMContentLoaded', function() {
         // Datei-Uploads
         elements.resumeUpload.addEventListener('change', handleFileUpload);
         elements.coverLetterUpload.addEventListener('change', handleFileUpload);
+
+        // Entfernen-Buttons für Datei-Vorschau
+        document.querySelectorAll('.file-preview .btn-close').forEach(btn => {
+            btn.addEventListener('click', handleFileRemove);
+        });
+
+        // Zahnrad-Icon (Einstellungen)
+        document.getElementById('settingsBtn').addEventListener('click', () => {
+            elements.settingsModal.show();
+        });
+
+        // API Key Toggle
+        document.getElementById('toggleApiKey').addEventListener('click', () => {
+            const apiKeyInput = elements.apiKey;
+            const type = apiKeyInput.type === 'password' ? 'text' : 'password';
+            apiKeyInput.type = type;
+        });
     }
 
     // ===== API Key Management =====
@@ -398,7 +414,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    async function generateSuggestionsForSection(section) {
+    async function generateSuggestionsForSection(section, apiKey) {
         try {
             const jobPosting = elements.jobPosting.value.trim();
             if (!jobPosting) {
@@ -406,8 +422,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
-            const analysis = await analyzeJobPosting(jobPosting);
-            const suggestions = await generateSectionSuggestions(section, analysis);
+            const analysis = await analyzeJobPosting(jobPosting, apiKey);
+            const suggestions = await generateSectionSuggestions(section, analysis, apiKey);
             displaySuggestions(suggestions);
             
         } catch (error) {
@@ -426,21 +442,38 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        showLoading(event.target, 'Verarbeite...');
+        const uploadArea = event.target.closest('.upload-area');
+        const container = uploadArea.closest('.upload-container');
+        const preview = container.querySelector('.file-preview');
+        const fileName = preview.querySelector('.file-name');
+
+        showLoading(uploadArea, 'Verarbeite...');
         try {
+            // Dateinamen in der Vorschau anzeigen
+            fileName.textContent = file.name;
+            
+            // Upload-Bereich ausblenden und Vorschau einblenden
+            uploadArea.classList.add('d-none');
+            preview.classList.remove('d-none');
+
             const text = await extractTextFromPDF(file);
-            if (event.target === elements.resumeUpload) {
-                elements.resumePreview.innerHTML = `<pre>${text}</pre>`;
-            } else if (event.target === elements.coverLetterUpload) {
-                const sections = analyzeCoverLetter(text);
-                applySectionsToForm(sections);
+            if (event.target.id === 'resumeUpload') {
+                // Speichere den extrahierten Text für spätere Verwendung
+                window.resumeText = text;
+                showSuccess('Lebenslauf erfolgreich hochgeladen');
+            } else if (event.target.id === 'coverLetterUpload') {
+                // Speichere den extrahierten Text für spätere Verwendung
+                window.coverLetterText = text;
+                showSuccess('Anschreiben erfolgreich hochgeladen');
             }
-            showSuccess('Datei erfolgreich verarbeitet');
         } catch (error) {
             showError('Fehler beim Verarbeiten der Datei');
             console.error(error);
+            // Bei Fehler Vorschau wieder ausblenden und Upload-Bereich einblenden
+            uploadArea.classList.remove('d-none');
+            preview.classList.add('d-none');
         } finally {
-            hideLoading(event.target, 'Datei auswählen');
+            hideLoading(uploadArea, '');
         }
     }
 
@@ -522,14 +555,33 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // ===== UI Hilfsfunktionen =====
-    function showLoading(button, text) {
-        button.disabled = true;
-        button.innerHTML = `<span class="spinner-border spinner-border-sm"></span> ${text}`;
+    function showLoading(element, text) {
+        if (element instanceof HTMLButtonElement) {
+            element.disabled = true;
+            element.innerHTML = `<span class="spinner-border spinner-border-sm"></span> ${text}`;
+        } else {
+            const loadingEl = document.createElement('div');
+            loadingEl.className = 'text-center';
+            loadingEl.innerHTML = `
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Lädt...</span>
+                </div>
+                <div class="mt-2">${text}</div>
+            `;
+            element.appendChild(loadingEl);
+        }
     }
 
-    function hideLoading(button, text) {
-        button.disabled = false;
-        button.innerHTML = text;
+    function hideLoading(element, text) {
+        if (element instanceof HTMLButtonElement) {
+            element.disabled = false;
+            element.innerHTML = text;
+        } else {
+            const loadingEl = element.querySelector('.text-center');
+            if (loadingEl) {
+                loadingEl.remove();
+            }
+        }
     }
 
     function showSuccess(message) {
@@ -710,6 +762,13 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Datei-Input zurücksetzen
         input.value = '';
+        
+        // Gespeicherten Text löschen
+        if (input.id === 'resumeUpload') {
+            window.resumeText = null;
+        } else if (input.id === 'coverLetterUpload') {
+            window.coverLetterText = null;
+        }
         
         // Vorschau ausblenden und Upload-Bereich wieder einblenden
         preview.classList.add('d-none');
