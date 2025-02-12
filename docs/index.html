@@ -26,7 +26,10 @@
                 <div class="card mb-4">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <h5 class="card-title mb-0">Anschreiben</h5>
-                        <button class="btn btn-sm btn-outline-primary" id="loadExampleCoverLetterBtn">Beispiel laden</button>
+                        <div>
+                            <button class="btn btn-sm btn-outline-primary me-2" id="loadExampleCoverLetterBtn">Beispiel laden</button>
+                            <button class="btn btn-sm btn-outline-success" id="generateSuggestionsBtn">KI-Vorschläge</button>
+                        </div>
                     </div>
                     <div class="card-body">
                         <div class="mb-3">
@@ -39,7 +42,78 @@
                                 </div>
                             </div>
                         </div>
-                        <textarea class="form-control mt-3" id="coverLetterText" rows="10" placeholder="Oder füge hier dein Anschreiben ein..."></textarea>
+                        
+                        <!-- Anschreiben Builder -->
+                        <div id="coverLetterBuilder" class="mb-3">
+                            <!-- Empfänger -->
+                            <div class="section mb-3">
+                                <label class="form-label d-flex justify-content-between">
+                                    <span>Empfänger</span>
+                                    <button class="btn btn-sm btn-outline-primary suggest-btn" data-section="recipient">Vorschläge</button>
+                                </label>
+                                <textarea class="form-control" id="coverLetterRecipient" rows="3" placeholder="Name und Adresse des Empfängers..."></textarea>
+                            </div>
+                            
+                            <!-- Betreff -->
+                            <div class="section mb-3">
+                                <label class="form-label d-flex justify-content-between">
+                                    <span>Betreff</span>
+                                    <button class="btn btn-sm btn-outline-primary suggest-btn" data-section="subject">Vorschläge</button>
+                                </label>
+                                <textarea class="form-control" id="coverLetterSubject" rows="2" placeholder="Betreffzeile..."></textarea>
+                            </div>
+                            
+                            <!-- Einleitung -->
+                            <div class="section mb-3">
+                                <label class="form-label d-flex justify-content-between">
+                                    <span>Einleitung</span>
+                                    <button class="btn btn-sm btn-outline-primary suggest-btn" data-section="introduction">Vorschläge</button>
+                                </label>
+                                <textarea class="form-control" id="coverLetterIntro" rows="3" placeholder="Einleitender Absatz..."></textarea>
+                            </div>
+                            
+                            <!-- Hauptteil -->
+                            <div class="section mb-3">
+                                <label class="form-label d-flex justify-content-between">
+                                    <span>Hauptteil</span>
+                                    <button class="btn btn-sm btn-outline-primary suggest-btn" data-section="main">Vorschläge</button>
+                                </label>
+                                <textarea class="form-control" id="coverLetterMain" rows="6" placeholder="Hauptteil des Anschreibens..."></textarea>
+                            </div>
+                            
+                            <!-- Abschluss -->
+                            <div class="section mb-3">
+                                <label class="form-label d-flex justify-content-between">
+                                    <span>Abschluss</span>
+                                    <button class="btn btn-sm btn-outline-primary suggest-btn" data-section="closing">Vorschläge</button>
+                                </label>
+                                <textarea class="form-control" id="coverLetterClosing" rows="3" placeholder="Abschließender Absatz..."></textarea>
+                            </div>
+                        </div>
+
+                        <!-- Original Textarea (now hidden by default) -->
+                        <textarea class="form-control mt-3 d-none" id="coverLetterText" rows="10" placeholder="Oder füge hier dein Anschreiben ein..."></textarea>
+                    </div>
+                </div>
+
+                <!-- Suggestions Modal -->
+                <div class="modal fade" id="suggestionsModal" tabindex="-1">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">KI-Vorschläge</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div id="suggestionsList" class="list-group">
+                                    <!-- Suggestions will be inserted here -->
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Schließen</button>
+                                <button type="button" class="btn btn-primary" id="generateMoreBtn">Weitere Vorschläge</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
