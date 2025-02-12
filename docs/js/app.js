@@ -877,16 +877,27 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             });
 
-            // Click-Handler
-            area.addEventListener('click', () => {
-                const input = area.querySelector('input[type="file"]');
-                input.click();
-            });
+            // Click-Handler nur für Label, nicht für den gesamten Bereich
+            const label = area.querySelector('.upload-label');
+            if (label) {
+                label.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const input = area.querySelector('input[type="file"]');
+                    if (input) {
+                        input.click();
+                    }
+                });
+            }
         });
 
         // Datei-Input Event-Handler
         fileInputs.forEach(input => {
             input.addEventListener('change', handleFileUpload);
+            // Verhindere Klick-Propagation
+            input.addEventListener('click', (e) => {
+                e.stopPropagation();
+            });
         });
     }
 
