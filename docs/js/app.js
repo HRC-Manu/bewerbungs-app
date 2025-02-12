@@ -1,3 +1,10 @@
+/* Hinzugefügt am Anfang der Datei, vor DOMContentLoaded */
+if (typeof window.applySuggestions === 'undefined') {
+    window.applySuggestions = function() {
+        console.warn('applySuggestions wurde noch nicht initialisiert.');
+    };
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     // ===== Bootstrap Modals =====
     const modals = {
@@ -1231,6 +1238,9 @@ document.addEventListener('DOMContentLoaded', function() {
         updatePreview();
     }
 
+    // Exponiere applySuggestions global, um 'applySuggestions is not defined' Fehler zu vermeiden
+    window.applySuggestions = applySuggestions;
+
     // ===== Event Listener für Textänderungen =====
     function initializeTextareaListeners() {
         // Füge Event Listener für jobPosting textarea hinzu
@@ -1271,6 +1281,10 @@ document.addEventListener('DOMContentLoaded', function() {
             uploadLabel.addEventListener('click', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
+                // Falls es sich um den Lebenslauf-Upload handelt und bereits ein File verarbeitet wurde, nicht erneut öffnen
+                if(input.id === 'resumeUpload' && window.resumeText) {
+                    return;
+                }
                 input.click();
             });
             
