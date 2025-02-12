@@ -842,26 +842,60 @@ document.addEventListener('DOMContentLoaded', function() {
             const input = area.querySelector('input[type="file"]');
             const container = area.closest('.upload-container');
             const preview = container.querySelector('.file-preview');
+            const removeBtn = preview.querySelector('.btn-close');
             
-            // Drag & Drop Events
+            // Entferne bestehende Event-Listener
+            input.removeEventListener('change', handleFileUpload);
+            area.removeEventListener('dragenter', handleDragEnter);
+            area.removeEventListener('dragover', handleDragOver);
+            area.removeEventListener('dragleave', handleDragLeave);
+            area.removeEventListener('drop', handleDrop);
+            if (removeBtn) {
+                removeBtn.removeEventListener('click', handleFileRemove);
+            }
+            
+            // Füge neue Event-Listener hinzu
+            input.addEventListener('change', handleFileUpload, { once: true });
             area.addEventListener('dragenter', handleDragEnter);
             area.addEventListener('dragover', handleDragOver);
             area.addEventListener('dragleave', handleDragLeave);
             area.addEventListener('drop', handleDrop);
             
-            // Click Events
-            area.addEventListener('click', () => input.click());
-            
-            // File Input Change Event
-            input.addEventListener('change', (e) => {
-                e.stopPropagation();
-                handleFileUpload(e);
+            // Click Event für Upload-Bereich
+            area.addEventListener('click', (e) => {
+                e.preventDefault();
+                input.click();
             });
             
-            // Remove Button in Preview
-            const removeBtn = preview.querySelector('.btn-close');
+            // Remove Button Event
             if (removeBtn) {
-                removeBtn.addEventListener('click', () => handleFileRemove(input.id));
+                removeBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    // Animation für das Entfernen
+                    preview.style.opacity = '0';
+                    setTimeout(() => {
+                        // Datei-Input zurücksetzen
+                        input.value = '';
+                        
+                        // Gespeicherten Text löschen
+                        if (input.id === 'resumeUpload') {
+                            window.resumeText = null;
+                        }
+                        
+                        // UI zurücksetzen
+                        preview.style.opacity = '1';
+                        preview.classList.add('d-none');
+                        area.style.display = 'block';
+                        
+                        // Event-Listener für Upload wieder hinzufügen
+                        input.addEventListener('change', handleFileUpload, { once: true });
+                        
+                        // Button-Status aktualisieren
+                        checkRequiredUploads();
+                    }, 300);
+                });
             }
         });
     }
