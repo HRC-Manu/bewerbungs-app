@@ -140,47 +140,74 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     async function makeApiRequest(endpoint, payload) {
-        try {
-            console.log('Starting API request to:', endpoint);
-            const response = await fetch(endpoint, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${getApiKey()}`,
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify(payload)
-            });
-
-            console.log('API Response Status:', response.status);
-            
-            if (!response.ok) {
-                const errorText = await response.text();
-                console.error('API Error Response:', errorText);
+        const MAX_RETRIES = 3;
+        const RETRY_DELAY = 1000;
+        
+        for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+            try {
+                console.log(`API Request attempt ${attempt}/${MAX_RETRIES}`);
                 
-                // Spezifische Fehlermeldungen für verschiedene Status Codes
-                if (response.status === 401) {
-                    throw new Error('API-Schlüssel ist ungültig oder abgelaufen');
-                } else if (response.status === 429) {
-                    throw new Error('Zu viele Anfragen. Bitte warten Sie einen Moment');
-                } else if (response.status === 500) {
-                    throw new Error('OpenAI Server-Fehler. Bitte versuchen Sie es später erneut');
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 Sekunden Timeout
+                
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${getApiKey()}`
+                    },
+                    body: JSON.stringify(payload),
+                    signal: controller.signal
+                });
+                
+                clearTimeout(timeoutId);
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error(`API Error (Attempt ${attempt}):`, errorText);
+                    
+                    if (response.status === 401) {
+                        throw new Error('API-Schlüssel ist ungültig oder abgelaufen');
+                    }
+                    
+                    if (response.status === 429 && attempt < MAX_RETRIES) {
+                        console.log('Rate limit reached, retrying after delay...');
+                        await new Promise(resolve => setTimeout(resolve, RETRY_DELAY * attempt));
+                        continue;
+                    }
+                    
+                    if (response.status === 500 && attempt < MAX_RETRIES) {
+                        console.log('Server error, retrying...');
+                        await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
+                        continue;
+                    }
+                    
+                    throw new Error(`API Fehler: ${response.status}`);
                 }
                 
-                try {
-                    const errorData = JSON.parse(errorText);
-                    throw new Error(errorData.error?.message || `HTTP error! status: ${response.status}`);
-                } catch (e) {
-                    throw new Error(`API Fehler: ${response.status}, ${errorText}`);
+                const data = await response.json();
+                console.log('API Response received successfully');
+                return data;
+                
+            } catch (error) {
+                console.error(`API Request error (Attempt ${attempt}):`, error);
+                
+                if (error.name === 'AbortError') {
+                    throw new Error('Die Anfrage wurde wegen Zeitüberschreitung abgebrochen');
                 }
+                
+                if (attempt === MAX_RETRIES) {
+                    throw error;
+                }
+                
+                if (error.message.includes('network') || error.message.includes('timeout')) {
+                    console.log('Network error, retrying...');
+                    await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
+                    continue;
+                }
+                
+                throw error;
             }
-
-            const data = await response.json();
-            console.log('API Response received successfully');
-            return data;
-        } catch (error) {
-            console.error('API request failed:', error);
-            throw new Error(`API Anfrage fehlgeschlagen: ${error.message}`);
         }
     }
 
