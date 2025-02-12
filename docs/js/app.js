@@ -1,4 +1,27 @@
-/* Hinzugefügt am Anfang der Datei, vor DOMContentLoaded */
+/* Globaler Kontext vor DOMContentLoaded */
+var globalElements = null;
+
+window.applySuggestions = function(suggestions) {
+    if (!globalElements) {
+        console.warn('globalElements ist noch nicht initialisiert, wende applySuggestions später an.');
+        document.addEventListener('DOMContentLoaded', function() {
+            window.applySuggestions(suggestions);
+        });
+        return;
+    }
+    if (!suggestions || !Array.isArray(suggestions)) return;
+    suggestions.forEach(suggestion => {
+        if (globalElements.coverLetterSections && globalElements.coverLetterSections[suggestion.section]) {
+            globalElements.coverLetterSections[suggestion.section].value = suggestion.text;
+        }
+    });
+    if (typeof window.updatePreview === 'function') {
+        window.updatePreview();
+    }
+};
+
+
+/* Bestehender Code */
 if (typeof window.applySuggestions === 'undefined') {
     window.applySuggestions = function() {
         console.warn('applySuggestions wurde noch nicht initialisiert.');
@@ -76,6 +99,9 @@ document.addEventListener('DOMContentLoaded', function() {
         helpModal: modals.help,
         messageToast: new bootstrap.Toast(document.getElementById('messageToast'))
     };
+
+    // Übergabe der DOM Elemente in den globalen Kontext
+    globalElements = elements;
 
     // ===== Event Listener =====
     function initializeEventListeners() {
@@ -850,6 +876,13 @@ document.addEventListener('DOMContentLoaded', function() {
             );
         }
         
+        // Neue Einbindung: Falls im Lebenslauf Erfolge (achievements) vorhanden sind, diese einfließen lassen
+        if (resume.achievements && resume.achievements.length > 0) {
+            mainSectionParts.push(
+                `Meine herausragenden Erfolge, wie ${resume.achievements.slice(0, 3).join(', ')}, unterstreichen meine Eignung für diese Position.`
+            );
+        }
+        
         // Kulturelle Passung betonen
         const culturalAspects = Object.entries(cultureFit)
             .filter(([_, score]) => score > 0.5)
@@ -1226,20 +1259,6 @@ document.addEventListener('DOMContentLoaded', function() {
         
         elements.coverLetterPreview.innerHTML = preview || 'Hier erscheint die Vorschau...';
     }
-
-    // Neue Funktion zur Anwendung der Vorschläge
-    function applySuggestions(suggestions) {
-        if (!suggestions || !Array.isArray(suggestions)) return;
-        suggestions.forEach(suggestion => {
-            if (elements.coverLetterSections[suggestion.section]) {
-                elements.coverLetterSections[suggestion.section].value = suggestion.text;
-            }
-        });
-        updatePreview();
-    }
-
-    // Exponiere applySuggestions global, um 'applySuggestions is not defined' Fehler zu vermeiden
-    window.applySuggestions = applySuggestions;
 
     // ===== Event Listener für Textänderungen =====
     function initializeTextareaListeners() {
@@ -2122,4 +2141,196 @@ document.addEventListener('DOMContentLoaded', function() {
         preview.classList.add('d-none');
         checkRequiredUploads();
     }
-}); 
+
+    // Am Ende DOMContentLoaded: updatePreview global verfügbar machen
+    window.updatePreview = updatePreview;
+
+    // Am Ende des DOMContentLoaded Handlers, vor der abschließenden Klammer
+    window.applySuggestions = applySuggestions;
+
+    // Aktuelle Position
+
+    // 1. Event Listener für 'createCoverLetterBtn' hinzufügen
+    // Füge folgenden Code im DOMContentLoaded Handler, z.B. am Ende der Initialisierung, hinzu:
+
+    document.getElementById('createCoverLetterBtn').addEventListener('click', async function(){
+        if (!elements.jobPosting.value.trim() || !window.resumeText) {
+            showError('Bitte fügen Sie eine Stellenanzeige ein und laden Sie Ihren Lebenslauf hoch.');
+            return;
+        }
+        try {
+            showLoading(elements.analyzeBtn, 'Erstelle Anschreiben...');
+            const jobAnalysis = await analyzeJobPosting(elements.jobPosting.value);
+            const resumeAnalysis = await analyzeResume(window.resumeText);
+            const analysisData = { job: jobAnalysis, resume: resumeAnalysis };
+            const suggestions = await generateSectionSuggestions('all', analysisData);
+            if (suggestions && suggestions.length > 0) {
+                applySuggestions(suggestions);
+                updatePreview();
+                showSuccess('Anschreiben wurde erstellt und aktualisiert.');
+            } else {
+                showError('Keine Vorschläge generiert.');
+            }
+        } catch (e) {
+            showError(e.message || 'Fehler beim Erstellen des Anschreibens.');
+        } finally {
+            hideLoading(elements.analyzeBtn, 'Analysieren und Anschreiben erstellen');
+        }
+    });
+
+    // 2. Event Listener für API-Button hinzufügen
+    const apiModalElement = document.getElementById('apiModal');
+    const apiModal = apiModalElement ? new bootstrap.Modal(apiModalElement) : null;
+    document.getElementById('apiBtn').addEventListener('click', function(){
+        if(apiModal) { apiModal.show(); }
+    });
+
+    // 3. Suggest-Buttons - neue Formulierung bei jedem Klick
+    document.querySelectorAll('.suggest-btn').forEach(btn => {
+        btn.addEventListener('click', async function(){
+             const section = this.getAttribute('data-section');
+             if(!elements.jobPosting.value.trim()) {
+                 showError('Bitte fügen Sie eine Stellenanzeige ein.');
+                 return;
+             }
+             try {
+                  showLoading(this, 'Generiere...');
+                  const jobAnalysis = await analyzeJobPosting(elements.jobPosting.value);
+                  const resumeAnalysis = await analyzeResume(window.resumeText || '');
+                  const analysisData = { job: jobAnalysis, resume: resumeAnalysis };
+                  const suggestion = await generateSectionSuggestions(section, analysisData);
+                  if(suggestion && suggestion.length > 0) {
+                      applySuggestions(suggestion);
+                      updatePreview();
+                      showSuccess('Neue Formulierung generiert.');
+                  } else {
+                      showError('Keine neue Formulierung generiert.');
+                  }
+             } catch(e){
+                  showError(e.message || 'Fehler bei der Generierung.');
+             } finally {
+                  hideLoading(this, '<i class="bi bi-magic"></i>');
+             }
+        });
+    });
+
+    // 4. extractPersonName Funktion modifizieren
+    function extractPersonName(text) {
+        const namePatterns = [
+            /(?:name|vorname|nachname):\s*([A-ZÄÖÜa-zäöüß\s-]+)/i,
+            /^([A-ZÄÖÜa-zäöüß\s-]+)\n/
+        ];
+        for (const pattern of namePatterns) {
+            const match = text.match(pattern);
+            if (match) {
+                let name = match[1].trim();
+                // Jeder Wortbeginn groß schreiben
+                name = name.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+                return name;
+            }
+        }
+        return 'Bewerber';
+    }
+
+    // 5. In handleFileUpload: Falls Lebenslauf bereits vorhanden, nicht erneut verarbeiten
+    async function handleFileUpload(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const input = event.target;
+        // Wenn es sich um den Lebenslauf handelt und bereits ein Text vorhanden ist, abbrechen
+        if(input.id === 'resumeUpload' && window.resumeText) { return; }
+        const container = input.closest('.upload-container');
+        const uploadArea = container.querySelector('.upload-area');
+        const preview = container.querySelector('.file-preview');
+        const fileName = preview.querySelector('.file-name');
+
+        try {
+            if (file.type !== 'application/pdf') {
+                throw new Error('Bitte nur PDF-Dateien hochladen');
+            }
+            if (file.size > 10 * 1024 * 1024) {
+                throw new Error('Die Datei ist zu groß (maximal 10MB)');
+            }
+            showLoading(preview, 'Verarbeite Datei...');
+            extractTextFromPDF(file).then(text => {
+                if (!text.trim()) {
+                    throw new Error('Keine Textinhalte in der PDF-Datei gefunden');
+                }
+                if (input.id === 'resumeUpload') {
+                    window.resumeText = text;
+                    uploadArea.style.display = 'none';
+                    preview.classList.remove('d-none');
+                    preview.style.display = 'block';
+                    fileName.innerHTML = `
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-file-pdf me-2"></i>
+                            <div>
+                                <div class="fw-bold">${file.name}</div>
+                                <small class="text-muted">${formatFileSize(file.size)}</small>
+                            </div>
+                        </div>
+                    `;
+                    showSuccess('Lebenslauf erfolgreich verarbeitet');
+                    checkRequiredUploads();
+                }
+            }).catch(error => {
+                console.error('Error processing file:', error);
+                showError(error.message || 'Fehler beim Verarbeiten der Datei');
+                resetFileUpload(input);
+            }).finally(() => {
+                hideLoading(preview);
+            });
+        } catch (error) {
+            console.error('Error handling file:', error);
+            showError(error.message || 'Fehler beim Verarbeiten der Datei');
+            resetFileUpload(input);
+            hideLoading(preview);
+        }
+    }
+
+    // 6. In generateMainSection: Erfolge aus dem Lebenslauf einfließen lassen
+    function generateMainSection(job, resume, keySkills, relevantExperience, cultureFit) {
+        const mainSectionParts = [];
+
+        if (relevantExperience) {
+            mainSectionParts.push(
+                `Mit meiner Erfahrung als ${relevantExperience.title} bei ${relevantExperience.company} bringe ich genau die Qualifikationen mit, die Sie suchen.`
+            );
+        }
+
+        if (keySkills.matching && keySkills.matching.length > 0) {
+            mainSectionParts.push(
+                `Meine Kernkompetenzen in ${keySkills.matching.join(', ')} entsprechen präzise Ihren Anforderungen.`
+            );
+        }
+
+        if (keySkills.additional && keySkills.additional.length > 0) {
+            mainSectionParts.push(
+                `Darüber hinaus verfüge ich über zusätzliche Expertise in ${keySkills.additional.slice(0, 3).join(', ')}, die einen Mehrwert für Ihr Team bieten kann.`
+            );
+        }
+
+        // Neue Einbindung: Falls im Lebenslauf Erfolge (achievements) vorhanden sind, diese einfließen lassen
+        if (resume.achievements && resume.achievements.length > 0) {
+            mainSectionParts.push(
+                `Meine herausragenden Erfolge, wie ${resume.achievements.slice(0, 3).join(', ')}, unterstreichen meine Eignung für diese Position.`
+            );
+        }
+
+        const culturalAspects = Object.entries(cultureFit)
+                .filter(([_, score]) => score > 0.5)
+                .map(([aspect, _]) => aspect);
+
+        if (culturalAspects.length > 0) {
+            mainSectionParts.push(
+                `Meine ${culturalAspects.join(', ')}-Fähigkeiten passen hervorragend zur Unternehmenskultur von ${job.company.name}.`
+            );
+        }
+
+        mainSectionParts.push(
+            `Die Position als ${job.jobTitle.position} bei ${job.company.name} reizt mich besonders, da sie meinem Wunsch nach ${job.company.culture.innovative ? 'innovativer Arbeit' : 'spannenden Herausforderungen'} entspricht.`
+        );
+
+        return mainSectionParts.join(' ');
+    }
+});
