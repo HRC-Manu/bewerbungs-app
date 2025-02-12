@@ -16,6 +16,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const loadExampleCoverLetterBtn = document.getElementById('loadExampleCoverLetterBtn');
     const messageToast = document.getElementById('messageToast');
     const bsToast = new bootstrap.Toast(messageToast);
+    const coverLetterFilePreview = document.getElementById('coverLetterFilePreview');
+    const resumeFilePreview = document.getElementById('resumeFilePreview');
 
     // Example job posting (Microsoft HR position)
     const exampleJobPosting = `Microsoft is on a mission to empower every person and every organization on the planet to achieve more. Our culture is centered on embracing a growth mindset, a theme of inspiring excellence, and encouraging teams and leaders to bring their best each day. In doing so, we create life-changing innovations that impact billions of lives around the world. You will help us achieve our mission based on our culture and values.
@@ -50,6 +52,18 @@ Qualifications:
     loadExampleJobBtn.addEventListener('click', loadExampleJob);
     loadExampleResumeBtn.addEventListener('click', loadExampleResume);
     loadExampleCoverLetterBtn.addEventListener('click', loadExampleCoverLetter);
+
+    // File preview delete buttons
+    coverLetterFilePreview.querySelector('.btn-close').addEventListener('click', () => {
+        coverLetterUpload.value = '';
+        coverLetterFilePreview.classList.add('d-none');
+        coverLetterText.disabled = false;
+    });
+
+    resumeFilePreview.querySelector('.btn-close').addEventListener('click', () => {
+        resumeUpload.value = '';
+        resumeFilePreview.classList.add('d-none');
+    });
 
     // Load example job posting
     function loadExampleJob() {
@@ -129,15 +143,52 @@ Qualifications:
         showLoading(exportBtn, 'Exportiere...');
 
         try {
-            // Hier würde normalerweise die GitHub Action aufgerufen werden
-            // Für den Test zeigen wir nur eine Erfolgsmeldung
-            setTimeout(() => {
-                showSuccess(`Dokument als ${format.toUpperCase()} exportiert!`);
-                hideLoading(exportBtn, format === 'word' ? 'Als Word exportieren' : 'Als PDF exportieren');
-            }, 2000);
+            // Erstelle einen Blob mit dem Inhalt
+            const content = `${coverLetterPreview.innerText}\n\n${resumePreview.innerText}`;
+            let blob;
+            let filename;
 
+            if (format === 'word') {
+                // Erstelle einen Word-Dokument Blob
+                const htmlContent = `
+                    <html>
+                        <head>
+                            <meta charset="UTF-8">
+                            <style>
+                                body { font-family: Arial, sans-serif; line-height: 1.6; }
+                                .section { margin-bottom: 20px; }
+                            </style>
+                        </head>
+                        <body>
+                            ${coverLetterPreview.innerHTML}
+                            <div style="page-break-before: always;"></div>
+                            ${resumePreview.innerHTML}
+                        </body>
+                    </html>
+                `;
+                blob = new Blob([htmlContent], { type: 'application/msword' });
+                filename = 'bewerbung.doc';
+            } else {
+                // Erstelle einen Text-Blob für PDF (später durch echte PDF-Generierung ersetzen)
+                blob = new Blob([content], { type: 'text/plain' });
+                filename = 'bewerbung.txt'; // Temporär als .txt, später .pdf
+            }
+
+            // Erstelle einen Download-Link
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+
+            showSuccess(`Dokument als ${format.toUpperCase()} exportiert!`);
         } catch (error) {
             showError('Fehler beim Export: ' + error.message);
+            console.error('Export error:', error);
+        } finally {
             hideLoading(exportBtn, format === 'word' ? 'Als Word exportieren' : 'Als PDF exportieren');
         }
     }
@@ -149,8 +200,11 @@ Qualifications:
             if (file.type !== 'application/pdf') {
                 showError('Bitte lade eine PDF-Datei hoch');
                 event.target.value = '';
+                resumeFilePreview.classList.add('d-none');
             } else {
                 showSuccess('Lebenslauf erfolgreich hochgeladen');
+                resumeFilePreview.querySelector('.file-name').textContent = file.name;
+                resumeFilePreview.classList.remove('d-none');
             }
         }
     }
@@ -162,9 +216,14 @@ Qualifications:
             if (file.type !== 'application/pdf') {
                 showError('Bitte lade eine PDF-Datei hoch');
                 event.target.value = '';
+                coverLetterFilePreview.classList.add('d-none');
+                coverLetterText.disabled = false;
             } else {
                 showSuccess('Anschreiben erfolgreich hochgeladen');
-                coverLetterText.value = ''; // Leere das Textfeld, wenn eine PDF hochgeladen wurde
+                coverLetterFilePreview.querySelector('.file-name').textContent = file.name;
+                coverLetterFilePreview.classList.remove('d-none');
+                coverLetterText.value = '';
+                coverLetterText.disabled = true;
             }
         }
     }
