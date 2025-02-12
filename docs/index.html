@@ -3,321 +3,270 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI-Powered Job Application Assistant</title>
+    <title>Bewerbungsassistent</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
     <link href="css/style.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <script>
-        // PDF.js worker configuration
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
     </script>
 </head>
-<body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-        <div class="container">
-            <a class="navbar-brand" href="#">Job Application Assistant</a>
-            <div class="d-flex">
-                <button class="btn btn-outline-light me-2" id="settingsBtn">
-                    <i class="bi bi-gear"></i> Einstellungen
+<body class="bg-light">
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-gradient">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">
+                <i class="bi bi-file-earmark-text me-2"></i>
+                Bewerbungsassistent
+            </a>
+            <div class="d-flex gap-2">
+                <button class="btn btn-outline-light" id="settingsBtn">
+                    <i class="bi bi-gear-fill"></i>
                 </button>
-                <button class="btn btn-outline-light" id="loadExampleBtn">
-                    <i class="bi bi-file-text"></i> Beispiel laden
+                <button class="btn btn-outline-light" id="helpBtn">
+                    <i class="bi bi-question-circle-fill"></i>
                 </button>
             </div>
         </div>
     </nav>
 
-    <main class="container mt-4">
-        <div class="row">
-            <div class="col-md-6">
-                <!-- Upload Section -->
-                <div class="card mb-4">
-                    <div class="card-header">
-                        <h5 class="card-title mb-0">Dokumente hochladen</h5>
+    <!-- Hauptinhalt -->
+    <main class="container-fluid py-4">
+        <div class="row g-4">
+            <!-- Linke Spalte: Eingabe -->
+            <div class="col-lg-6">
+                <!-- Fortschrittsanzeige -->
+                <div class="progress-stepper mb-4">
+                    <div class="step active" id="step1">
+                        <div class="step-icon">
+                            <i class="bi bi-1-circle"></i>
+                        </div>
+                        <div class="step-label">Dokumente</div>
+                    </div>
+                    <div class="step" id="step2">
+                        <div class="step-icon">
+                            <i class="bi bi-2-circle"></i>
+                        </div>
+                        <div class="step-label">Stellenanzeige</div>
+                    </div>
+                    <div class="step" id="step3">
+                        <div class="step-icon">
+                            <i class="bi bi-3-circle"></i>
+                        </div>
+                        <div class="step-label">Anschreiben</div>
+                    </div>
+                </div>
+
+                <!-- Dokumente Upload -->
+                <div class="card shadow-sm mb-4" id="uploadSection">
+                    <div class="card-header bg-white py-3">
+                        <h5 class="card-title mb-0">
+                            <i class="bi bi-file-earmark-pdf me-2"></i>
+                            Dokumente hochladen
+                        </h5>
                     </div>
                     <div class="card-body">
-                        <!-- Anschreiben Upload -->
-                        <div class="mb-3">
-                            <label for="coverLetterUpload" class="form-label">PDF-Anschreiben hochladen</label>
-                            <input class="form-control form-control-lg" type="file" id="coverLetterUpload" accept=".pdf">
-                            <div id="coverLetterFilePreview" class="file-preview mt-2 d-none">
-                                <div class="alert alert-info d-flex align-items-center justify-content-between">
-                                    <span class="file-name"></span>
-                                    <button type="button" class="btn-close" aria-label="Löschen"></button>
-                                </div>
-                            </div>
+                        <div class="upload-area mb-4">
+                            <label for="resumeUpload" class="upload-label">
+                                <i class="bi bi-cloud-arrow-up display-4"></i>
+                                <h6>Lebenslauf hochladen</h6>
+                                <p class="text-muted small">PDF-Datei hier ablegen oder klicken</p>
+                            </label>
+                            <input type="file" id="resumeUpload" accept=".pdf" class="d-none">
                         </div>
-
-                        <!-- Lebenslauf Upload -->
-                        <div class="mb-3">
-                            <label for="resumeUpload" class="form-label">PDF-Lebenslauf hochladen</label>
-                            <input class="form-control form-control-lg" type="file" id="resumeUpload" accept=".pdf">
-                            <div id="resumeFilePreview" class="file-preview mt-2 d-none">
-                                <div class="alert alert-info d-flex align-items-center justify-content-between">
-                                    <span class="file-name"></span>
-                                    <button type="button" class="btn-close" aria-label="Löschen"></button>
-                                </div>
-                            </div>
+                        <div class="upload-area">
+                            <label for="coverLetterUpload" class="upload-label">
+                                <i class="bi bi-cloud-arrow-up display-4"></i>
+                                <h6>Bestehendes Anschreiben hochladen (optional)</h6>
+                                <p class="text-muted small">PDF-Datei hier ablegen oder klicken</p>
+                            </label>
+                            <input type="file" id="coverLetterUpload" accept=".pdf" class="d-none">
                         </div>
                     </div>
                 </div>
 
                 <!-- Stellenanzeige -->
-                <div class="card mb-4">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <h5 class="card-title mb-0">Stellenanzeige</h5>
-                        <div class="btn-group">
-                            <button class="btn btn-sm btn-outline-primary" id="loadExampleJobBtn">Beispiel laden</button>
-                            <button class="btn btn-sm btn-outline-info" id="analyzeJobBtn">Analysieren</button>
+                <div class="card shadow-sm mb-4" id="jobPostingSection">
+                    <div class="card-header bg-white py-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="card-title mb-0">
+                                <i class="bi bi-briefcase me-2"></i>
+                                Stellenanzeige
+                            </h5>
+                            <div class="btn-group">
+                                <button class="btn btn-sm btn-outline-primary" id="pasteBtn">
+                                    <i class="bi bi-clipboard"></i> Einfügen
+                                </button>
+                                <button class="btn btn-sm btn-outline-primary" id="loadExampleBtn">
+                                    <i class="bi bi-file-text"></i> Beispiel
+                                </button>
+                            </div>
                         </div>
                     </div>
                     <div class="card-body">
-                        <textarea class="form-control" id="jobPosting" rows="10" placeholder="Füge hier die Stellenanzeige ein..."></textarea>
-                        <div id="jobAnalysis" class="mt-3 d-none">
-                            <h6>Analyse der Stellenanzeige:</h6>
+                        <textarea class="form-control" id="jobPosting" rows="12" 
+                            placeholder="Füge hier die Stellenanzeige ein..."></textarea>
+                        
+                        <div id="jobAnalysis" class="analysis-section mt-4 d-none">
+                            <h6 class="analysis-title">
+                                <i class="bi bi-graph-up me-2"></i>
+                                Analyse der Stellenanzeige
+                            </h6>
                             <div class="analysis-content">
-                                <div class="row">
+                                <div class="row g-3">
                                     <div class="col-md-6">
-                                        <ul class="list-group">
-                                            <li class="list-group-item">
-                                                <strong>Position:</strong> <span id="jobTitleAnalysis"></span>
-                                            </li>
-                                            <li class="list-group-item">
-                                                <strong>Unternehmen:</strong> <span id="companyAnalysis"></span>
-                                            </li>
-                                            <li class="list-group-item">
-                                                <strong>Branche:</strong> <span id="industryAnalysis"></span>
-                                            </li>
-                                        </ul>
+                                        <div class="info-card">
+                                            <div class="info-card-header">Position</div>
+                                            <div class="info-card-body" id="jobTitleAnalysis"></div>
+                                        </div>
                                     </div>
                                     <div class="col-md-6">
-                                        <ul class="list-group">
-                                            <li class="list-group-item">
-                                                <strong>Arbeitsmodell:</strong> <span id="workModelAnalysis"></span>
-                                            </li>
-                                            <li class="list-group-item">
-                                                <strong>Team:</strong> <span id="teamAnalysis"></span>
-                                            </li>
-                                            <li class="list-group-item">
-                                                <strong>Ton:</strong> <span id="toneAnalysis"></span>
-                                            </li>
-                                        </ul>
+                                        <div class="info-card">
+                                            <div class="info-card-header">Unternehmen</div>
+                                            <div class="info-card-body" id="companyAnalysis"></div>
+                                        </div>
+                                    </div>
+                                    <div class="col-12">
+                                        <div class="info-card">
+                                            <div class="info-card-header">Anforderungen</div>
+                                            <div class="info-card-body">
+                                                <div class="row">
+                                                    <div class="col-md-6">
+                                                        <h7>Muss</h7>
+                                                        <ul class="requirement-list" id="mustHaveList"></ul>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <h7>Optional</h7>
+                                                        <ul class="requirement-list" id="niceToHaveList"></ul>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
+                    <div class="card-footer bg-white">
+                        <button class="btn btn-primary w-100" id="analyzeBtn">
+                            <i class="bi bi-magic me-2"></i>
+                            Analysieren und Anschreiben erstellen
+                        </button>
+                    </div>
                 </div>
 
-                <!-- Anschreiben Builder -->
-                <div class="card mb-4">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <h5 class="card-title mb-0">Anschreiben Generator</h5>
-                        <div>
-                            <button class="btn btn-sm btn-outline-primary me-2" id="loadExampleCoverLetterBtn">Beispiel laden</button>
-                            <button class="btn btn-sm btn-outline-success" id="generateSuggestionsBtn">KI-Vorschläge</button>
+                <!-- Anschreiben Generator -->
+                <div class="card shadow-sm" id="coverLetterSection">
+                    <div class="card-header bg-white py-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="card-title mb-0">
+                                <i class="bi bi-pencil me-2"></i>
+                                Anschreiben Generator
+                            </h5>
+                            <button class="btn btn-sm btn-success" id="generateSuggestionsBtn">
+                                <i class="bi bi-stars me-2"></i>
+                                KI-Vorschläge
+                            </button>
                         </div>
                     </div>
                     <div class="card-body">
-                        <div id="coverLetterBuilder" class="mb-3">
-                            <!-- Empfänger -->
-                            <div class="section mb-3">
-                                <label class="form-label d-flex justify-content-between">
+                        <div id="coverLetterBuilder">
+                            <div class="section-group">
+                                <div class="section-header">
                                     <span>Empfänger</span>
-                                    <button class="btn btn-sm btn-outline-primary suggest-btn" data-section="recipient">Vorschläge</button>
-                                </label>
-                                <textarea class="form-control" id="coverLetterRecipient" rows="3" placeholder="Name und Adresse des Empfängers..."></textarea>
+                                    <button class="btn btn-sm btn-outline-primary suggest-btn" data-section="recipient">
+                                        <i class="bi bi-magic"></i>
+                                    </button>
+                                </div>
+                                <textarea class="form-control" id="coverLetterRecipient" rows="2"></textarea>
                             </div>
-                            
-                            <!-- Betreff -->
-                            <div class="section mb-3">
-                                <label class="form-label d-flex justify-content-between">
+
+                            <div class="section-group">
+                                <div class="section-header">
                                     <span>Betreff</span>
-                                    <button class="btn btn-sm btn-outline-primary suggest-btn" data-section="subject">Vorschläge</button>
-                                </label>
-                                <textarea class="form-control" id="coverLetterSubject" rows="2" placeholder="Betreffzeile..."></textarea>
+                                    <button class="btn btn-sm btn-outline-primary suggest-btn" data-section="subject">
+                                        <i class="bi bi-magic"></i>
+                                    </button>
+                                </div>
+                                <textarea class="form-control" id="coverLetterSubject" rows="1"></textarea>
                             </div>
-                            
-                            <!-- Einleitung -->
-                            <div class="section mb-3">
-                                <label class="form-label d-flex justify-content-between">
+
+                            <div class="section-group">
+                                <div class="section-header">
                                     <span>Einleitung</span>
-                                    <button class="btn btn-sm btn-outline-primary suggest-btn" data-section="introduction">Vorschläge</button>
-                                </label>
-                                <textarea class="form-control" id="coverLetterIntro" rows="3" placeholder="Einleitender Absatz..."></textarea>
+                                    <button class="btn btn-sm btn-outline-primary suggest-btn" data-section="introduction">
+                                        <i class="bi bi-magic"></i>
+                                    </button>
+                                </div>
+                                <textarea class="form-control" id="coverLetterIntro" rows="3"></textarea>
                             </div>
-                            
-                            <!-- Hauptteil -->
-                            <div class="section mb-3">
-                                <label class="form-label d-flex justify-content-between">
+
+                            <div class="section-group">
+                                <div class="section-header">
                                     <span>Hauptteil</span>
-                                    <button class="btn btn-sm btn-outline-primary suggest-btn" data-section="main">Vorschläge</button>
-                                </label>
-                                <textarea class="form-control" id="coverLetterMain" rows="6" placeholder="Hauptteil des Anschreibens..."></textarea>
+                                    <button class="btn btn-sm btn-outline-primary suggest-btn" data-section="main">
+                                        <i class="bi bi-magic"></i>
+                                    </button>
+                                </div>
+                                <textarea class="form-control" id="coverLetterMain" rows="6"></textarea>
                             </div>
-                            
-                            <!-- Abschluss -->
-                            <div class="section mb-3">
-                                <label class="form-label d-flex justify-content-between">
+
+                            <div class="section-group">
+                                <div class="section-header">
                                     <span>Abschluss</span>
-                                    <button class="btn btn-sm btn-outline-primary suggest-btn" data-section="closing">Vorschläge</button>
-                                </label>
-                                <textarea class="form-control" id="coverLetterClosing" rows="3" placeholder="Abschließender Absatz..."></textarea>
+                                    <button class="btn btn-sm btn-outline-primary suggest-btn" data-section="closing">
+                                        <i class="bi bi-magic"></i>
+                                    </button>
+                                </div>
+                                <textarea class="form-control" id="coverLetterClosing" rows="2"></textarea>
                             </div>
                         </div>
-
-                        <!-- Original Textarea (now hidden by default) -->
-                        <textarea class="form-control mt-3 d-none" id="coverLetterText" rows="10" placeholder="Oder füge hier dein Anschreiben ein..."></textarea>
                     </div>
                 </div>
             </div>
 
-            <div class="col-md-6">
-                <!-- Vorschau -->
-                <div class="card mb-4">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <h5 class="card-title mb-0">Vorschau</h5>
-                        <div class="btn-group">
-                            <button class="btn btn-primary" id="generateBtn">Generieren</button>
-                            <button class="btn btn-success dropdown-toggle" type="button" id="exportDropdown" data-bs-toggle="dropdown">
-                                Exportieren
-                            </button>
-                            <ul class="dropdown-menu">
-                                <li><a class="dropdown-item" href="#" id="exportWordBtn">Als Word exportieren</a></li>
-                                <li><a class="dropdown-item" href="#" id="exportPdfBtn">Als PDF exportieren</a></li>
-                            </ul>
+            <!-- Rechte Spalte: Vorschau -->
+            <div class="col-lg-6">
+                <div class="card shadow-sm sticky-top" style="top: 1rem;">
+                    <div class="card-header bg-white py-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="card-title mb-0">
+                                <i class="bi bi-eye me-2"></i>
+                                Vorschau
+                            </h5>
+                            <div class="btn-group">
+                                <button class="btn btn-primary" id="copyBtn">
+                                    <i class="bi bi-clipboard me-2"></i>
+                                    Kopieren
+                                </button>
+                                <button class="btn btn-success dropdown-toggle" type="button" id="exportDropdown" data-bs-toggle="dropdown">
+                                    <i class="bi bi-download me-2"></i>
+                                    Exportieren
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li>
+                                        <a class="dropdown-item" href="#" id="exportWordBtn">
+                                            <i class="bi bi-file-word me-2"></i>
+                                            Als Word exportieren
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="#" id="exportPdfBtn">
+                                            <i class="bi bi-file-pdf me-2"></i>
+                                            Als PDF exportieren
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
                         </div>
                     </div>
                     <div class="card-body">
-                        <div class="progress-container">
-                            <div class="progress mb-3 d-none" id="generationProgress">
-                                <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
-                            </div>
-                        </div>
-                        <div class="preview-container">
-                            <div class="preview-toolbar mb-2">
-                                <div class="btn-group">
-                                    <button class="btn btn-sm btn-outline-secondary" id="copyBtn">
-                                        <i class="bi bi-clipboard"></i> Kopieren
-                                    </button>
-                                    <button class="btn btn-sm btn-outline-secondary" id="downloadBtn">
-                                        <i class="bi bi-download"></i> Herunterladen
-                                    </button>
-                                    <button class="btn btn-sm btn-outline-primary" id="analyzeBtn">
-                                        <i class="bi bi-search"></i> Analysieren
-                                    </button>
-                                </div>
-                            </div>
-                            <div id="documentPreview" class="preview-content">
-                                <div id="coverLetterPreview">
-                                    Hier erscheint die Vorschau des Anschreibens...
-                                </div>
-                                <hr class="my-4">
-                                <div id="resumePreview">
-                                    Hier erscheint die Vorschau des Lebenslaufs...
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Suggestions Modal -->
-                <div class="modal fade" id="suggestionsModal" tabindex="-1">
-                    <div class="modal-dialog modal-lg">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title">KI-Vorschläge</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                            </div>
-                            <div class="modal-body">
-                                <div id="suggestionsList" class="list-group">
-                                    <!-- Suggestions will be inserted here -->
-                                </div>
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Schließen</button>
-                                <button type="button" class="btn btn-primary" id="generateMoreBtn">Weitere Vorschläge</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Analyse Modal -->
-                <div class="modal fade" id="analysisModal" tabindex="-1">
-                    <div class="modal-dialog modal-lg">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title">Dokumentenanalyse</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                            </div>
-                            <div class="modal-body">
-                                <ul class="nav nav-tabs" role="tablist">
-                                    <li class="nav-item">
-                                        <a class="nav-link active" data-bs-toggle="tab" href="#styleTab">Stil</a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a class="nav-link" data-bs-toggle="tab" href="#structureTab">Struktur</a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a class="nav-link" data-bs-toggle="tab" href="#contentTab">Inhalt</a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a class="nav-link" data-bs-toggle="tab" href="#improvementTab">Verbesserungen</a>
-                                    </li>
-                                </ul>
-                                <div class="tab-content mt-3">
-                                    <div class="tab-pane fade show active" id="styleTab">
-                                        <div class="row">
-                                            <div class="col-md-4">
-                                                <h6>Tonalität</h6>
-                                                <p id="styleTone"></p>
-                                            </div>
-                                            <div class="col-md-4">
-                                                <h6>Komplexität</h6>
-                                                <p id="styleComplexity"></p>
-                                            </div>
-                                            <div class="col-md-4">
-                                                <h6>Persönlichkeit</h6>
-                                                <p id="stylePersonality"></p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="tab-pane fade" id="structureTab">
-                                        <div class="row">
-                                            <div class="col-md-6">
-                                                <h6>Abschnitte</h6>
-                                                <ul id="structureSections" class="list-unstyled"></ul>
-                                            </div>
-                                            <div class="col-md-6">
-                                                <h6>Format</h6>
-                                                <p id="structureFormat"></p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="tab-pane fade" id="contentTab">
-                                        <div class="row">
-                                            <div class="col-md-6">
-                                                <h6>Schlüsselphrasen</h6>
-                                                <ul id="contentPhrases" class="list-unstyled"></ul>
-                                            </div>
-                                            <div class="col-md-6">
-                                                <h6>Erfolge</h6>
-                                                <ul id="contentAchievements" class="list-unstyled"></ul>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="tab-pane fade" id="improvementTab">
-                                        <div class="row">
-                                            <div class="col-md-6">
-                                                <h6>Verbesserungsvorschläge</h6>
-                                                <ul id="improvementSuggestions" class="list-unstyled"></ul>
-                                            </div>
-                                            <div class="col-md-6">
-                                                <h6>Fehlende Elemente</h6>
-                                                <ul id="improvementMissing" class="list-unstyled"></ul>
-                                            </div>
-                                        </div>
-                                    </div>
+                        <div class="preview-paper">
+                            <div id="coverLetterPreview" class="preview-content">
+                                <div class="preview-placeholder">
+                                    <i class="bi bi-file-text display-1"></i>
+                                    <p>Hier erscheint die Vorschau des Anschreibens...</p>
                                 </div>
                             </div>
                         </div>
@@ -327,57 +276,159 @@
         </div>
     </main>
 
-    <!-- Error/Success Toast -->
-    <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
-        <div id="messageToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
-            <div class="toast-header">
-                <strong class="me-auto" id="toastTitle">Nachricht</strong>
-                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
-            </div>
-            <div class="toast-body" id="toastMessage"></div>
-        </div>
-    </div>
-
-    <!-- File Preview Modal -->
-    <div class="modal fade preview-modal" id="filePreviewModal" tabindex="-1">
+    <!-- Modals -->
+    <!-- Vorschläge Modal -->
+    <div class="modal fade" id="suggestionsModal" tabindex="-1">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Datei Vorschau</h5>
+                    <h5 class="modal-title">
+                        <i class="bi bi-lightbulb me-2"></i>
+                        KI-Vorschläge
+                    </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <div id="filePreviewContent" class="mini-preview">
-                        <!-- Preview content will be inserted here -->
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Füge API Key Konfiguration hinzu -->
-    <div class="modal fade" id="settingsModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Einstellungen</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label for="apiKey" class="form-label">OpenAI API Key</label>
-                        <input type="password" class="form-control" id="apiKey" placeholder="sk-...">
-                        <div class="form-text">Ihr OpenAI API Key wird lokal in Ihrem Browser gespeichert.</div>
+                    <div id="suggestionsList" class="suggestions-grid">
+                        <!-- Vorschläge werden hier eingefügt -->
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Schließen</button>
+                    <button type="button" class="btn btn-primary" id="generateMoreBtn">
+                        <i class="bi bi-plus-circle me-2"></i>
+                        Weitere Vorschläge
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Einstellungen Modal -->
+    <div class="modal fade" id="settingsModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-gear me-2"></i>
+                        Einstellungen
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-4">
+                        <label class="form-label d-flex justify-content-between">
+                            OpenAI API Key
+                            <a href="https://platform.openai.com/api-keys" target="_blank" class="text-muted small">
+                                <i class="bi bi-question-circle"></i>
+                            </a>
+                        </label>
+                        <div class="input-group">
+                            <input type="password" class="form-control font-monospace" id="apiKey" placeholder="sk-...">
+                            <button class="btn btn-outline-secondary" type="button" id="toggleApiKey">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                        </div>
+                        <div class="form-text">Ihr API Key wird sicher in Ihrem Browser gespeichert.</div>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label">KI-Modell</label>
+                        <select class="form-select" id="modelSelect">
+                            <option value="gpt-4">GPT-4 (Beste Qualität)</option>
+                            <option value="gpt-3.5-turbo">GPT-3.5 Turbo (Schneller)</option>
+                        </select>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label">Sprache</label>
+                        <select class="form-select" id="languageSelect">
+                            <option value="de">Deutsch</option>
+                            <option value="en">English</option>
+                        </select>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label">Anschreiben-Stil</label>
+                        <select class="form-select" id="styleSelect">
+                            <option value="professional">Professionell</option>
+                            <option value="modern">Modern</option>
+                            <option value="creative">Kreativ</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Abbrechen</button>
                     <button type="button" class="btn btn-primary" id="saveSettingsBtn">Speichern</button>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- Hilfe Modal -->
+    <div class="modal fade" id="helpModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-question-circle me-2"></i>
+                        Hilfe & Tipps
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="accordion" id="helpAccordion">
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne">
+                                    Erste Schritte
+                                </button>
+                            </h2>
+                            <div id="collapseOne" class="accordion-collapse collapse show" data-bs-parent="#helpAccordion">
+                                <div class="accordion-body">
+                                    <ol class="mb-0">
+                                        <li>Laden Sie Ihren Lebenslauf hoch (PDF-Format)</li>
+                                        <li>Fügen Sie die Stellenanzeige ein</li>
+                                        <li>Klicken Sie auf "Analysieren"</li>
+                                        <li>Passen Sie die generierten Vorschläge an</li>
+                                        <li>Exportieren Sie das fertige Anschreiben</li>
+                                    </ol>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo">
+                                    Tipps für bessere Ergebnisse
+                                </button>
+                            </h2>
+                            <div id="collapseTwo" class="accordion-collapse collapse" data-bs-parent="#helpAccordion">
+                                <div class="accordion-body">
+                                    <ul class="mb-0">
+                                        <li>Verwenden Sie einen aktuellen, gut formatierten Lebenslauf</li>
+                                        <li>Fügen Sie die komplette Stellenanzeige ein</li>
+                                        <li>Prüfen und personalisieren Sie die Vorschläge</li>
+                                        <li>Nutzen Sie die Analyse-Funktion für Verbesserungen</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Nachrichten -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+        <div id="messageToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header">
+                <i class="bi bi-info-circle me-2"></i>
+                <strong class="me-auto" id="toastTitle">Nachricht</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+            </div>
+            <div class="toast-body" id="toastMessage"></div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="js/app.js"></script>
 </body>
