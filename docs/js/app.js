@@ -280,6 +280,8 @@ Qualifications:
     // Generate suggestions using ChatGPT with analysis
     async function generateCoverLetterSuggestions(section, jobPosting, analysis) {
         try {
+            console.log('Generating suggestions - Input:', { section, jobPosting, analysis });
+
             // Ensure analysis object has all required properties
             const safeAnalysis = {
                 jobTitle: analysis.jobTitle || 'die ausgeschriebene Position',
@@ -287,6 +289,8 @@ Qualifications:
                 matchingSkills: analysis.matchingSkills || [],
                 keyRequirements: analysis.keyRequirements || []
             };
+
+            console.log('Safe Analysis:', safeAnalysis);
 
             // Customize prompts based on analysis
             const prompts = {
@@ -326,23 +330,29 @@ Qualifications:
                 ]
             };
 
+            console.log('Prompts:', prompts);
+
             // Handle 'all' section generation
             if (section === 'all') {
                 const allSections = ['recipient', 'subject', 'introduction', 'main', 'closing'];
                 const allSuggestions = allSections
                     .map(sec => {
                         const sectionPrompts = prompts[sec];
+                        console.log(`Suggestions for ${sec}:`, sectionPrompts);
                         return sectionPrompts && sectionPrompts.length > 0 
                             ? sectionPrompts[0] 
                             : null;
                     })
                     .filter(suggestion => suggestion !== null);
                 
+                console.log('All Suggestions:', allSuggestions);
                 return allSuggestions;
             } 
             
             // Return section-specific suggestions
-            return prompts[section] || [];
+            const sectionSuggestions = prompts[section] || [];
+            console.log(`Suggestions for ${section}:`, sectionSuggestions);
+            return sectionSuggestions;
             
         } catch (error) {
             console.error('Error generating suggestions:', error);
@@ -370,13 +380,16 @@ Qualifications:
             
             // Analyze with ChatGPT
             const analysis = await analyzeWithChatGPT(jobPosting, resumeText);
+            console.log('Analysis Result:', analysis);
             
             // Generate suggestions for all sections
             const suggestions = await generateCoverLetterSuggestions('all', jobPosting, analysis);
+            console.log('Generated Suggestions:', suggestions);
             
             // Apply suggestions to create a complete cover letter
             let completeCoverLetter = '';
             suggestions.forEach(suggestion => {
+                console.log('Processing Suggestion:', suggestion);
                 if (suggestion && suggestion.section && suggestion.text) {
                     completeCoverLetter += suggestion.text + '\n\n';
                 }
