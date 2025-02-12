@@ -99,31 +99,31 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // ===== Analyse-Einstellungen =====
     const ANALYSIS_SETTINGS = {
-        // Schlüsselwörter für Positionen
         positions: {
-            developer: ['entwickler', 'programmierer', 'software engineer', 'full-stack', 'frontend', 'backend'],
-            manager: ['manager', 'leiter', 'führungskraft', 'teamleiter', 'projektleiter'],
-            consultant: ['berater', 'consultant', 'architekt'],
-            analyst: ['analyst', 'data scientist', 'business intelligence']
+            developer: ['entwickler', 'programmierer', 'software engineer', 'full-stack', 'frontend', 'backend', 'web developer', 'app developer'],
+            manager: ['manager', 'leiter', 'führungskraft', 'teamleiter', 'projektleiter', 'gruppenleiter', 'abteilungsleiter'],
+            consultant: ['berater', 'consultant', 'architekt', 'spezialist', 'experte'],
+            analyst: ['analyst', 'data scientist', 'business intelligence', 'datenanalyst', 'market researcher']
         },
-        // Schlüsselwörter für Level
         levels: {
-            junior: ['junior', 'entry level', 'berufseinsteiger'],
-            senior: ['senior', 'erfahren', 'expert'],
-            lead: ['lead', 'principal', 'head of', 'leitung']
+            junior: ['junior', 'entry level', 'berufseinsteiger', 'trainee', 'praktikant'],
+            senior: ['senior', 'erfahren', 'expert', 'professional', 'spezialist'],
+            lead: ['lead', 'principal', 'head of', 'leitung', 'chief', 'direktor']
         },
-        // Schlüsselwörter für Abteilungen
         departments: {
-            it: ['it', 'edv', 'software', 'entwicklung', 'tech'],
-            hr: ['hr', 'personal', 'recruiting'],
-            finance: ['finance', 'finanzen', 'controlling'],
-            sales: ['sales', 'vertrieb', 'marketing']
+            it: ['it', 'edv', 'software', 'entwicklung', 'tech', 'digital', 'system', 'application'],
+            hr: ['hr', 'personal', 'recruiting', 'talent', 'human resources', 'personalabteilung'],
+            finance: ['finance', 'finanzen', 'controlling', 'buchhaltung', 'rechnungswesen'],
+            sales: ['sales', 'vertrieb', 'marketing', 'business development', 'account management']
         },
-        // Unternehmenskultur-Indikatoren
         culture: {
-            formal: ['etabliert', 'traditionell', 'strukturiert', 'corporate'],
-            casual: ['startup', 'dynamisch', 'agil', 'modern', 'jung'],
-            innovative: ['innovativ', 'zukunftsorientiert', 'digital']
+            formal: ['etabliert', 'traditionell', 'strukturiert', 'corporate', 'konzern', 'bank', 'versicherung'],
+            casual: ['startup', 'dynamisch', 'agil', 'modern', 'jung', 'kreativ', 'flexibel'],
+            innovative: ['innovativ', 'zukunftsorientiert', 'digital', 'technologieführer', 'vorreiter']
+        },
+        requirements: {
+            mustHave: ['muss', 'zwingend', 'notwendig', 'erforderlich', 'vorausgesetzt'],
+            niceToHave: ['wünschenswert', 'von vorteil', 'plus', 'ideal', 'gerne']
         }
     };
 
@@ -169,369 +169,296 @@ document.addEventListener('DOMContentLoaded', function() {
 
             const text = jobPosting.toLowerCase();
             
-            // Position analysieren
-            const position = findBestMatch(text, ANALYSIS_SETTINGS.positions) || { name: 'Nicht spezifiziert', score: 0 };
-            const level = findBestMatch(text, ANALYSIS_SETTINGS.levels) || { name: 'Nicht spezifiziert', score: 0 };
-            const department = findBestMatch(text, ANALYSIS_SETTINGS.departments) || { name: 'Nicht spezifiziert', score: 0 };
+            // Erweiterte Positionsanalyse
+            const positionInfo = analyzePosition(text);
+            const levelInfo = analyzeLevel(text);
+            const departmentInfo = analyzeDepartment(text);
             
-            // Unternehmensdetails extrahieren
-            const companyInfo = extractCompanyInfo(text) || { name: 'Nicht angegeben', industry: 'Nicht spezifiziert', culture: 'Klassisch' };
+            // Detaillierte Unternehmensanalyse
+            const companyInfo = analyzeCompany(text);
             
-            // Anforderungen analysieren
-            const requirements = analyzeRequirements(text) || { hardSkills: [], softSkills: [] };
+            // Strukturierte Anforderungsanalyse
+            const requirements = analyzeRequirements(text);
             
             return {
                 jobTitle: {
-                    position: position.name || 'Nicht spezifiziert',
-                    level: level.name || 'Nicht spezifiziert',
-                    department: department.name || 'Nicht spezifiziert'
+                    position: positionInfo.title,
+                    level: levelInfo.level,
+                    department: departmentInfo.name,
+                    context: {
+                        isRemote: checkRemoteWork(text),
+                        location: extractLocation(text),
+                        teamSize: extractTeamSize(text)
+                    }
                 },
                 company: {
-                    name: companyInfo.name || 'Nicht angegeben',
-                    industry: companyInfo.industry || 'Nicht spezifiziert',
-                    culture: companyInfo.culture || 'Klassisch'
+                    name: companyInfo.name,
+                    industry: companyInfo.industry,
+                    culture: companyInfo.culture,
+                    benefits: extractBenefits(text),
+                    technologies: extractTechnologies(text)
                 },
                 requirements: {
-                    hardSkills: requirements.hardSkills || [],
-                    softSkills: requirements.softSkills || []
+                    essential: requirements.essential,
+                    preferred: requirements.preferred,
+                    experience: requirements.experience,
+                    education: requirements.education,
+                    skills: {
+                        technical: requirements.technical,
+                        soft: requirements.soft
+                    }
                 }
             };
         } catch (error) {
-            console.error('Job posting analysis error:', error);
-            throw new Error(`Analyse der Stellenanzeige fehlgeschlagen: ${error.message}`);
+            console.error('Analyse Fehler:', error);
+            throw new Error(`Analyse fehlgeschlagen: ${error.message}`);
         }
     }
 
-    function findBestMatch(text, categories) {
-        let bestMatch = { name: 'Nicht spezifiziert', score: 0 };
+    function analyzePosition(text) {
+        const positions = {
+            development: ['entwickler', 'programmierer', 'software engineer', 'full-stack', 'frontend', 'backend'],
+            management: ['manager', 'leiter', 'führungskraft', 'teamleiter', 'projektleiter'],
+            consulting: ['berater', 'consultant', 'architekt'],
+            analysis: ['analyst', 'data scientist', 'business intelligence']
+        };
         
-        for (const [category, keywords] of Object.entries(categories)) {
-            const score = keywords.reduce((count, keyword) => {
-                return count + (text.includes(keyword) ? 1 : 0);
-            }, 0);
+        let bestMatch = { title: 'Nicht spezifiziert', confidence: 0 };
+        
+        for (const [category, keywords] of Object.entries(positions)) {
+            const matches = keywords.filter(keyword => text.includes(keyword));
+            const confidence = matches.length / keywords.length;
             
-            if (score > bestMatch.score) {
-                bestMatch = { name: category, score };
+            if (confidence > bestMatch.confidence) {
+                bestMatch = {
+                    title: category,
+                    confidence: confidence,
+                    matches: matches
+                };
             }
         }
         
         return bestMatch;
     }
 
-    function extractCompanyInfo(text) {
-        // Firmenname aus Text extrahieren (vereinfachte Version)
-        const nameMatch = text.match(/(?:firma|unternehmen|arbeitgeber):\s*([^\n.]+)/i);
-        const name = nameMatch ? nameMatch[1].trim() : 'Nicht angegeben';
-        
-        // Branche identifizieren
-        const industries = {
-            it: ['software', 'it-dienstleistung', 'technologie'],
-            automotive: ['automobil', 'fahrzeug', 'automotive'],
-            finance: ['bank', 'versicherung', 'finanz'],
-            health: ['gesundheit', 'pharma', 'medizin']
+    function analyzeLevel(text) {
+        const levels = {
+            junior: {
+                keywords: ['junior', 'entry level', 'berufseinsteiger'],
+                experience: '0-3 Jahre'
+            },
+            middle: {
+                keywords: ['erfahren', 'professional'],
+                experience: '3-5 Jahre'
+            },
+            senior: {
+                keywords: ['senior', 'expert', 'lead'],
+                experience: '5+ Jahre'
+            }
         };
         
-        const industry = findBestMatch(text, industries).name;
+        let bestMatch = { level: 'Nicht spezifiziert', confidence: 0 };
         
-        // Unternehmenskultur analysieren
-        const culture = analyzeCulture(text);
-        
-        return { name, industry, culture };
-    }
-
-    function analyzeCulture(text) {
-        const culturalAspects = [];
-        
-        for (const [type, indicators] of Object.entries(ANALYSIS_SETTINGS.culture)) {
-            if (indicators.some(indicator => text.includes(indicator))) {
-                culturalAspects.push(type);
+        for (const [level, info] of Object.entries(levels)) {
+            const matches = info.keywords.filter(keyword => text.includes(keyword));
+            const confidence = matches.length / info.keywords.length;
+            
+            if (confidence > bestMatch.confidence) {
+                bestMatch = {
+                    level: level,
+                    experience: info.experience,
+                    confidence: confidence
+                };
             }
         }
         
-        if (culturalAspects.length === 0) {
-            return 'Klassisch';
+        return bestMatch;
+    }
+
+    function analyzeDepartment(text) {
+        const departments = {
+            it: ['it', 'edv', 'software', 'entwicklung', 'tech'],
+            hr: ['hr', 'personal', 'recruiting'],
+            finance: ['finance', 'finanzen', 'controlling'],
+            sales: ['sales', 'vertrieb', 'marketing']
+        };
+        
+        let bestMatch = { name: 'Nicht spezifiziert', confidence: 0 };
+        
+        for (const [dept, keywords] of Object.entries(departments)) {
+            const matches = keywords.filter(keyword => text.includes(keyword));
+            const confidence = matches.length / keywords.length;
+            
+            if (confidence > bestMatch.confidence) {
+                bestMatch = {
+                    name: dept,
+                    confidence: confidence,
+                    matches: matches
+                };
+            }
         }
         
-        return culturalAspects.join(', ');
+        return bestMatch;
+    }
+
+    function analyzeCompany(text) {
+        return {
+            name: extractCompanyName(text),
+            industry: determineIndustry(text),
+            culture: analyzeCultureDetails(text),
+            size: determineCompanySize(text)
+        };
+    }
+
+    function analyzeCultureDetails(text) {
+        const culturalAspects = {
+            formal: ['etabliert', 'traditionell', 'strukturiert', 'corporate'],
+            casual: ['startup', 'dynamisch', 'agil', 'modern'],
+            innovative: ['innovativ', 'zukunftsorientiert', 'digital']
+        };
+        
+        const matchedAspects = {};
+        
+        for (const [aspect, indicators] of Object.entries(culturalAspects)) {
+            const matches = indicators.filter(indicator => text.includes(indicator));
+            if (matches.length > 0) {
+                matchedAspects[aspect] = {
+                    score: matches.length / indicators.length,
+                    matches: matches
+                };
+            }
+        }
+        
+        return matchedAspects;
     }
 
     function analyzeRequirements(text) {
-        const requirements = {
-            hardSkills: [],
-            softSkills: []
-        };
+        const sections = text.split(/(?:anforderungen|qualifikationen|ihr profil|wir erwarten|sie bringen mit):/i);
         
-        // Typische Einleitungen für Anforderungen
-        const requirementSections = text.split(/(?:ihre qualifikationen|anforderungsprofil|wir erwarten|sie bringen mit):/i);
-        
-        if (requirementSections.length > 1) {
-            const requirementText = requirementSections[1];
-            
-            // Aufzählungen extrahieren
-            const bulletPoints = requirementText.split(/[•\-\*]\s+/);
-            
-            bulletPoints.forEach(point => {
-                if (point.trim()) {
-                    // Hard Skills erkennen (technische und fachliche Anforderungen)
-                    if (isHardSkill(point)) {
-                        requirements.hardSkills.push(point.trim());
-                    } else {
-                        // Soft Skills (alle anderen Anforderungen)
-                        requirements.softSkills.push(point.trim());
-                    }
-                }
-            });
-        }
-        
-        return requirements;
-    }
-
-    function isHardSkill(text) {
-        const hardSkillIndicators = [
-            'kenntnisse', 'erfahrung', 'studium', 'ausbildung',
-            'abschluss', 'technisch', 'software', 'programmierung',
-            'entwicklung', 'tools', 'technologien', 'stack'
-        ];
-        
-        return hardSkillIndicators.some(indicator => text.toLowerCase().includes(indicator));
-    }
-
-    async function analyzeResume(resumeText) {
-        try {
-            const text = resumeText.toLowerCase();
-            
-            // Persönliche Informationen extrahieren
-            const personalInfo = extractPersonalInfo(text);
-            
-            // Skills analysieren
-            const skills = extractSkills(text);
-            
-            // Berufserfahrung analysieren
-            const experience = extractExperience(text);
-            
-            // Ausbildung analysieren
-            const education = extractEducation(text);
-            
-            return {
-                personalInfo,
-                skills,
-                experience,
-                education
-            };
-        } catch (error) {
-            throw new Error(`Analyse fehlgeschlagen: ${error.message}`);
-        }
-    }
-
-    function extractPersonalInfo(text) {
-        // Name extrahieren (erste Zeile oder nach "Name:")
-        const nameMatch = text.match(/^([^\n]+)|name:\s*([^\n]+)/i);
-        const name = nameMatch ? (nameMatch[1] || nameMatch[2]).trim() : 'Nicht angegeben';
-        
-        // Aktuelle Position aus Erfahrungsbereich
-        const positionMatch = text.match(/(?:aktuelle position|position|rolle):\s*([^\n]+)/i);
-        const title = positionMatch ? positionMatch[1].trim() : 'Nicht angegeben';
-        
-        // Berufserfahrung berechnen
-        const yearsMatch = text.match(/(\d+)\s*(?:jahre\s+(?:berufs)?erfahrung|years?\s+(?:of\s+)?experience)/i);
-        const yearsOfExperience = yearsMatch ? parseInt(yearsMatch[1]) : calculateExperienceYears(text);
-        
-        return {
-            name,
-            title,
-            yearsOfExperience
-        };
-    }
-
-    function calculateExperienceYears(text) {
-        // Suche nach Datumsbereichen im Format MM/YYYY oder YYYY
-        const dateRanges = text.match(/\d{2}\/\d{4}|\d{4}/g);
-        if (!dateRanges) return 0;
-        
-        let totalYears = 0;
-        let dates = dateRanges.map(d => {
-            if (d.includes('/')) {
-                const [month, year] = d.split('/');
-                return new Date(year, month - 1);
-            }
-            return new Date(d, 0);
-        });
-        
-        // Paare von Daten durchgehen und Jahre berechnen
-        for (let i = 0; i < dates.length - 1; i += 2) {
-            const start = dates[i];
-            const end = dates[i + 1] || new Date();
-            totalYears += (end - start) / (1000 * 60 * 60 * 24 * 365);
-        }
-        
-        return Math.round(totalYears);
-    }
-
-    function extractSkills(text) {
-        const skills = {
+        if (sections.length < 2) return {
+            essential: [],
+            preferred: [],
+            experience: [],
+            education: [],
             technical: [],
             soft: []
         };
         
-        // Skill-Bereiche identifizieren
-        const skillSections = text.split(/(?:kenntnisse|skills|fähigkeiten|kompetenzen):/i);
+        const requirementsText = sections[1];
+        const requirements = {
+            essential: extractEssentialRequirements(requirementsText),
+            preferred: extractPreferredRequirements(requirementsText),
+            experience: extractExperienceRequirements(requirementsText),
+            education: extractEducationRequirements(requirementsText),
+            technical: extractTechnicalSkills(requirementsText),
+            soft: extractSoftSkills(requirementsText)
+        };
         
-        if (skillSections.length > 1) {
-            const skillText = skillSections[1];
-            
-            // Skills nach Kategorien aufteilen
-            const technicalSkills = extractTechnicalSkills(skillText);
-            const softSkills = extractSoftSkills(skillText);
-            
-            skills.technical = technicalSkills;
-            skills.soft = softSkills;
-        }
-        
-        return skills;
+        return requirements;
     }
 
-    function extractTechnicalSkills(text) {
-        const technicalIndicators = [
-            'programmiersprachen', 'frameworks', 'datenbanken',
-            'tools', 'software', 'technologien', 'entwicklung',
-            'sprachen', 'systeme', 'methodiken'
-        ];
-        
-        const skills = [];
+    function extractEssentialRequirements(text) {
+        const mustHaveIndicators = ['muss', 'zwingend', 'notwendig', 'erforderlich'];
+        return extractRequirementsWithIndicators(text, mustHaveIndicators);
+    }
+
+    function extractPreferredRequirements(text) {
+        const niceToHaveIndicators = ['wünschenswert', 'von vorteil', 'plus', 'ideal'];
+        return extractRequirementsWithIndicators(text, niceToHaveIndicators);
+    }
+
+    function extractRequirementsWithIndicators(text, indicators) {
+        const requirements = [];
         const lines = text.split('\n');
         
-        let isInTechnicalSection = false;
-        
         lines.forEach(line => {
-            line = line.trim().toLowerCase();
-            
-            // Prüfe, ob wir in einem technischen Abschnitt sind
-            if (technicalIndicators.some(indicator => line.includes(indicator))) {
-                isInTechnicalSection = true;
-            } else if (line.length > 0 && isInTechnicalSection) {
-                // Extrahiere einzelne Skills (durch Kommas oder Bullets getrennt)
-                const lineSkills = line.split(/[,•\-]/).map(s => s.trim()).filter(s => s.length > 0);
-                skills.push(...lineSkills);
+            if (indicators.some(indicator => line.includes(indicator))) {
+                const requirement = line.trim()
+                    .replace(/^[-•*]\s*/, '')
+                    .replace(new RegExp(`(${indicators.join('|')})`, 'i'), '')
+                    .trim();
+                if (requirement) {
+                    requirements.push(requirement);
+                }
             }
         });
         
-        return [...new Set(skills)]; // Duplikate entfernen
+        return requirements;
     }
 
-    function extractSoftSkills(text) {
-        const softSkillIndicators = [
-            'teamfähigkeit', 'kommunikation', 'führung',
-            'organisation', 'motivation', 'flexibilität',
-            'kreativität', 'analytisch', 'selbstständig'
-        ];
-        
-        const skills = [];
-        const lines = text.split('\n');
-        
-        lines.forEach(line => {
-            line = line.trim().toLowerCase();
-            softSkillIndicators.forEach(indicator => {
-                if (line.includes(indicator)) {
-                    skills.push(line);
-                }
-            });
-        });
-        
-        return [...new Set(skills)]; // Duplikate entfernen
-    }
-
-    function extractExperience(text) {
-        const experience = [];
-        
-        // Berufserfahrungsbereich identifizieren
-        const experienceSections = text.split(/(?:berufserfahrung|beruflicher werdegang|work experience):/i);
-        
-        if (experienceSections.length > 1) {
-            const experienceText = experienceSections[1];
-            const entries = experienceText.split(/\n(?=\d{2}\/\d{4}|\d{4})/);
+    // Verbesserte Vorschlagsgenerierung
+    async function generateSectionSuggestions(section, analysisData) {
+        try {
+            const { job, resume } = analysisData;
             
-            entries.forEach(entry => {
-                const position = extractPositionFromEntry(entry);
-                if (position.company) {
-                    experience.push(position);
-                }
-            });
+            // Kontext-basierte Vorschlagsgenerierung
+            const context = {
+                matchScore: calculateMatchScore(job, resume),
+                relevantExperience: findMostRelevantExperience(job, resume),
+                keySkills: identifyKeySkills(job, resume),
+                cultureFit: analyzeCultureFit(job, resume)
+            };
+            
+            if (section === 'all') {
+                const sections = ['recipient', 'subject', 'introduction', 'main', 'closing'];
+                return Promise.all(sections.map(async (sec) => {
+                    const suggestion = await generateEnhancedSection(sec, analysisData, context);
+                    return {
+                        section: sec,
+                        text: suggestion.text,
+                        alternatives: suggestion.alternatives,
+                        context: suggestion.context
+                    };
+                }));
+            }
+            
+            const suggestion = await generateEnhancedSection(section, analysisData, context);
+            return [{
+                section,
+                text: suggestion.text,
+                alternatives: suggestion.alternatives,
+                context: suggestion.context
+            }];
+        } catch (error) {
+            console.error('Suggestion generation error:', error);
+            throw new Error('Generierung fehlgeschlagen: ' + error.message);
         }
-        
-        return experience;
     }
 
-    function extractPositionFromEntry(entry) {
-        const lines = entry.split('\n').map(l => l.trim());
+    async function generateEnhancedSection(section, analysisData, context) {
+        const { job, resume } = analysisData;
         
-        // Position und Firma aus der ersten Zeile extrahieren
-        const firstLine = lines[0];
-        const positionMatch = firstLine.match(/(?:als\s+)?([^@\n]+)(?:\s+@\s+|bei\s+|für\s+)([^\n]+)/i);
+        // Wähle den besten Stil basierend auf Unternehmenskultur und Position
+        const style = determineOptimalStyle(job, context);
         
-        if (!positionMatch) return {};
+        // Generiere personalisierte Vorschläge
+        const suggestion = await generatePersonalizedContent(section, analysisData, style, context);
         
-        const position = positionMatch[1].trim();
-        const company = positionMatch[2].trim();
-        
-        // Zeitraum extrahieren
-        const durationMatch = firstLine.match(/(\d{2}\/\d{4}|\d{4})\s*-\s*(\d{2}\/\d{4}|\d{4}|heute|present)/i);
-        const duration = durationMatch ? `${durationMatch[1]} - ${durationMatch[2]}` : '';
-        
-        // Achievements aus den folgenden Zeilen extrahieren
-        const achievements = lines.slice(1)
-            .filter(line => line.startsWith('-') || line.startsWith('•'))
-            .map(line => line.replace(/^[-•]\s*/, '').trim());
+        // Generiere kontextbezogene Alternativen
+        const alternatives = generateContextualAlternatives(suggestion, style, context);
         
         return {
-            position,
-            company,
-            duration,
-            achievements
+            text: suggestion,
+            alternatives: alternatives,
+            context: {
+                style,
+                matchScore: context.matchScore,
+                keyPoints: extractKeyPoints(suggestion)
+            }
         };
     }
 
-    function extractEducation(text) {
-        const education = [];
+    function determineOptimalStyle(job, context) {
+        const { culture } = job.company;
+        const { matchScore } = context;
         
-        // Ausbildungsbereich identifizieren
-        const educationSections = text.split(/(?:ausbildung|bildung|education):/i);
-        
-        if (educationSections.length > 1) {
-            const educationText = educationSections[1];
-            const entries = educationText.split(/\n(?=\d{2}\/\d{4}|\d{4})/);
-            
-            entries.forEach(entry => {
-                const degree = extractDegreeFromEntry(entry);
-                if (degree.institution) {
-                    education.push(degree);
-                }
-            });
+        if (culture.includes('formal') || job.jobTitle.level.includes('senior')) {
+            return 'formal';
+        } else if (matchScore > 0.8) {
+            return 'confident';
+        } else {
+            return 'balanced';
         }
-        
-        return education;
-    }
-
-    function extractDegreeFromEntry(entry) {
-        const lines = entry.split('\n').map(l => l.trim());
-        
-        // Abschluss und Institution aus der ersten Zeile extrahieren
-        const firstLine = lines[0];
-        const degreeMatch = firstLine.match(/([^@\n]+)(?:\s+@\s+|an\s+der\s+|in\s+)([^\n]+)/i);
-        
-        if (!degreeMatch) return {};
-        
-        const degree = degreeMatch[1].trim();
-        const institution = degreeMatch[2].trim();
-        
-        // Jahr extrahieren
-        const yearMatch = firstLine.match(/(\d{4})/);
-        const year = yearMatch ? yearMatch[1] : '';
-        
-        return {
-            degree,
-            institution,
-            year
-        };
     }
 
     function displayAnalysis(jobAnalysis) {
@@ -562,12 +489,12 @@ document.addEventListener('DOMContentLoaded', function() {
         const niceToHaveList = document.getElementById('niceToHaveList');
 
         if (mustHaveList) {
-            mustHaveList.innerHTML = jobAnalysis.requirements.hardSkills
+            mustHaveList.innerHTML = jobAnalysis.requirements.essential
                 .map(skill => `<li>${skill}</li>`).join('');
         }
 
         if (niceToHaveList) {
-            niceToHaveList.innerHTML = jobAnalysis.requirements.softSkills
+            niceToHaveList.innerHTML = jobAnalysis.requirements.preferred
                 .map(skill => `<li>${skill}</li>`).join('');
         }
 
@@ -591,395 +518,52 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    async function generateSectionSuggestions(section, analysisData) {
+    async function handleAnalyze() {
         try {
-            const { job, resume } = analysisData;
-            
-            // Wenn 'all' ausgewählt ist, generiere alle Abschnitte
-            if (section === 'all') {
-                const sections = ['recipient', 'subject', 'introduction', 'main', 'closing'];
-                const allSuggestions = [];
-                
-                for (const sec of sections) {
-                    const suggestion = generateSingleSection(sec, analysisData);
-                    allSuggestions.push({
-                        section: sec,
-                        text: suggestion.text,
-                        alternatives: suggestion.alternatives || []
-                    });
-                }
-                
-                return allSuggestions;
+            // Eingaben validieren
+            if (!validateInputs()) {
+                return;
             }
-            
-            // Für einzelne Abschnitte
-            const suggestion = generateSingleSection(section, analysisData);
-            return [{
-                section: section,
-                text: suggestion.text,
-                alternatives: suggestion.alternatives || []
-            }];
-        } catch (error) {
-            console.error('Suggestion generation error:', error);
-            throw new Error('Generierung fehlgeschlagen: ' + error.message);
-        }
-    }
 
-    function generateSingleSection(section, analysisData) {
-        const { job, resume } = analysisData;
-        
-        // Unternehmenskultur bestimmt den Stil
-        const isFormal = job.company.culture.includes('formal');
-        
-        // Generiere Vorschläge basierend auf dem Abschnitt
-        switch (section) {
-            case 'recipient':
-                return generateRecipient(job, isFormal);
-            case 'subject':
-                return generateSubject(job, resume);
-            case 'introduction':
-                return generateIntroduction(job, resume);
-            case 'main':
-                return generateMain(job, resume);
-            case 'closing':
-                return generateClosing(job);
-            default:
-                throw new Error('Unbekannter Abschnitt');
-        }
-    }
+            // Analyse-Button deaktivieren und Ladeanimation anzeigen
+            const analyzeBtn = elements.analyzeBtn;
+            showLoading(analyzeBtn, 'Analysiere...');
 
-    function generateRecipient(job, isFormal) {
-        const templates = LETTER_TEMPLATES.recipient;
-        const style = isFormal ? templates.formal : templates.casual;
-        
-        // Suche nach Ansprechpartner in der Stellenanzeige
-        const hasContactPerson = false; // TODO: Implementiere Ansprechpartnersuche
-        
-        return {
-            text: hasContactPerson ? style.known('NAME') : style.unknown,
-            alternatives: [
-                style.unknown,
-                templates.formal.unknown,
-                templates.casual.unknown
-            ]
-        };
-    }
+            // Stellenanzeige analysieren
+            const jobPosting = elements.jobPosting.value;
+            const jobAnalysis = await analyzeJobPosting(jobPosting);
 
-    function generateSubject(job, resume) {
-        const templates = LETTER_TEMPLATES.subject;
-        const position = job.jobTitle.position;
-        const years = resume.personalInfo.yearsOfExperience;
-        
-        return {
-            text: templates.standard(position),
-            alternatives: [
-                templates.experienced(position, years),
-                templates.standard(position, 'REF12345'),
-                `Bewerbung: ${position} - ${years} Jahre Erfahrung`
-            ]
-        };
-    }
+            // Lebenslauf analysieren
+            const resumeAnalysis = await analyzeResume(window.resumeText);
 
-    function generateIntroduction(job, resume) {
-        const templates = LETTER_TEMPLATES.introduction;
-        const position = job.jobTitle.position;
-        const company = job.company.name;
-        
-        return {
-            text: templates.jobPortal(position, company),
-            alternatives: [
-                templates.initiative(company),
-                templates.recommendation(position, 'Ihrem Mitarbeiter Herrn Mustermann'),
-                `Ihre ausgeschriebene Stelle als ${position} hat mein großes Interesse geweckt.`
-            ]
-        };
-    }
+            // Analyseergebnisse anzeigen
+            displayAnalysis(jobAnalysis);
 
-    function generateMain(job, resume) {
-        // Matching-Score zwischen Anforderungen und Skills berechnen
-        const matchingSkills = findMatchingSkills(job.requirements.hardSkills, resume.skills.technical);
-        const matchingSoftSkills = findMatchingSkills(job.requirements.softSkills, resume.skills.soft);
-        
-        // Relevante Erfahrungen identifizieren
-        const relevantExperience = findRelevantExperience(job, resume.experience);
-        
-        // Text generieren
-        const text = `
-Mit ${resume.personalInfo.yearsOfExperience} Jahren Erfahrung in der ${job.jobTitle.department}-Branche 
-bringe ich genau die Fähigkeiten mit, die Sie suchen. ${generateSkillsText(matchingSkills)}
+            // Vorschläge generieren
+            const suggestions = await generateSectionSuggestions('all', {
+                job: jobAnalysis,
+                resume: resumeAnalysis
+            });
 
-${generateExperienceText(relevantExperience)}
+            // Vorschläge anwenden
+            applySuggestions(suggestions);
 
-${generateSoftSkillsText(matchingSoftSkills)}
-        `.trim();
-        
-        return {
-            text,
-            alternatives: [
-                generateAlternativeMain(job, resume, 1),
-                generateAlternativeMain(job, resume, 2)
-            ]
-        };
-    }
-
-    function findMatchingSkills(required, available) {
-        return required.filter(req => 
-            available.some(skill => 
-                skill.toLowerCase().includes(req.toLowerCase()) ||
-                req.toLowerCase().includes(skill.toLowerCase())
-            )
-        );
-    }
-
-    function findRelevantExperience(job, experience) {
-        return experience
-            .filter(exp => 
-                exp.position.toLowerCase().includes(job.jobTitle.position.toLowerCase()) ||
-                job.requirements.hardSkills.some(skill => 
-                    exp.achievements.some(achievement => 
-                        achievement.toLowerCase().includes(skill.toLowerCase())
-                    )
-                )
-            )
-            .sort((a, b) => {
-                // Neuere Erfahrungen zuerst
-                const aYear = parseInt(a.duration.split('-')[0]);
-                const bYear = parseInt(b.duration.split('-')[0]);
-                return bYear - aYear;
-            })
-            .slice(0, 2); // Maximal 2 relevante Erfahrungen
-    }
-
-    function generateSkillsText(matchingSkills) {
-        if (matchingSkills.length === 0) return '';
-        
-        return `Meine Kernkompetenzen liegen in den Bereichen ${matchingSkills.join(', ')}.`;
-    }
-
-    function generateExperienceText(relevantExperience) {
-        if (relevantExperience.length === 0) return '';
-        
-        return relevantExperience.map(exp => 
-            `Bei ${exp.company} habe ich als ${exp.position} ${exp.achievements[0] || 'wertvolle Erfahrungen gesammelt'}.`
-        ).join('\n\n');
-    }
-
-    function generateSoftSkillsText(matchingSoftSkills) {
-        if (matchingSoftSkills.length === 0) return '';
-        
-        return `Darüber hinaus zeichne ich mich durch ${matchingSoftSkills.join(', ')} aus.`;
-    }
-
-    function generateAlternativeMain(job, resume, version) {
-        // Verschiedene Versionen des Hauptteils
-        const templates = [
-            // Version 1: Fokus auf Projekterfolge
-            (job, resume) => {
-                const exp = resume.experience[0] || {};
-                return `
-In meiner aktuellen Position als ${exp.position} bei ${exp.company} 
-konnte ich bereits erfolgreich ${exp.achievements[0] || 'verschiedene Projekte umsetzen'}. 
-Meine Expertise in ${resume.skills.technical.slice(0, 3).join(', ')} 
-macht mich zu einem idealen Kandidaten für die Position als ${job.jobTitle.position}.
-                `.trim();
-            },
-            // Version 2: Fokus auf Entwicklung
-            (job, resume) => {
-                return `
-Meine bisherige Laufbahn im ${job.jobTitle.department}-Bereich hat mir ein tiefes Verständnis 
-für ${job.requirements.hardSkills[0] || 'die relevanten Technologien'} vermittelt. 
-Besonders reizt mich bei Ihrem Unternehmen die Möglichkeit, ${job.company.culture} zu arbeiten.
-                `.trim();
-            }
-        ];
-        
-        return templates[version - 1](job, resume);
-    }
-
-    function generateClosing(job) {
-        const templates = LETTER_TEMPLATES.closing;
-        
-        return {
-            text: templates.standard,
-            alternatives: [
-                templates.flexible,
-                templates.availability('nächsten Monat'),
-                'Gerne stelle ich Ihnen meine Erfahrungen in einem persönlichen Gespräch vor.'
-            ]
-        };
-    }
-
-    function applySuggestions(suggestions) {
-        suggestions.forEach(suggestion => {
-            if (suggestion.section && elements.coverLetterSections[suggestion.section]) {
-                elements.coverLetterSections[suggestion.section].value = suggestion.text;
-                
-                // Speichere Alternativen für späteren Zugriff
-                if (suggestion.alternatives && suggestion.alternatives.length > 0) {
-                    elements.coverLetterSections[suggestion.section].dataset.alternatives = 
-                        JSON.stringify(suggestion.alternatives);
-                }
-            }
-        });
-        
-        // Aktiviere Buttons für alternative Vorschläge
-        document.querySelectorAll('.suggest-btn').forEach(btn => {
-            const section = btn.dataset.section;
-            const textarea = elements.coverLetterSections[section];
-            
-            if (textarea && textarea.dataset.alternatives) {
-                btn.disabled = false;
-                btn.title = 'Alternative Vorschläge verfügbar';
-            }
-        });
-    }
-
-    function displaySuggestions(suggestions) {
-        const suggestionsList = document.getElementById('suggestionsList');
-        suggestionsList.innerHTML = '';
-        
-        suggestions.forEach((suggestion, index) => {
-            // Verbessere den Vorschlag mit dem Schreibassistenten
-            const improved = improveText(suggestion.text);
-            const alternatives = generateAlternatives(suggestion.text);
-            
-            const card = document.createElement('div');
-            card.className = 'suggestion-card';
-            card.innerHTML = `
-                <div class="card mb-3">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <h6 class="mb-0">Vorschlag ${index + 1}</h6>
-                        <div class="btn-group">
-                            <button class="btn btn-sm btn-outline-primary apply-suggestion">
-                                <i class="bi bi-check-lg"></i> Übernehmen
-                            </button>
-                            <button class="btn btn-sm btn-outline-secondary show-alternatives">
-                                <i class="bi bi-lightning"></i> Alternativen
-                            </button>
-                        </div>
-                    </div>
-                    <div class="card-body">
-                        <div class="suggestion-text">${improved.text.replace(/\n/g, '<br>')}</div>
-                        ${improved.improvements.length > 0 ? `
-                            <div class="mt-3 border-top pt-3">
-                                <small class="text-muted">Verbesserungsvorschläge:</small>
-                                <ul class="list-unstyled small">
-                                    ${improved.improvements.map(imp => `
-                                        <li><i class="bi bi-arrow-right-short"></i> ${imp}</li>
-                                    `).join('')}
-                                </ul>
-                            </div>
-                        ` : ''}
-                    </div>
-                </div>
-            `;
-            
-            // Event-Handler für Buttons
-            card.querySelector('.apply-suggestion').onclick = () => {
-                applySuggestion({
-                    ...suggestion,
-                    text: improved.text
-                });
-            };
-            
-            card.querySelector('.show-alternatives').onclick = () => {
-                showAlternatives({
-                    ...suggestion,
-                    text: improved.text,
-                    alternatives: alternatives
-                });
-            };
-            
-            suggestionsList.appendChild(card);
-        });
-        
-        elements.suggestionsModal.show();
-    }
-
-    function showAlternatives(suggestion) {
-        const modalHtml = `
-            <div class="modal fade" tabindex="-1">
-                <div class="modal-dialog modal-lg">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title">
-                                <i class="bi bi-lightning me-2"></i>
-                                Alternative Formulierungen
-                            </h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                        </div>
-                        <div class="modal-body">
-                            <div class="alternatives-list">
-                                ${suggestion.alternatives.map((alt, i) => `
-                                    <div class="alternative-item p-3 ${i < suggestion.alternatives.length - 1 ? 'border-bottom' : ''}">
-                                        <div class="d-flex justify-content-between align-items-center mb-2">
-                                            <div>
-                                                <span class="badge bg-primary me-2">Variante ${i + 1}</span>
-                                                <span class="badge bg-light text-dark">
-                                                    ${i === 0 ? 'Formell' : i === 1 ? 'Selbstbewusst' : 'Modern'}
-                                                </span>
-                                            </div>
-                                            <button class="btn btn-sm btn-outline-primary use-alternative">
-                                                <i class="bi bi-check-lg me-1"></i>
-                                                Verwenden
-                                            </button>
-                                        </div>
-                                        <div>${alt.replace(/\n/g, '<br>')}</div>
-                                    </div>
-                                `).join('')}
-                            </div>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Schließen</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-        
-        const modalElement = document.createElement('div');
-        modalElement.innerHTML = modalHtml;
-        document.body.appendChild(modalElement);
-        
-        const modal = new bootstrap.Modal(modalElement.querySelector('.modal'));
-        
-        // Event-Handler für "Verwenden" Buttons
-        modalElement.querySelectorAll('.use-alternative').forEach((btn, index) => {
-            btn.onclick = () => {
-                applySuggestion({
-                    ...suggestion,
-                    text: suggestion.alternatives[index]
-                });
-                modal.hide();
-            };
-        });
-        
-        // Modal anzeigen
-        modal.show();
-        
-        // Aufräumen nach dem Schließen
-        modalElement.querySelector('.modal').addEventListener('hidden.bs.modal', () => {
-            document.body.removeChild(modalElement);
-        });
-    }
-
-    function applySuggestion(suggestion) {
-        if (suggestion.section && elements.coverLetterSections[suggestion.section]) {
-            elements.coverLetterSections[suggestion.section].value = suggestion.text;
+            // Vorschau aktualisieren
             updatePreview();
-            
-            // Erfolgsanimation
-            const btn = document.querySelector(`.suggest-btn[data-section="${suggestion.section}"]`);
-            if (btn) {
-                btn.classList.add('btn-success');
-                btn.classList.remove('btn-outline-primary');
-                setTimeout(() => {
-                    btn.classList.remove('btn-success');
-                    btn.classList.add('btn-outline-primary');
-                }, 1000);
-            }
+
+            // Fortschritt aktualisieren
+            updateProgressStep(3);
+
+            // Erfolgsmeldung anzeigen
+            showSuccess('Analyse erfolgreich abgeschlossen');
+
+        } catch (error) {
+            console.error('Analysis error:', error);
+            showError(error.message || 'Fehler bei der Analyse');
+        } finally {
+            // Analyse-Button wieder aktivieren und Ladeanimation entfernen
+            hideLoading(elements.analyzeBtn, 'Analysieren und Anschreiben erstellen');
         }
-        elements.suggestionsModal.hide();
     }
 
     // ===== Erweiterte Hilfsfunktionen =====
