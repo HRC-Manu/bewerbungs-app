@@ -1,5 +1,12 @@
 // Hauptanwendungslogik
 document.addEventListener('DOMContentLoaded', function() {
+    // ===== Bootstrap Modals =====
+    const modals = {
+        settings: new bootstrap.Modal(document.getElementById('settingsModal')),
+        suggestions: new bootstrap.Modal(document.getElementById('suggestionsModal')),
+        help: new bootstrap.Modal(document.getElementById('helpModal'))
+    };
+
     // ===== DOM Elemente =====
     const elements = {
         // Eingabefelder
@@ -28,21 +35,22 @@ document.addEventListener('DOMContentLoaded', function() {
         },
         
         // Modals und Toasts
-        settingsModal: new bootstrap.Modal(document.getElementById('settingsModal')),
-        suggestionsModal: new bootstrap.Modal(document.getElementById('suggestionsModal')),
-        helpModal: new bootstrap.Modal(document.getElementById('helpModal')),
+        settingsModal: modals.settings,
+        suggestionsModal: modals.suggestions,
+        helpModal: modals.help,
         messageToast: new bootstrap.Toast(document.getElementById('messageToast'))
     };
 
     // ===== Event Listener =====
     function initializeEventListeners() {
-        // Analyze Button
-        elements.analyzeBtn.addEventListener('click', handleAnalyze);
-        
         // Settings Button
         elements.settingsBtn.addEventListener('click', () => {
+            console.log('Settings button clicked');
             elements.settingsModal.show();
         });
+
+        // Analyze Button
+        elements.analyzeBtn.addEventListener('click', handleAnalyze);
         
         // Help Button
         document.getElementById('helpBtn').addEventListener('click', () => {
@@ -51,39 +59,14 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Save Settings Button
         elements.saveSettingsBtn.addEventListener('click', saveSettings);
-        
-        // Suggestions Button
-        elements.generateSuggestionsBtn.addEventListener('click', async () => {
-            try {
-                const apiKey = getApiKey();
-                showLoading(elements.generateSuggestionsBtn, 'Generiere...');
-                await generateSuggestionsForSection('all', apiKey);
-            } catch (error) {
-                showError(error.message);
-            } finally {
-                hideLoading(elements.generateSuggestionsBtn, 'KI-Vorschläge');
-            }
-        });
-
-        // Einzelne Abschnitts-Buttons
-        document.querySelectorAll('.suggest-btn').forEach(btn => {
-            btn.addEventListener('click', async (e) => {
-                try {
-                    const apiKey = getApiKey();
-                    const section = e.target.dataset.section;
-                    showLoading(e.target, 'Generiere...');
-                    await generateSuggestionsForSection(section, apiKey);
-                } catch (error) {
-                    showError(error.message);
-                } finally {
-                    hideLoading(e.target, 'Vorschläge');
-                }
-            });
-        });
 
         // Datei-Uploads
-        elements.resumeUpload.addEventListener('change', handleFileUpload);
-        elements.coverLetterUpload.addEventListener('change', handleFileUpload);
+        if (elements.resumeUpload) {
+            elements.resumeUpload.addEventListener('change', handleFileUpload);
+        }
+        if (elements.coverLetterUpload) {
+            elements.coverLetterUpload.addEventListener('change', handleFileUpload);
+        }
 
         // Entfernen-Buttons für Datei-Vorschau
         document.querySelectorAll('.file-preview .btn-close').forEach(btn => {
@@ -91,7 +74,10 @@ document.addEventListener('DOMContentLoaded', function() {
         });
 
         // Unlock Settings Button
-        document.getElementById('unlockSettings').addEventListener('click', unlockSettings);
+        const unlockBtn = document.getElementById('unlockSettings');
+        if (unlockBtn) {
+            unlockBtn.addEventListener('click', unlockSettings);
+        }
 
         // API Key Toggle Buttons
         document.querySelectorAll('.toggle-password').forEach(btn => {
@@ -105,13 +91,14 @@ document.addEventListener('DOMContentLoaded', function() {
         });
 
         // Service Selection
-        document.getElementById('aiServiceSelect').addEventListener('change', (e) => {
-            const service = e.target.value;
-            // Alle API-Settings ausblenden
-            document.querySelectorAll('.api-settings').forEach(el => el.classList.add('d-none'));
-            // Gewählte API-Settings einblenden
-            document.getElementById(`${service}Settings`).classList.remove('d-none');
-        });
+        const serviceSelect = document.getElementById('aiServiceSelect');
+        if (serviceSelect) {
+            serviceSelect.addEventListener('change', (e) => {
+                const service = e.target.value;
+                document.querySelectorAll('.api-settings').forEach(el => el.classList.add('d-none'));
+                document.getElementById(`${service}Settings`).classList.remove('d-none');
+            });
+        }
 
         // API Key aus localStorage laden
         const savedApiKey = localStorage.getItem('openai_api_key');
@@ -264,14 +251,27 @@ document.addEventListener('DOMContentLoaded', function() {
         const encryptedKey = localStorage.getItem(`${service}_api_key`);
         
         if (!encryptedKey) {
+            console.log('No API key found, showing settings modal');
             elements.settingsModal.show();
             throw new Error(`Bitte geben Sie zuerst Ihren ${service.toUpperCase()} API Key ein`);
         }
         
-        return CryptoJS.AES.decrypt(
-            encryptedKey, 
-            API_SETTINGS.encryptionKey
-        ).toString(CryptoJS.enc.Utf8);
+        try {
+            const decryptedKey = CryptoJS.AES.decrypt(
+                encryptedKey, 
+                API_SETTINGS.encryptionKey
+            ).toString(CryptoJS.enc.Utf8);
+
+            if (!decryptedKey) {
+                throw new Error('Ungültiger API Key');
+            }
+
+            return decryptedKey;
+        } catch (error) {
+            console.error('Error decrypting API key:', error);
+            elements.settingsModal.show();
+            throw new Error('Fehler beim Laden des API Keys. Bitte geben Sie den Key erneut ein.');
+        }
     }
 
     // ===== Hauptfunktionen =====
@@ -591,44 +591,69 @@ document.addEventListener('DOMContentLoaded', function() {
         const file = event.target.files[0];
         if (!file) return;
 
-        if (file.type !== 'application/pdf') {
-            showError('Bitte laden Sie eine PDF-Datei hoch');
-            event.target.value = '';
-            return;
-        }
-
         const uploadArea = event.target.closest('.upload-area');
         const container = uploadArea.closest('.upload-container');
         const preview = container.querySelector('.file-preview');
         const fileName = preview.querySelector('.file-name');
+        const fileType = file.type;
+        const fileSize = file.size;
 
-        showLoading(uploadArea, 'Verarbeite...');
+        // Validierung
+        if (fileType !== 'application/pdf') {
+            showError('Bitte laden Sie nur PDF-Dateien hoch');
+            event.target.value = '';
+            return;
+        }
+
+        if (fileSize > 10 * 1024 * 1024) { // 10MB limit
+            showError('Die Datei ist zu groß (maximal 10MB)');
+            event.target.value = '';
+            return;
+        }
+
         try {
-            // Dateinamen in der Vorschau anzeigen
-            fileName.textContent = file.name;
+            // Lade-Animation anzeigen
+            showLoading(preview, 'Verarbeite Datei...');
             
-            // Upload-Bereich ausblenden und Vorschau einblenden
-            uploadArea.classList.add('d-none');
-            preview.classList.remove('d-none');
-
+            // Text aus PDF extrahieren
             const text = await extractTextFromPDF(file);
+            
+            // Speichere extrahierten Text
             if (event.target.id === 'resumeUpload') {
-                // Speichere den extrahierten Text für spätere Verwendung
                 window.resumeText = text;
-                showSuccess('Lebenslauf erfolgreich hochgeladen');
+                showSuccess('Lebenslauf erfolgreich verarbeitet');
             } else if (event.target.id === 'coverLetterUpload') {
-                // Speichere den extrahierten Text für spätere Verwendung
                 window.coverLetterText = text;
-                showSuccess('Anschreiben erfolgreich hochgeladen');
+                showSuccess('Anschreiben erfolgreich verarbeitet');
             }
+
+            // Dateinamen und Größe anzeigen
+            fileName.innerHTML = `
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-file-pdf me-2"></i>
+                    <div>
+                        <div class="fw-bold">${file.name}</div>
+                        <small class="text-muted">${formatFileSize(fileSize)}</small>
+                    </div>
+                </div>
+            `;
+
+            // UI aktualisieren
+            uploadArea.style.display = 'none';
+            preview.classList.remove('d-none');
+            preview.style.display = 'block';
+
+            // Aktiviere den Analyse-Button wenn beide Dateien hochgeladen sind
+            checkRequiredUploads();
+
         } catch (error) {
+            console.error('Error processing file:', error);
             showError('Fehler beim Verarbeiten der Datei');
-            console.error(error);
-            // Bei Fehler Vorschau wieder ausblenden und Upload-Bereich einblenden
-            uploadArea.classList.remove('d-none');
-            preview.classList.add('d-none');
+            event.target.value = '';
+            uploadArea.style.display = 'block';
+            preview.style.display = 'none';
         } finally {
-            hideLoading(uploadArea, '');
+            hideLoading(preview);
         }
     }
 
@@ -874,81 +899,106 @@ document.addEventListener('DOMContentLoaded', function() {
         const uploadAreas = document.querySelectorAll('.upload-area');
         const fileInputs = document.querySelectorAll('input[type="file"]');
         
-        // Drag & Drop für Upload-Bereiche
         uploadAreas.forEach(area => {
-            area.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                area.classList.add('drag-over');
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                area.addEventListener(eventName, preventDefaults, false);
             });
-            
-            area.addEventListener('dragleave', (e) => {
+
+            function preventDefaults(e) {
                 e.preventDefault();
-                area.classList.remove('drag-over');
+                e.stopPropagation();
+            }
+
+            // Visuelles Feedback während Drag
+            ['dragenter', 'dragover'].forEach(eventName => {
+                area.addEventListener(eventName, () => {
+                    area.classList.add('drag-over');
+                });
             });
-            
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                area.addEventListener(eventName, () => {
+                    area.classList.remove('drag-over');
+                });
+            });
+
+            // Handle Drop
             area.addEventListener('drop', (e) => {
-                e.preventDefault();
-                area.classList.remove('drag-over');
                 const input = area.querySelector('input[type="file"]');
-                const files = e.dataTransfer.files;
+                const dt = e.dataTransfer;
+                const files = dt.files;
+
                 if (files.length > 0) {
                     input.files = files;
                     handleFileUpload({ target: input });
                 }
             });
+
+            // Click-Handler
+            area.addEventListener('click', () => {
+                const input = area.querySelector('input[type="file"]');
+                input.click();
+            });
         });
-        
+
         // Datei-Input Event-Handler
         fileInputs.forEach(input => {
             input.addEventListener('change', handleFileUpload);
-        });
-        
-        // Entfernen-Buttons
-        document.querySelectorAll('.file-preview .btn-close').forEach(btn => {
-            btn.addEventListener('click', handleFileRemove);
         });
     }
 
     function handleFileRemove(event) {
         const preview = event.target.closest('.file-preview');
         const container = preview.closest('.upload-container');
-        const area = container.querySelector('.upload-area');
-        const input = area.querySelector('input[type="file"]');
+        const uploadArea = container.querySelector('.upload-area');
+        const input = uploadArea.querySelector('input[type="file"]');
         
-        // Datei-Input zurücksetzen
-        input.value = '';
-        
-        // Gespeicherten Text löschen
-        if (input.id === 'resumeUpload') {
-            window.resumeText = null;
-        } else if (input.id === 'coverLetterUpload') {
-            window.coverLetterText = null;
-        }
-        
-        // Vorschau ausblenden und Upload-Bereich wieder einblenden
-        preview.classList.add('d-none');
-        area.classList.remove('d-none');
+        // Animation für das Entfernen
+        preview.style.opacity = '0';
+        setTimeout(() => {
+            // Datei-Input zurücksetzen
+            input.value = '';
+            
+            // Gespeicherten Text löschen
+            if (input.id === 'resumeUpload') {
+                window.resumeText = null;
+            } else if (input.id === 'coverLetterUpload') {
+                window.coverLetterText = null;
+            }
+            
+            // UI zurücksetzen
+            preview.style.opacity = '1';
+            preview.classList.add('d-none');
+            uploadArea.classList.remove('d-none');
+            uploadArea.style.display = 'block';
+            
+            // Button-Status aktualisieren
+            checkRequiredUploads();
+        }, 300);
     }
 
-    async function processResume(file) {
-        try {
-            const text = await extractTextFromPDF(file);
-            // Hier können wir den extrahierten Text weiterverarbeiten
-            console.log('Extracted Resume Text:', text);
-        } catch (error) {
-            console.error('Error processing resume:', error);
-            showError('Fehler beim Verarbeiten des Lebenslaufs');
-        }
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
     }
 
-    async function processCoverLetter(file) {
-        try {
-            const text = await extractTextFromPDF(file);
-            // Hier können wir den extrahierten Text weiterverarbeiten
-            console.log('Extracted Cover Letter Text:', text);
-        } catch (error) {
-            console.error('Error processing cover letter:', error);
-            showError('Fehler beim Verarbeiten des Anschreibens');
+    function checkRequiredUploads() {
+        const resumeUploaded = window.resumeText !== null;
+        const jobPostingFilled = elements.jobPosting.value.trim().length > 0;
+        
+        // Analyse-Button aktivieren/deaktivieren
+        elements.analyzeBtn.disabled = !(resumeUploaded && jobPostingFilled);
+        
+        // Visuelles Feedback
+        if (elements.analyzeBtn.disabled) {
+            elements.analyzeBtn.classList.add('btn-secondary');
+            elements.analyzeBtn.classList.remove('btn-primary');
+        } else {
+            elements.analyzeBtn.classList.add('btn-primary');
+            elements.analyzeBtn.classList.remove('btn-secondary');
         }
     }
 
