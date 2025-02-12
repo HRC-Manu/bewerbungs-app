@@ -1,0 +1,66 @@
+name: Generate Application Documents
+
+on:
+  workflow_dispatch:
+    inputs:
+      job_posting:
+        description: 'Job posting text'
+        required: true
+      resume_file:
+        description: 'Base64 encoded PDF resume'
+        required: true
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        cache: 'pip'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Inject API Key
+      run: |
+        sed -i "s/OPENAI_API_KEY_PLACEHOLDER/${{ secrets.OPENAI_API_KEY }}/" docs/index.html
+
+    - name: Prepare input files
+      run: |
+        mkdir -p input
+        echo "${{ github.event.inputs.job_posting }}" > input/job_posting.txt
+        echo "${{ github.event.inputs.resume_file }}" | base64 -d > input/resume.pdf
+
+    - name: Extract resume text
+      run: |
+        python scripts/pdf_extract.py input/resume.pdf input/extracted_content.json
+
+    - name: Generate documents
+      env:
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      run: |
+        python scripts/generate.py
+      
+    - name: Upload generated documents
+      uses: actions/upload-artifact@v3
+      with:
+        name: generated-documents
+        path: |
+          output/cover_letter.html
+          output/resume.html
+        retention-days: 1
+
+    - name: Return documents
+      id: documents
+      run: |
+        cover_letter=$(cat output/cover_letter.html)
+        resume=$(cat output/resume.html)
+        echo "cover_letter=$cover_letter" >> $GITHUB_OUTPUT
+        echo "resume=$resume" >> $GITHUB_OUTPUT 
