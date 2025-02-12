@@ -598,7 +598,84 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // ===== Datei-Upload-Funktionen =====
+    function initializeFileUpload() {
+        const uploadAreas = document.querySelectorAll('.upload-area');
+        const fileInputs = document.querySelectorAll('input[type="file"]');
+        
+        // Drag & Drop für Upload-Bereiche
+        uploadAreas.forEach(area => {
+            area.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                area.classList.add('drag-over');
+            });
+            
+            area.addEventListener('dragleave', (e) => {
+                e.preventDefault();
+                area.classList.remove('drag-over');
+            });
+            
+            area.addEventListener('drop', (e) => {
+                e.preventDefault();
+                area.classList.remove('drag-over');
+                const input = area.querySelector('input[type="file"]');
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    input.files = files;
+                    handleFileUpload({ target: input });
+                }
+            });
+        });
+        
+        // Datei-Input Event-Handler
+        fileInputs.forEach(input => {
+            input.addEventListener('change', handleFileUpload);
+        });
+        
+        // Entfernen-Buttons
+        document.querySelectorAll('.file-preview .btn-close').forEach(btn => {
+            btn.addEventListener('click', handleFileRemove);
+        });
+    }
+
+    function handleFileRemove(event) {
+        const preview = event.target.closest('.file-preview');
+        const container = preview.closest('.upload-container');
+        const area = container.querySelector('.upload-area');
+        const input = area.querySelector('input[type="file"]');
+        
+        // Datei-Input zurücksetzen
+        input.value = '';
+        
+        // Vorschau ausblenden und Upload-Bereich wieder einblenden
+        preview.classList.add('d-none');
+        area.classList.remove('d-none');
+    }
+
+    async function processResume(file) {
+        try {
+            const text = await extractTextFromPDF(file);
+            // Hier können wir den extrahierten Text weiterverarbeiten
+            console.log('Extracted Resume Text:', text);
+        } catch (error) {
+            console.error('Error processing resume:', error);
+            showError('Fehler beim Verarbeiten des Lebenslaufs');
+        }
+    }
+
+    async function processCoverLetter(file) {
+        try {
+            const text = await extractTextFromPDF(file);
+            // Hier können wir den extrahierten Text weiterverarbeiten
+            console.log('Extracted Cover Letter Text:', text);
+        } catch (error) {
+            console.error('Error processing cover letter:', error);
+            showError('Fehler beim Verarbeiten des Anschreibens');
+        }
+    }
+
     // ===== Initialisierung =====
     initializeEventListeners();
     initializeTextareaListeners();
+    initializeFileUpload();
 }); 
