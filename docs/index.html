@@ -67,21 +67,44 @@
                         </h5>
                     </div>
                     <div class="card-body">
-                        <div class="upload-area mb-4">
-                            <label for="resumeUpload" class="upload-label">
-                                <i class="bi bi-cloud-arrow-up display-4"></i>
-                                <h6>Lebenslauf hochladen</h6>
-                                <p class="text-muted small">PDF-Datei hier ablegen oder klicken</p>
-                            </label>
-                            <input type="file" id="resumeUpload" accept=".pdf" class="d-none">
+                        <div class="upload-container mb-4">
+                            <div class="upload-area" id="resumeUploadArea">
+                                <label for="resumeUpload" class="upload-label">
+                                    <i class="bi bi-cloud-arrow-up display-4"></i>
+                                    <h6>Lebenslauf hochladen</h6>
+                                    <p class="text-muted small">PDF-Datei hier ablegen oder klicken</p>
+                                </label>
+                                <input type="file" id="resumeUpload" accept=".pdf" class="d-none">
+                            </div>
+                            <div class="file-preview d-none" id="resumePreview">
+                                <div class="alert alert-info d-flex align-items-center justify-content-between">
+                                    <div class="d-flex align-items-center">
+                                        <i class="bi bi-file-pdf me-2"></i>
+                                        <span class="file-name"></span>
+                                    </div>
+                                    <button type="button" class="btn-close" aria-label="Entfernen"></button>
+                                </div>
+                            </div>
                         </div>
-                        <div class="upload-area">
-                            <label for="coverLetterUpload" class="upload-label">
-                                <i class="bi bi-cloud-arrow-up display-4"></i>
-                                <h6>Bestehendes Anschreiben hochladen (optional)</h6>
-                                <p class="text-muted small">PDF-Datei hier ablegen oder klicken</p>
-                            </label>
-                            <input type="file" id="coverLetterUpload" accept=".pdf" class="d-none">
+                        
+                        <div class="upload-container">
+                            <div class="upload-area" id="coverLetterUploadArea">
+                                <label for="coverLetterUpload" class="upload-label">
+                                    <i class="bi bi-cloud-arrow-up display-4"></i>
+                                    <h6>Bestehendes Anschreiben hochladen (optional)</h6>
+                                    <p class="text-muted small">PDF-Datei hier ablegen oder klicken</p>
+                                </label>
+                                <input type="file" id="coverLetterUpload" accept=".pdf" class="d-none">
+                            </div>
+                            <div class="file-preview d-none" id="coverLetterPreview">
+                                <div class="alert alert-info d-flex align-items-center justify-content-between">
+                                    <div class="d-flex align-items-center">
+                                        <i class="bi bi-file-pdf me-2"></i>
+                                        <span class="file-name"></span>
+                                    </div>
+                                    <button type="button" class="btn-close" aria-label="Entfernen"></button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
