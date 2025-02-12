@@ -280,27 +280,44 @@ Qualifications:
     // Generate suggestions using ChatGPT with analysis
     async function generateCoverLetterSuggestions(section, jobPosting, analysis) {
         try {
+            // Ensure analysis object has all required properties
+            const safeAnalysis = {
+                jobTitle: analysis.jobTitle || 'die ausgeschriebene Position',
+                companyInfo: analysis.companyInfo || { name: 'das Unternehmen', culture: '' },
+                matchingSkills: analysis.matchingSkills || [],
+                keyRequirements: analysis.keyRequirements || []
+            };
+
             // Customize prompts based on analysis
             const prompts = {
                 recipient: [
                     { section: 'recipient', text: "Sehr geehrte Damen und Herren," },
-                    { section: 'recipient', text: `Sehr geehrte Frau ${analysis?.companyInfo?.name || '[Name]'},` },
-                    { section: 'recipient', text: `Sehr geehrter Herr ${analysis?.companyInfo?.name || '[Name]'},` }
+                    { section: 'recipient', text: `Sehr geehrte Frau ${safeAnalysis.companyInfo.name},` },
+                    { section: 'recipient', text: `Sehr geehrter Herr ${safeAnalysis.companyInfo.name},` }
                 ],
                 subject: [
-                    { section: 'subject', text: `Bewerbung als ${analysis?.jobTitle || '[Position]'} - Referenz: [Jobcode]` },
-                    { section: 'subject', text: `Ihre Stellenanzeige: ${analysis?.jobTitle || '[Position]'} vom [Datum]` },
-                    { section: 'subject', text: `Bewerbung für die Position als ${analysis?.jobTitle || '[Position]'}` }
+                    { section: 'subject', text: `Bewerbung als ${safeAnalysis.jobTitle} - Referenz: [Jobcode]` },
+                    { section: 'subject', text: `Ihre Stellenanzeige: ${safeAnalysis.jobTitle} vom [Datum]` },
+                    { section: 'subject', text: `Bewerbung für die Position als ${safeAnalysis.jobTitle}` }
                 ],
                 introduction: [
-                    { section: 'introduction', text: `mit großem Interesse habe ich Ihre Stellenanzeige für die Position als ${analysis?.jobTitle} gelesen und bewerbe mich um diese spannende Aufgabe.` },
-                    { section: 'introduction', text: `Ihre ausgeschriebene Stelle als ${analysis?.jobTitle} hat sofort mein Interesse geweckt, da sie perfekt zu meinem Profil passt.` },
-                    { section: 'introduction', text: `auf der Suche nach einer neuen beruflichen Herausforderung bin ich auf Ihre Stellenanzeige als ${analysis?.jobTitle} gestoßen und möchte mich hiermit bewerben.` }
+                    { section: 'introduction', text: `mit großem Interesse habe ich Ihre Stellenanzeige für die Position als ${safeAnalysis.jobTitle} gelesen und bewerbe mich um diese spannende Aufgabe.` },
+                    { section: 'introduction', text: `Ihre ausgeschriebene Stelle als ${safeAnalysis.jobTitle} hat sofort mein Interesse geweckt, da sie perfekt zu meinem Profil passt.` },
+                    { section: 'introduction', text: `auf der Suche nach einer neuen beruflichen Herausforderung bin ich auf Ihre Stellenanzeige als ${safeAnalysis.jobTitle} gestoßen und möchte mich hiermit bewerben.` }
                 ],
                 main: [
-                    { section: 'main', text: `Durch meine Erfahrung in ${analysis?.matchingSkills?.join(', ') || '[Bereiche]'} bringe ich ideale Voraussetzungen mit. ${analysis?.companyInfo?.culture || ''}` },
-                    { section: 'main', text: `Meine Stärken liegen besonders in ${analysis?.matchingSkills?.slice(0, 2).join(' und ') || '[Kompetenzen]'}. Diese konnte ich in meinen bisherigen Positionen erfolgreich einsetzen und weiterentwickeln.` },
-                    { section: 'main', text: `Was mich besonders an der Position reizt, ist die Möglichkeit, meine Erfahrungen in ${analysis?.matchingSkills?.[0] || '[Bereich]'} einzubringen und dabei in einem innovativen Umfeld zu arbeiten.` }
+                    { 
+                        section: 'main', 
+                        text: `Durch meine Erfahrung in ${safeAnalysis.matchingSkills.length > 0 ? safeAnalysis.matchingSkills.join(', ') : 'relevanten Bereichen'} bringe ich ideale Voraussetzungen mit. ${safeAnalysis.companyInfo.culture || ''}`
+                    },
+                    { 
+                        section: 'main', 
+                        text: `Meine Stärken liegen besonders in ${safeAnalysis.matchingSkills.slice(0, 2).length > 0 ? safeAnalysis.matchingSkills.slice(0, 2).join(' und ') : 'meinen Kompetenzen'}. Diese konnte ich in meinen bisherigen Positionen erfolgreich einsetzen und weiterentwickeln.`
+                    },
+                    { 
+                        section: 'main', 
+                        text: `Was mich besonders an der Position reizt, ist die Möglichkeit, meine Erfahrungen in ${safeAnalysis.matchingSkills[0] || 'meinem Fachgebiet'} einzubringen und dabei in einem innovativen Umfeld zu arbeiten.`
+                    }
                 ],
                 closing: [
                     { section: 'closing', text: "Über die Möglichkeit eines persönlichen Gesprächs freue ich mich sehr." },
@@ -309,21 +326,24 @@ Qualifications:
                 ]
             };
 
+            // Handle 'all' section generation
             if (section === 'all') {
-                const allSuggestions = [];
-                const sections = ['recipient', 'subject', 'introduction', 'main', 'closing'];
-                
-                // Take the first suggestion from each section
-                sections.forEach(sec => {
-                    if (prompts[sec] && prompts[sec].length > 0) {
-                        allSuggestions.push(prompts[sec][0]);
-                    }
-                });
+                const allSections = ['recipient', 'subject', 'introduction', 'main', 'closing'];
+                const allSuggestions = allSections
+                    .map(sec => {
+                        const sectionPrompts = prompts[sec];
+                        return sectionPrompts && sectionPrompts.length > 0 
+                            ? sectionPrompts[0] 
+                            : null;
+                    })
+                    .filter(suggestion => suggestion !== null);
                 
                 return allSuggestions;
-            } else {
-                return prompts[section] || [];
-            }
+            } 
+            
+            // Return section-specific suggestions
+            return prompts[section] || [];
+            
         } catch (error) {
             console.error('Error generating suggestions:', error);
             return [];
@@ -357,15 +377,7 @@ Qualifications:
             // Apply suggestions to create a complete cover letter
             let completeCoverLetter = '';
             suggestions.forEach(suggestion => {
-                if (suggestion.section === 'recipient') {
-                    completeCoverLetter = suggestion.text + '\n\n';
-                } else if (suggestion.section === 'subject') {
-                    completeCoverLetter += suggestion.text + '\n\n';
-                } else if (suggestion.section === 'introduction') {
-                    completeCoverLetter += suggestion.text + '\n\n';
-                } else if (suggestion.section === 'main') {
-                    completeCoverLetter += suggestion.text + '\n\n';
-                } else if (suggestion.section === 'closing') {
+                if (suggestion && suggestion.section && suggestion.text) {
                     completeCoverLetter += suggestion.text + '\n\n';
                 }
             });
