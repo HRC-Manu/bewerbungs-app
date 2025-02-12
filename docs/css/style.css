@@ -55,6 +55,15 @@ textarea.form-control {
     padding: 0.25rem 0.5rem;
 }
 
+.btn-close {
+    padding: 0.5rem;
+    margin: -0.5rem -0.5rem -0.5rem 0.5rem;
+}
+
+.btn-close:hover {
+    background-color: rgba(0,0,0,.1);
+}
+
 .btn-primary {
     background-color: #0d6efd;
     border-color: #0d6efd;
@@ -155,6 +164,25 @@ textarea.form-control {
     border-bottom: 1px solid rgba(0,0,0,.05);
 }
 
+/* File preview */
+.file-preview {
+    transition: all 0.3s ease;
+}
+
+.file-preview .alert {
+    margin-bottom: 0;
+    padding: 0.5rem 1rem;
+}
+
+.file-preview .file-name {
+    font-size: 0.9rem;
+    color: #0c5460;
+}
+
+.file-preview .btn-close {
+    font-size: 0.8rem;
+}
+
 /* Loading spinner */
 .spinner-border {
     width: 1rem;
@@ -197,4 +225,4 @@ textarea.form-control {
     .gap-2 {
         gap: 0.5rem;
     }
-}
+} 
