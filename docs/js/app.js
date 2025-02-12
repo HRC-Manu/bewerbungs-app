@@ -338,23 +338,17 @@ Qualifications:
         showLoading(generateBtn, 'Generiere...');
         
         try {
-            // Extract text from uploaded PDFs
-            let resumeText = '';
-            let coverLetterText = '';
+            // Get job posting text
+            const jobPosting = jobPostingTextarea.value.trim();
             
+            // Extract text from uploaded PDFs if available
+            let resumeText = '';
             if (resumeUpload.files[0]) {
                 resumeText = await extractTextFromPDF(resumeUpload.files[0]);
             }
             
-            if (coverLetterUpload.files[0]) {
-                coverLetterText = await extractTextFromPDF(coverLetterUpload.files[0]);
-            }
-
-            // Get job posting text
-            const jobPosting = jobPostingTextarea.value.trim();
-            
-            // Analyze documents with ChatGPT
-            const analysis = await analyzeWithChatGPT(jobPosting, resumeText, coverLetterText);
+            // Analyze with ChatGPT
+            const analysis = await analyzeWithChatGPT(jobPosting, resumeText);
             
             // Generate suggestions for all sections
             const suggestions = await generateCoverLetterSuggestions('all', jobPosting, analysis);
@@ -383,12 +377,25 @@ Qualifications:
                 ${formatText(completeCoverLetter)}
             </div>`;
 
-            resumePreview.innerHTML = `<div class="generated-content">
-                <h2 class="mb-4">Lebenslauf</h2>
-                ${formatText(resumeText)}
-            </div>`;
+            // Only show resume preview if a resume was uploaded
+            if (resumeText) {
+                resumePreview.innerHTML = `<div class="generated-content">
+                    <h2 class="mb-4">Lebenslauf</h2>
+                    ${formatText(resumeText)}
+                </div>`;
+            }
             
-            showSuccess('Dokumente erfolgreich generiert!');
+            showSuccess('Anschreiben erfolgreich generiert!');
+            
+            // Automatically fill the form sections with the generated content
+            const sections = completeCoverLetter.split('\n\n');
+            if (sections.length >= 5) {
+                coverLetterSections.recipient.value = sections[0];
+                coverLetterSections.subject.value = sections[1];
+                coverLetterSections.introduction.value = sections[2];
+                coverLetterSections.main.value = sections[3];
+                coverLetterSections.closing.value = sections[4];
+            }
             
         } catch (error) {
             showError('Fehler bei der Generierung: ' + error.message);
@@ -417,18 +424,9 @@ Qualifications:
             errors.push('Die Stellenanzeige scheint zu kurz zu sein. Bitte füge mehr Details ein');
         }
 
-        // Validate resume
-        if (!resumeUpload.files[0]) {
-            errors.push('Bitte lade deinen Lebenslauf hoch');
-        } else if (resumeUpload.files[0].size > 10 * 1024 * 1024) { // 10MB limit
+        // Only validate resume if we're not just generating a cover letter
+        if (resumeUpload.files[0] && resumeUpload.files[0].size > 10 * 1024 * 1024) { // 10MB limit
             errors.push('Die Lebenslauf-Datei ist zu groß (maximal 10MB)');
-        }
-
-        // Validate cover letter
-        if (!coverLetterUpload.files[0] && !coverLetterText.value.trim()) {
-            errors.push('Bitte lade ein Anschreiben hoch oder gib eines ein');
-        } else if (coverLetterText.value.trim().length < 100 && !coverLetterUpload.files[0]) {
-            errors.push('Das Anschreiben scheint zu kurz zu sein. Bitte füge mehr Inhalt hinzu');
         }
 
         if (errors.length > 0) {
