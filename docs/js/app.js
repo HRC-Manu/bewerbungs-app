@@ -159,54 +159,116 @@ document.addEventListener('DOMContentLoaded', function() {
 
     async function generateSectionSuggestions(section, analysis) {
         try {
-            const response = await fetch('https://api.openai.com/v1/chat/completions', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
-                },
-                body: JSON.stringify({
-                    model: "gpt-4",
-                    messages: [{
-                        role: "system",
-                        content: "Du bist ein Experte für das Schreiben überzeugender Bewerbungsanschreiben."
-                    }, {
-                        role: "user",
-                        content: `Generiere 3 verschiedene Vorschläge für den ${section}-Abschnitt eines Bewerbungsanschreibens.
-                        
-                        Stellendetails:
-                        Position: ${analysis.jobTitle}
-                        Firma: ${analysis.company}
-                        Anforderungen: ${analysis.requirements.join(', ')}
-                        Aufgaben: ${analysis.responsibilities.join(', ')}
-                        Ton: ${analysis.tone}
-                        
-                        Die Vorschläge sollen:
-                        - Überzeugend und professionell sein
-                        - Auf die Anforderungen eingehen
-                        - Den passenden Ton treffen
-                        - Authentisch und nicht standardmäßig klingen
-                        
-                        Liefere die Vorschläge im JSON-Format:
-                        {
-                            "suggestions": [
-                                {"text": "Vorschlag 1", "style": "Standard"},
-                                {"text": "Vorschlag 2", "style": "Kreativ"},
-                                {"text": "Vorschlag 3", "style": "Direkt"}
-                            ]
-                        }`
-                    }],
-                    temperature: 0.8
-                })
-            });
+            // Wenn 'all' ausgewählt ist, generiere alle Abschnitte
+            if (section === 'all') {
+                const sections = ['recipient', 'subject', 'introduction', 'main', 'closing'];
+                const allSuggestions = [];
 
-            const data = await response.json();
-            const suggestions = JSON.parse(data.choices[0].message.content).suggestions;
-            return suggestions.map(s => ({ ...s, section }));
+                for (const sec of sections) {
+                    const suggestion = await generateSingleSection(sec, analysis);
+                    allSuggestions.push({
+                        section: sec,
+                        text: suggestion.text,
+                        style: suggestion.style
+                    });
+                }
+
+                return allSuggestions;
+            }
+
+            // Für einzelne Abschnitte
+            const suggestion = await generateSingleSection(section, analysis);
+            return [{
+                section: section,
+                text: suggestion.text,
+                style: suggestion.style
+            }];
         } catch (error) {
             console.error('Fehler bei der Generierung:', error);
             throw new Error('Generierung fehlgeschlagen');
         }
+    }
+
+    async function generateSingleSection(section, analysis) {
+        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
+            },
+            body: JSON.stringify({
+                model: "gpt-4",
+                messages: [{
+                    role: "system",
+                    content: "Du bist ein Experte für das Schreiben überzeugender Bewerbungsanschreiben."
+                }, {
+                    role: "user",
+                    content: generatePromptForSection(section, analysis)
+                }],
+                temperature: 0.8
+            })
+        });
+
+        const data = await response.json();
+        const result = JSON.parse(data.choices[0].message.content);
+        return result.suggestion;
+    }
+
+    function generatePromptForSection(section, analysis) {
+        const basePrompt = `
+        Stellendetails:
+        Position: ${analysis.jobTitle}
+        Firma: ${analysis.company}
+        Anforderungen: ${analysis.requirements.join(', ')}
+        Aufgaben: ${analysis.responsibilities.join(', ')}
+        Skills: ${analysis.skills.join(', ')}
+        Ton: ${analysis.tone}
+        
+        Generiere einen überzeugenden ${section}-Abschnitt für das Anschreiben.
+        
+        Liefere das Ergebnis im JSON-Format:
+        {
+            "suggestion": {
+                "text": "Der generierte Text",
+                "style": "Standard"
+            }
+        }
+        `;
+
+        const sectionPrompts = {
+            recipient: `${basePrompt}
+            Der Text soll eine formelle Anrede sein.
+            - Bei unbekanntem Empfänger: "Sehr geehrte Damen und Herren,"
+            - Sonst personalisiert mit [Name]`,
+
+            subject: `${basePrompt}
+            Der Text soll ein prägnanter Betreff sein.
+            - Erwähne die Position
+            - Optional: Referenznummer oder Datum
+            - Kurz und professionell`,
+
+            introduction: `${basePrompt}
+            Der Text soll eine überzeugende Einleitung sein.
+            - Zeige Interesse an der Position
+            - Erwähne, wie du auf die Stelle aufmerksam geworden bist
+            - Maximal 2-3 Sätze`,
+
+            main: `${basePrompt}
+            Der Text soll ein überzeugender Hauptteil sein.
+            - Stelle Bezug zwischen deinen Fähigkeiten und den Anforderungen her
+            - Erkläre deine Motivation
+            - Hebe 2-3 relevante Erfahrungen hervor
+            - Zeige, dass du zur Unternehmenskultur passt
+            - 2-3 Absätze`,
+
+            closing: `${basePrompt}
+            Der Text soll ein professioneller Abschluss sein.
+            - Drücke Interesse an einem persönlichen Gespräch aus
+            - Erwähne deine Verfügbarkeit
+            - Maximal 2 Sätze`
+        };
+
+        return sectionPrompts[section] || basePrompt;
     }
 
     async function generateFullCoverLetter(analysis, resumeText = '') {
