@@ -376,136 +376,246 @@ document.addEventListener('DOMContentLoaded', function() {
         return requirements;
     }
 
-    // Verbesserte Vorschlagsgenerierung
-    async function generateSectionSuggestions(section, analysisData) {
+    // ===== Analyse-Hilfsfunktionen =====
+    function calculateMatchScore(job, resume) {
         try {
-            const { job, resume } = analysisData;
+            let score = 0;
+            const totalCriteria = 3;
             
-            // Kontext-basierte Vorschlagsgenerierung
-            const context = {
-                matchScore: calculateMatchScore(job, resume),
-                relevantExperience: findMostRelevantExperience(job, resume),
-                keySkills: identifyKeySkills(job, resume),
-                cultureFit: analyzeCultureFit(job, resume)
+            // Vergleiche Position
+            if (resume.personalInfo.position.toLowerCase().includes(job.jobTitle.position.toLowerCase())) {
+                score += 1;
+            }
+            
+            // Vergleiche Skills
+            const requiredSkills = [...job.requirements.skills.technical, ...job.requirements.skills.soft];
+            const candidateSkills = [...resume.skills.technical, ...resume.skills.soft];
+            const skillMatch = requiredSkills.filter(skill => 
+                candidateSkills.some(candidateSkill => 
+                    candidateSkill.toLowerCase().includes(skill.toLowerCase())
+                )
+            ).length;
+            
+            if (skillMatch / requiredSkills.length > 0.5) {
+                score += 1;
+            }
+            
+            // Vergleiche Erfahrung
+            if (resume.experience && resume.experience.length > 0) {
+                score += 1;
+            }
+            
+            return score / totalCriteria;
+        } catch (error) {
+            console.error('Error calculating match score:', error);
+            return 0;
+        }
+    }
+
+    function findMostRelevantExperience(job, resume) {
+        try {
+            if (!resume.experience || resume.experience.length === 0) {
+                return null;
+            }
+            
+            const relevantExperience = resume.experience
+                .filter(exp => {
+                    const positionMatch = exp.title.toLowerCase().includes(job.jobTitle.position.toLowerCase());
+                    const skillsMatch = job.requirements.skills.technical.some(skill =>
+                        exp.description.toLowerCase().includes(skill.toLowerCase())
+                    );
+                    return positionMatch || skillsMatch;
+                })
+                .sort((a, b) => b.duration - a.duration);
+            
+            return relevantExperience[0] || null;
+        } catch (error) {
+            console.error('Error finding relevant experience:', error);
+            return null;
+        }
+    }
+
+    function identifyKeySkills(job, resume) {
+        try {
+            const requiredSkills = new Set([
+                ...job.requirements.skills.technical,
+                ...job.requirements.skills.soft
+            ].map(skill => skill.toLowerCase()));
+            
+            const candidateSkills = new Set([
+                ...resume.skills.technical,
+                ...resume.skills.soft
+            ].map(skill => skill.toLowerCase()));
+            
+            const matchingSkills = [...requiredSkills].filter(skill => candidateSkills.has(skill));
+            const missingSkills = [...requiredSkills].filter(skill => !candidateSkills.has(skill));
+            const additionalSkills = [...candidateSkills].filter(skill => !requiredSkills.has(skill));
+            
+            return {
+                matching: matchingSkills,
+                missing: missingSkills,
+                additional: additionalSkills
+            };
+        } catch (error) {
+            console.error('Error identifying key skills:', error);
+            return {
+                matching: [],
+                missing: [],
+                additional: []
+            };
+        }
+    }
+
+    function analyzeCultureFit(job, resume) {
+        try {
+            const culturalAspects = {
+                formal: ['strukturiert', 'professionell', 'methodisch'],
+                innovative: ['kreativ', 'innovativ', 'agil'],
+                teamOriented: ['team', 'zusammenarbeit', 'kommunikativ']
             };
             
-            if (section === 'all') {
-                const sections = ['recipient', 'subject', 'introduction', 'main', 'closing'];
-                return Promise.all(sections.map(async (sec) => {
-                    const suggestion = await generateEnhancedSection(sec, analysisData, context);
-                    return {
-                        section: sec,
-                        text: suggestion.text,
-                        alternatives: suggestion.alternatives,
-                        context: suggestion.context
-                    };
-                }));
+            const companyValues = Object.values(job.company.culture).flat();
+            const candidateValues = resume.experience
+                .map(exp => exp.description.toLowerCase())
+                .join(' ');
+            
+            const fitScore = {};
+            
+            for (const [aspect, keywords] of Object.entries(culturalAspects)) {
+                const matchCount = keywords.filter(keyword =>
+                    companyValues.includes(keyword) && candidateValues.includes(keyword)
+                ).length;
+                
+                fitScore[aspect] = matchCount / keywords.length;
             }
             
-            const suggestion = await generateEnhancedSection(section, analysisData, context);
-            return [{
-                section,
-                text: suggestion.text,
-                alternatives: suggestion.alternatives,
-                context: suggestion.context
-            }];
+            return fitScore;
         } catch (error) {
-            console.error('Suggestion generation error:', error);
-            throw new Error('Generierung fehlgeschlagen: ' + error.message);
+            console.error('Error analyzing culture fit:', error);
+            return {};
         }
     }
 
-    async function generateEnhancedSection(section, analysisData, context) {
-        const { job, resume } = analysisData;
-        
-        // Wähle den besten Stil basierend auf Unternehmenskultur und Position
-        const style = determineOptimalStyle(job, context);
-        
-        // Generiere personalisierte Vorschläge
-        const suggestion = await generatePersonalizedContent(section, analysisData, style, context);
-        
-        // Generiere kontextbezogene Alternativen
-        const alternatives = generateContextualAlternatives(suggestion, style, context);
-        
-        return {
-            text: suggestion,
-            alternatives: alternatives,
-            context: {
-                style,
-                matchScore: context.matchScore,
-                keyPoints: extractKeyPoints(suggestion)
+    function generatePersonalizedContent(section, analysisData, style, context) {
+        try {
+            const { job, resume } = analysisData;
+            let content = '';
+            
+            switch (section) {
+                case 'recipient':
+                    content = LETTER_TEMPLATES.recipient[style].unknown;
+                    break;
+                    
+                case 'subject':
+                    const position = job.jobTitle.position;
+                    content = LETTER_TEMPLATES.subject.standard(position);
+                    break;
+                    
+                case 'introduction':
+                    const company = job.company.name;
+                    content = LETTER_TEMPLATES.introduction.jobPortal(job.jobTitle.position, company);
+                    break;
+                    
+                case 'main':
+                    content = generateMainContent(job, resume, context);
+                    break;
+                    
+                case 'closing':
+                    content = LETTER_TEMPLATES.closing.standard;
+                    break;
+                    
+                default:
+                    content = '';
             }
+            
+            return content;
+        } catch (error) {
+            console.error('Error generating personalized content:', error);
+            return '';
+        }
+    }
+
+    function generateMainContent(job, resume, context) {
+        try {
+            const { matchScore, relevantExperience, keySkills } = context;
+            let content = '';
+            
+            // Erfahrung und Qualifikation
+            if (relevantExperience) {
+                content += `Mit meiner Erfahrung als ${relevantExperience.title} bringe ich genau die Qualifikationen mit, die Sie suchen. `;
+            }
+            
+            // Matching Skills
+            if (keySkills.matching.length > 0) {
+                content += `Meine Kernkompetenzen in ${keySkills.matching.join(', ')} entsprechen Ihren Anforderungen. `;
+            }
+            
+            // Zusätzliche Skills
+            if (keySkills.additional.length > 0) {
+                content += `Darüber hinaus verfüge ich über Expertise in ${keySkills.additional.slice(0, 3).join(', ')}. `;
+            }
+            
+            // Motivation
+            content += `Die Position als ${job.jobTitle.position} bei ${job.company.name} reizt mich besonders, da sie meinem Wunsch nach ${job.company.culture.innovative ? 'innovativer Arbeit' : 'spannenden Herausforderungen'} entspricht.`;
+            
+            return content;
+        } catch (error) {
+            console.error('Error generating main content:', error);
+            return '';
+        }
+    }
+
+    function generateContextualAlternatives(suggestion, style, context) {
+        try {
+            const alternatives = [];
+            const { matchScore } = context;
+            
+            // Formelle Alternative
+            alternatives.push(improveText(suggestion, 'formal').text);
+            
+            // Selbstbewusste Alternative (bei hohem Match-Score)
+            if (matchScore > 0.7) {
+                alternatives.push(improveText(suggestion, 'confident').text);
+            }
+            
+            // Moderne Alternative
+            alternatives.push(improveText(suggestion, 'casual').text);
+            
+            return alternatives.filter(alt => alt !== suggestion);
+        } catch (error) {
+            console.error('Error generating alternatives:', error);
+            return [];
+        }
+    }
+
+    function extractKeyPoints(text) {
+        try {
+            const sentences = text.split(/[.!?]+/).filter(s => s.trim());
+            return sentences.map(sentence => ({
+                text: sentence.trim(),
+                type: determineStatementType(sentence)
+            }));
+        } catch (error) {
+            console.error('Error extracting key points:', error);
+            return [];
+        }
+    }
+
+    function determineStatementType(sentence) {
+        const types = {
+            experience: ['erfahrung', 'gearbeitet', 'tätig'],
+            skills: ['kenntnisse', 'fähigkeiten', 'kompetenzen'],
+            motivation: ['interessiert', 'reizt', 'begeistert'],
+            education: ['studium', 'ausbildung', 'abschluss']
         };
-    }
-
-    function determineOptimalStyle(job, context) {
-        const { culture } = job.company;
-        const { matchScore } = context;
         
-        if (culture.includes('formal') || job.jobTitle.level.includes('senior')) {
-            return 'formal';
-        } else if (matchScore > 0.8) {
-            return 'confident';
-        } else {
-            return 'balanced';
+        for (const [type, keywords] of Object.entries(types)) {
+            if (keywords.some(keyword => sentence.toLowerCase().includes(keyword))) {
+                return type;
+            }
         }
-    }
-
-    function displayAnalysis(jobAnalysis) {
-        // Position anzeigen
-        const jobTitleAnalysis = document.getElementById('jobTitleAnalysis');
-        if (jobTitleAnalysis) {
-            jobTitleAnalysis.innerHTML = `
-                <div><strong>${jobAnalysis.jobTitle.position}</strong></div>
-                <div class="text-muted">${jobAnalysis.jobTitle.level} - ${jobAnalysis.jobTitle.department}</div>
-            `;
-        }
-
-        // Unternehmen anzeigen
-        const companyAnalysis = document.getElementById('companyAnalysis');
-        if (companyAnalysis) {
-            companyAnalysis.innerHTML = `
-                <div><strong>${jobAnalysis.company.name}</strong></div>
-                <div class="text-muted">${jobAnalysis.company.industry}</div>
-                <div class="mt-2">
-                    <small class="text-muted">Unternehmenskultur:</small><br>
-                    ${jobAnalysis.company.culture}
-                </div>
-            `;
-        }
-
-        // Anforderungen anzeigen
-        const mustHaveList = document.getElementById('mustHaveList');
-        const niceToHaveList = document.getElementById('niceToHaveList');
-
-        if (mustHaveList) {
-            mustHaveList.innerHTML = jobAnalysis.requirements.essential
-                .map(skill => `<li>${skill}</li>`).join('');
-        }
-
-        if (niceToHaveList) {
-            niceToHaveList.innerHTML = jobAnalysis.requirements.preferred
-                .map(skill => `<li>${skill}</li>`).join('');
-        }
-
-        // Analyse-Sektion anzeigen
-        const jobAnalysisSection = document.getElementById('jobAnalysis');
-        if (jobAnalysisSection) {
-            jobAnalysisSection.classList.remove('d-none');
-        }
-    }
-
-    function updateProgressStep(step) {
-        // Alle Steps zurücksetzen
-        document.querySelectorAll('.progress-stepper .step').forEach(el => {
-            el.classList.remove('active');
-        });
-
-        // Aktiven Step setzen
-        const activeStep = document.getElementById(`step${step}`);
-        if (activeStep) {
-            activeStep.classList.add('active');
-        }
+        
+        return 'other';
     }
 
     async function handleAnalyze() {
@@ -834,12 +944,12 @@ document.addEventListener('DOMContentLoaded', function() {
             const preview = container.querySelector('.file-preview');
             const removeBtn = preview.querySelector('.btn-close');
             
-            // Click Event für Upload-Bereich
-            area.addEventListener('click', (e) => {
+            // Click Event nur für das Label, nicht den gesamten Bereich
+            const uploadLabel = area.querySelector('.upload-label');
+            uploadLabel.addEventListener('click', (e) => {
                 e.preventDefault();
-                if (e.target === area || e.target.closest('.upload-label')) {
-                    input.click();
-                }
+                e.stopPropagation();
+                input.click();
             });
             
             // File Input Change Event
