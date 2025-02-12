@@ -62,168 +62,436 @@ document.addEventListener('DOMContentLoaded', function() {
         initializeTextareaListeners();
     }
 
-    // ===== API Key Management =====
-    const API_SETTINGS = {
-        currentService: 'openai',
-        apiKey: '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'
+    // ===== Analyse-Einstellungen =====
+    const ANALYSIS_SETTINGS = {
+        // Schlüsselwörter für Positionen
+        positions: {
+            developer: ['entwickler', 'programmierer', 'software engineer', 'full-stack', 'frontend', 'backend'],
+            manager: ['manager', 'leiter', 'führungskraft', 'teamleiter', 'projektleiter'],
+            consultant: ['berater', 'consultant', 'architekt'],
+            analyst: ['analyst', 'data scientist', 'business intelligence']
+        },
+        // Schlüsselwörter für Level
+        levels: {
+            junior: ['junior', 'entry level', 'berufseinsteiger'],
+            senior: ['senior', 'erfahren', 'expert'],
+            lead: ['lead', 'principal', 'head of', 'leitung']
+        },
+        // Schlüsselwörter für Abteilungen
+        departments: {
+            it: ['it', 'edv', 'software', 'entwicklung', 'tech'],
+            hr: ['hr', 'personal', 'recruiting'],
+            finance: ['finance', 'finanzen', 'controlling'],
+            sales: ['sales', 'vertrieb', 'marketing']
+        },
+        // Unternehmenskultur-Indikatoren
+        culture: {
+            formal: ['etabliert', 'traditionell', 'strukturiert', 'corporate'],
+            casual: ['startup', 'dynamisch', 'agil', 'modern', 'jung'],
+            innovative: ['innovativ', 'zukunftsorientiert', 'digital']
+        }
     };
 
-    function getApiKey() {
-        const apiKey = API_SETTINGS.apiKey;
-        if (!apiKey) {
-            throw new Error('API-Schlüssel nicht gefunden');
-        }
-        return apiKey;
-    }
-
-    async function makeApiRequest(endpoint, payload) {
-        const MAX_RETRIES = 3;
-        const RETRY_DELAY = 1000;
-        
-        for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
-            try {
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 30000);
-                
-                const response = await fetch('https://api.openai.com/v1/chat/completions', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${getApiKey()}`,
-                        'Accept': 'application/json'
-                    },
-                    body: JSON.stringify(payload)
-                });
-                
-                clearTimeout(timeoutId);
-                
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    console.error(`API Error (Attempt ${attempt}):`, errorText);
-                    
-                    if (response.status === 401) {
-                        throw new Error('API-Schlüssel ist ungültig oder abgelaufen');
-                    }
-                    
-                    if (response.status === 429 && attempt < MAX_RETRIES) {
-                        await new Promise(resolve => setTimeout(resolve, RETRY_DELAY * attempt));
-                        continue;
-                    }
-                    
-                    throw new Error(`API Fehler: ${response.status}`);
-                }
-                
-                const data = await response.json();
-                return data;
-                
-            } catch (error) {
-                console.error(`API Request error (Attempt ${attempt}):`, error);
-                
-                if (error.name === 'AbortError') {
-                    throw new Error('Die Anfrage wurde wegen Zeitüberschreitung abgebrochen');
-                }
-                
-                if (attempt === MAX_RETRIES) {
-                    throw error;
-                }
-                
-                if (error.message.includes('network') || error.message.includes('timeout')) {
-                    await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
-                    continue;
-                }
-                
-                throw error;
+    // Textbausteine für Anschreiben
+    const LETTER_TEMPLATES = {
+        recipient: {
+            formal: {
+                known: (name) => `Sehr geehrte/r Frau/Herr ${name},`,
+                unknown: 'Sehr geehrte Damen und Herren,'
+            },
+            casual: {
+                known: (name) => `Hallo ${name},`,
+                unknown: 'Hallo,'
             }
+        },
+        subject: {
+            standard: (position, refNumber = '') => 
+                `Bewerbung als ${position}${refNumber ? ` (Referenz: ${refNumber})` : ''}`,
+            experienced: (position, years) => 
+                `Erfahrene/r ${position} (${years} Jahre Berufserfahrung) sucht neue Herausforderung`
+        },
+        introduction: {
+            jobPortal: (position, company) => 
+                `mit großem Interesse habe ich Ihre Stellenanzeige als ${position} bei ${company} gelesen.`,
+            recommendation: (position, referrer) => 
+                `auf Empfehlung von ${referrer} bewerbe ich mich auf die Position als ${position} in Ihrem Unternehmen.`,
+            initiative: (company) => 
+                `Ihr Unternehmen ${company} hat mich durch seine innovative Ausrichtung und spannenden Projekte überzeugt.`
+        },
+        closing: {
+            standard: 'Ich freue mich auf ein persönliches Gespräch.',
+            availability: (date) => 
+                `Ich könnte zum ${date} bei Ihnen anfangen und freue mich auf Ihre Einladung zu einem persönlichen Gespräch.`,
+            flexible: 'Ich bin zeitlich flexibel und freue mich auf Ihre Einladung zu einem persönlichen Gespräch.'
         }
-    }
+    };
 
     async function analyzeJobPosting(jobPosting) {
         try {
-            const payload = {
-                model: "gpt-3.5-turbo",
-                messages: [{
-                    role: "system",
-                    content: "Du bist ein Experte für Bewerbungsanalyse. Analysiere die Stellenanzeige und gib die Informationen im folgenden JSON-Format zurück: { jobTitle: { position, level, department }, company: { name, industry, culture }, requirements: { hardSkills: [], softSkills: [] } }"
-                }, {
-                    role: "user",
-                    content: `Analysiere diese Stellenanzeige und gib die Informationen im spezifizierten JSON-Format zurück:\n\n${jobPosting}`
-                }],
-                temperature: 0.7
+            const text = jobPosting.toLowerCase();
+            
+            // Position analysieren
+            const position = findBestMatch(text, ANALYSIS_SETTINGS.positions);
+            const level = findBestMatch(text, ANALYSIS_SETTINGS.levels);
+            const department = findBestMatch(text, ANALYSIS_SETTINGS.departments);
+            
+            // Unternehmensdetails extrahieren
+            const companyInfo = extractCompanyInfo(text);
+            
+            // Anforderungen analysieren
+            const requirements = analyzeRequirements(text);
+            
+            return {
+                jobTitle: {
+                    position: position.name,
+                    level: level.name,
+                    department: department.name
+                },
+                company: {
+                    name: companyInfo.name,
+                    industry: companyInfo.industry,
+                    culture: companyInfo.culture
+                },
+                requirements: {
+                    hardSkills: requirements.hardSkills,
+                    softSkills: requirements.softSkills
+                }
             };
-
-            const data = await makeApiRequest('https://api.openai.com/v1/chat/completions', payload);
-
-            if (!data.choices?.[0]?.message?.content) {
-                throw new Error('Ungültige API-Antwort: Fehlende Daten');
-            }
-
-            try {
-                return JSON.parse(data.choices[0].message.content);
-            } catch (parseError) {
-                throw new Error('Fehler bei der Verarbeitung der API-Antwort');
-            }
         } catch (error) {
             throw new Error(`Analyse fehlgeschlagen: ${error.message}`);
         }
+    }
+
+    function findBestMatch(text, categories) {
+        let bestMatch = { name: 'Nicht spezifiziert', score: 0 };
+        
+        for (const [category, keywords] of Object.entries(categories)) {
+            const score = keywords.reduce((count, keyword) => {
+                return count + (text.includes(keyword) ? 1 : 0);
+            }, 0);
+            
+            if (score > bestMatch.score) {
+                bestMatch = { name: category, score };
+            }
+        }
+        
+        return bestMatch;
+    }
+
+    function extractCompanyInfo(text) {
+        // Firmenname aus Text extrahieren (vereinfachte Version)
+        const nameMatch = text.match(/(?:firma|unternehmen|arbeitgeber):\s*([^\n.]+)/i);
+        const name = nameMatch ? nameMatch[1].trim() : 'Nicht angegeben';
+        
+        // Branche identifizieren
+        const industries = {
+            it: ['software', 'it-dienstleistung', 'technologie'],
+            automotive: ['automobil', 'fahrzeug', 'automotive'],
+            finance: ['bank', 'versicherung', 'finanz'],
+            health: ['gesundheit', 'pharma', 'medizin']
+        };
+        
+        const industry = findBestMatch(text, industries).name;
+        
+        // Unternehmenskultur analysieren
+        const culture = analyzeCulture(text);
+        
+        return { name, industry, culture };
+    }
+
+    function analyzeCulture(text) {
+        const culturalAspects = [];
+        
+        for (const [type, indicators] of Object.entries(ANALYSIS_SETTINGS.culture)) {
+            if (indicators.some(indicator => text.includes(indicator))) {
+                culturalAspects.push(type);
+            }
+        }
+        
+        if (culturalAspects.length === 0) {
+            return 'Klassisch';
+        }
+        
+        return culturalAspects.join(', ');
+    }
+
+    function analyzeRequirements(text) {
+        const requirements = {
+            hardSkills: [],
+            softSkills: []
+        };
+        
+        // Typische Einleitungen für Anforderungen
+        const requirementSections = text.split(/(?:ihre qualifikationen|anforderungsprofil|wir erwarten|sie bringen mit):/i);
+        
+        if (requirementSections.length > 1) {
+            const requirementText = requirementSections[1];
+            
+            // Aufzählungen extrahieren
+            const bulletPoints = requirementText.split(/[•\-\*]\s+/);
+            
+            bulletPoints.forEach(point => {
+                if (point.trim()) {
+                    // Hard Skills erkennen (technische und fachliche Anforderungen)
+                    if (isHardSkill(point)) {
+                        requirements.hardSkills.push(point.trim());
+                    } else {
+                        // Soft Skills (alle anderen Anforderungen)
+                        requirements.softSkills.push(point.trim());
+                    }
+                }
+            });
+        }
+        
+        return requirements;
+    }
+
+    function isHardSkill(text) {
+        const hardSkillIndicators = [
+            'kenntnisse', 'erfahrung', 'studium', 'ausbildung',
+            'abschluss', 'technisch', 'software', 'programmierung',
+            'entwicklung', 'tools', 'technologien', 'stack'
+        ];
+        
+        return hardSkillIndicators.some(indicator => text.toLowerCase().includes(indicator));
     }
 
     async function analyzeResume(resumeText) {
         try {
-            const payload = {
-                model: "gpt-3.5-turbo",
-                messages: [{
-                    role: "system",
-                    content: "Du bist ein Experte für Lebenslaufanalyse. Analysiere den Lebenslauf und gib die Informationen im spezifizierten JSON-Format zurück."
-                }, {
-                    role: "user",
-                    content: `Analysiere diesen Lebenslauf und gib die Informationen im folgenden JSON-Format zurück:
-                    {
-                        "personalInfo": {
-                            "name": "Name des Bewerbers",
-                            "title": "Aktuelle Position",
-                            "yearsOfExperience": "Anzahl Jahre"
-                        },
-                        "skills": {
-                            "technical": ["Skill 1", "Skill 2"],
-                            "soft": ["Soft Skill 1", "Soft Skill 2"]
-                        },
-                        "experience": [
-                            {
-                                "position": "Position",
-                                "company": "Firma",
-                                "duration": "Zeitraum",
-                                "achievements": ["Achievement 1", "Achievement 2"]
-                            }
-                        ],
-                        "education": [
-                            {
-                                "degree": "Abschluss",
-                                "institution": "Institution",
-                                "year": "Jahr"
-                            }
-                        ]
-                    }
-
-                    Lebenslauf zum Analysieren:
-                    ${resumeText}`
-                }],
-                temperature: 0.7
+            const text = resumeText.toLowerCase();
+            
+            // Persönliche Informationen extrahieren
+            const personalInfo = extractPersonalInfo(text);
+            
+            // Skills analysieren
+            const skills = extractSkills(text);
+            
+            // Berufserfahrung analysieren
+            const experience = extractExperience(text);
+            
+            // Ausbildung analysieren
+            const education = extractEducation(text);
+            
+            return {
+                personalInfo,
+                skills,
+                experience,
+                education
             };
-
-            const data = await makeApiRequest('https://api.openai.com/v1/chat/completions', payload);
-
-            if (!data.choices?.[0]?.message?.content) {
-                throw new Error('Ungültige API-Antwort: Fehlende Daten');
-            }
-
-            try {
-                return JSON.parse(data.choices[0].message.content);
-            } catch (parseError) {
-                throw new Error('Fehler beim Parsen der API-Antwort');
-            }
         } catch (error) {
             throw new Error(`Analyse fehlgeschlagen: ${error.message}`);
         }
+    }
+
+    function extractPersonalInfo(text) {
+        // Name extrahieren (erste Zeile oder nach "Name:")
+        const nameMatch = text.match(/^([^\n]+)|name:\s*([^\n]+)/i);
+        const name = nameMatch ? (nameMatch[1] || nameMatch[2]).trim() : 'Nicht angegeben';
+        
+        // Aktuelle Position aus Erfahrungsbereich
+        const positionMatch = text.match(/(?:aktuelle position|position|rolle):\s*([^\n]+)/i);
+        const title = positionMatch ? positionMatch[1].trim() : 'Nicht angegeben';
+        
+        // Berufserfahrung berechnen
+        const yearsMatch = text.match(/(\d+)\s*(?:jahre\s+(?:berufs)?erfahrung|years?\s+(?:of\s+)?experience)/i);
+        const yearsOfExperience = yearsMatch ? parseInt(yearsMatch[1]) : calculateExperienceYears(text);
+        
+        return {
+            name,
+            title,
+            yearsOfExperience
+        };
+    }
+
+    function calculateExperienceYears(text) {
+        // Suche nach Datumsbereichen im Format MM/YYYY oder YYYY
+        const dateRanges = text.match(/\d{2}\/\d{4}|\d{4}/g);
+        if (!dateRanges) return 0;
+        
+        let totalYears = 0;
+        let dates = dateRanges.map(d => {
+            if (d.includes('/')) {
+                const [month, year] = d.split('/');
+                return new Date(year, month - 1);
+            }
+            return new Date(d, 0);
+        });
+        
+        // Paare von Daten durchgehen und Jahre berechnen
+        for (let i = 0; i < dates.length - 1; i += 2) {
+            const start = dates[i];
+            const end = dates[i + 1] || new Date();
+            totalYears += (end - start) / (1000 * 60 * 60 * 24 * 365);
+        }
+        
+        return Math.round(totalYears);
+    }
+
+    function extractSkills(text) {
+        const skills = {
+            technical: [],
+            soft: []
+        };
+        
+        // Skill-Bereiche identifizieren
+        const skillSections = text.split(/(?:kenntnisse|skills|fähigkeiten|kompetenzen):/i);
+        
+        if (skillSections.length > 1) {
+            const skillText = skillSections[1];
+            
+            // Skills nach Kategorien aufteilen
+            const technicalSkills = extractTechnicalSkills(skillText);
+            const softSkills = extractSoftSkills(skillText);
+            
+            skills.technical = technicalSkills;
+            skills.soft = softSkills;
+        }
+        
+        return skills;
+    }
+
+    function extractTechnicalSkills(text) {
+        const technicalIndicators = [
+            'programmiersprachen', 'frameworks', 'datenbanken',
+            'tools', 'software', 'technologien', 'entwicklung',
+            'sprachen', 'systeme', 'methodiken'
+        ];
+        
+        const skills = [];
+        const lines = text.split('\n');
+        
+        let isInTechnicalSection = false;
+        
+        lines.forEach(line => {
+            line = line.trim().toLowerCase();
+            
+            // Prüfe, ob wir in einem technischen Abschnitt sind
+            if (technicalIndicators.some(indicator => line.includes(indicator))) {
+                isInTechnicalSection = true;
+            } else if (line.length > 0 && isInTechnicalSection) {
+                // Extrahiere einzelne Skills (durch Kommas oder Bullets getrennt)
+                const lineSkills = line.split(/[,•\-]/).map(s => s.trim()).filter(s => s.length > 0);
+                skills.push(...lineSkills);
+            }
+        });
+        
+        return [...new Set(skills)]; // Duplikate entfernen
+    }
+
+    function extractSoftSkills(text) {
+        const softSkillIndicators = [
+            'teamfähigkeit', 'kommunikation', 'führung',
+            'organisation', 'motivation', 'flexibilität',
+            'kreativität', 'analytisch', 'selbstständig'
+        ];
+        
+        const skills = [];
+        const lines = text.split('\n');
+        
+        lines.forEach(line => {
+            line = line.trim().toLowerCase();
+            softSkillIndicators.forEach(indicator => {
+                if (line.includes(indicator)) {
+                    skills.push(line);
+                }
+            });
+        });
+        
+        return [...new Set(skills)]; // Duplikate entfernen
+    }
+
+    function extractExperience(text) {
+        const experience = [];
+        
+        // Berufserfahrungsbereich identifizieren
+        const experienceSections = text.split(/(?:berufserfahrung|beruflicher werdegang|work experience):/i);
+        
+        if (experienceSections.length > 1) {
+            const experienceText = experienceSections[1];
+            const entries = experienceText.split(/\n(?=\d{2}\/\d{4}|\d{4})/);
+            
+            entries.forEach(entry => {
+                const position = extractPositionFromEntry(entry);
+                if (position.company) {
+                    experience.push(position);
+                }
+            });
+        }
+        
+        return experience;
+    }
+
+    function extractPositionFromEntry(entry) {
+        const lines = entry.split('\n').map(l => l.trim());
+        
+        // Position und Firma aus der ersten Zeile extrahieren
+        const firstLine = lines[0];
+        const positionMatch = firstLine.match(/(?:als\s+)?([^@\n]+)(?:\s+@\s+|bei\s+|für\s+)([^\n]+)/i);
+        
+        if (!positionMatch) return {};
+        
+        const position = positionMatch[1].trim();
+        const company = positionMatch[2].trim();
+        
+        // Zeitraum extrahieren
+        const durationMatch = firstLine.match(/(\d{2}\/\d{4}|\d{4})\s*-\s*(\d{2}\/\d{4}|\d{4}|heute|present)/i);
+        const duration = durationMatch ? `${durationMatch[1]} - ${durationMatch[2]}` : '';
+        
+        // Achievements aus den folgenden Zeilen extrahieren
+        const achievements = lines.slice(1)
+            .filter(line => line.startsWith('-') || line.startsWith('•'))
+            .map(line => line.replace(/^[-•]\s*/, '').trim());
+        
+        return {
+            position,
+            company,
+            duration,
+            achievements
+        };
+    }
+
+    function extractEducation(text) {
+        const education = [];
+        
+        // Ausbildungsbereich identifizieren
+        const educationSections = text.split(/(?:ausbildung|bildung|education):/i);
+        
+        if (educationSections.length > 1) {
+            const educationText = educationSections[1];
+            const entries = educationText.split(/\n(?=\d{2}\/\d{4}|\d{4})/);
+            
+            entries.forEach(entry => {
+                const degree = extractDegreeFromEntry(entry);
+                if (degree.institution) {
+                    education.push(degree);
+                }
+            });
+        }
+        
+        return education;
+    }
+
+    function extractDegreeFromEntry(entry) {
+        const lines = entry.split('\n').map(l => l.trim());
+        
+        // Abschluss und Institution aus der ersten Zeile extrahieren
+        const firstLine = lines[0];
+        const degreeMatch = firstLine.match(/([^@\n]+)(?:\s+@\s+|an\s+der\s+|in\s+)([^\n]+)/i);
+        
+        if (!degreeMatch) return {};
+        
+        const degree = degreeMatch[1].trim();
+        const institution = degreeMatch[2].trim();
+        
+        // Jahr extrahieren
+        const yearMatch = firstLine.match(/(\d{4})/);
+        const year = yearMatch ? yearMatch[1] : '';
+        
+        return {
+            degree,
+            institution,
+            year
+        };
     }
 
     function displayAnalysis(jobAnalysis) {
@@ -291,21 +559,21 @@ document.addEventListener('DOMContentLoaded', function() {
             if (section === 'all') {
                 const sections = ['recipient', 'subject', 'introduction', 'main', 'closing'];
                 const allSuggestions = [];
-
+                
                 for (const sec of sections) {
-                    const suggestion = await generateSingleSection(sec, analysisData);
+                    const suggestion = generateSingleSection(sec, analysisData);
                     allSuggestions.push({
                         section: sec,
                         text: suggestion.text,
                         alternatives: suggestion.alternatives || []
                     });
                 }
-
+                
                 return allSuggestions;
             }
-
+            
             // Für einzelne Abschnitte
-            const suggestion = await generateSingleSection(section, analysisData);
+            const suggestion = generateSingleSection(section, analysisData);
             return [{
                 section: section,
                 text: suggestion.text,
@@ -317,110 +585,188 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    async function generateSingleSection(section, analysisData) {
+    function generateSingleSection(section, analysisData) {
         const { job, resume } = analysisData;
         
-        const response = await fetch('https://api.openai.com/v1/chat/completions', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${getApiKey()}`
-            },
-            body: JSON.stringify({
-                model: "gpt-4",
-                messages: [{
-                    role: "system",
-                    content: `Du bist ein Experte für das Schreiben überzeugender Bewerbungsanschreiben.
-                             Dein Ziel ist es, personalisierte und überzeugende Textbausteine zu erstellen,
-                             die die Stärken des Bewerbers optimal mit den Anforderungen der Stelle verbinden.`
-                }, {
-                    role: "user",
-                    content: generatePromptForSection(section, analysisData)
-                }],
-                temperature: 0.8,
-                n: 3 // Generiere 3 alternative Vorschläge
-            })
-        });
-
-        if (!response.ok) {
-            throw new Error('API Anfrage fehlgeschlagen');
+        // Unternehmenskultur bestimmt den Stil
+        const isFormal = job.company.culture.includes('formal');
+        
+        // Generiere Vorschläge basierend auf dem Abschnitt
+        switch (section) {
+            case 'recipient':
+                return generateRecipient(job, isFormal);
+            case 'subject':
+                return generateSubject(job, resume);
+            case 'introduction':
+                return generateIntroduction(job, resume);
+            case 'main':
+                return generateMain(job, resume);
+            case 'closing':
+                return generateClosing(job);
+            default:
+                throw new Error('Unbekannter Abschnitt');
         }
+    }
 
-        const data = await response.json();
-        const suggestions = data.choices.map(choice => JSON.parse(choice.message.content));
+    function generateRecipient(job, isFormal) {
+        const templates = LETTER_TEMPLATES.recipient;
+        const style = isFormal ? templates.formal : templates.casual;
+        
+        // Suche nach Ansprechpartner in der Stellenanzeige
+        const hasContactPerson = false; // TODO: Implementiere Ansprechpartnersuche
         
         return {
-            text: suggestions[0].suggestion,
-            alternatives: suggestions.slice(1).map(s => s.suggestion)
+            text: hasContactPerson ? style.known('NAME') : style.unknown,
+            alternatives: [
+                style.unknown,
+                templates.formal.unknown,
+                templates.casual.unknown
+            ]
         };
     }
 
-    function generatePromptForSection(section, analysisData) {
-        const { job, resume } = analysisData;
+    function generateSubject(job, resume) {
+        const templates = LETTER_TEMPLATES.subject;
+        const position = job.jobTitle.position;
+        const years = resume.personalInfo.yearsOfExperience;
         
-        const basePrompt = `
-        Stelle: ${job.jobTitle.position} (${job.jobTitle.level})
-        Firma: ${job.company.name}
-        Branche: ${job.company.industry}
-        Unternehmenskultur: ${job.company.culture}
-        
-        Bewerber:
-        - Name: ${resume.personalInfo.name}
-        - Aktuelle Position: ${resume.personalInfo.title}
-        - Erfahrung: ${resume.personalInfo.yearsOfExperience} Jahre
-        
-        Anforderungen:
-        - Must-Have: ${job.requirements.hardSkills.join(', ')}
-        - Nice-to-Have: ${job.requirements.softSkills.join(', ')}
-        
-        Bewerber Skills:
-        - Expert: ${resume.skills.technical.join(', ')}
-        - Advanced: ${resume.skills.technical.join(', ')}
-        
-        Generiere einen überzeugenden ${section}-Abschnitt für das Anschreiben.
-        
-        Liefere das Ergebnis als Text ohne JSON-Formatierung.`;
-
-        const sectionPrompts = {
-            recipient: `${basePrompt}
-            Erstelle eine professionelle Anrede.
-            - Bei bekanntem Empfänger: Personalisiert
-            - Bei unbekanntem Empfänger: "Sehr geehrte Damen und Herren,"
-            - Berücksichtige die Unternehmenskultur (formal/casual)`,
-
-            subject: `${basePrompt}
-            Erstelle einen aussagekräftigen Betreff.
-            - Erwähne die Position und ggf. Referenznummer
-            - Hebe relevante Erfahrung hervor
-            - Kurz und prägnant
-            - Wecke Interesse`,
-
-            introduction: `${basePrompt}
-            Erstelle eine packende Einleitung.
-            - Zeige Begeisterung für die Position
-            - Erwähne, wie du auf die Stelle aufmerksam geworden bist
-            - Hebe die wichtigste Qualifikation hervor
-            - Stelle Bezug zur Firma her
-            - Max. 3-4 Sätze`,
-
-            main: `${basePrompt}
-            Erstelle einen überzeugenden Hauptteil.
-            - Verbinde Anforderungen mit konkreten Erfahrungen
-            - Strukturiere in 2-3 Absätze
-            - Verwende Beispiele aus dem Lebenslauf
-            - Zeige Alignment mit Unternehmenskultur
-            - Hebe Erfolge und messbare Ergebnisse hervor`,
-
-            closing: `${basePrompt}
-            Erstelle einen starken Abschluss.
-            - Bekräftige dein Interesse
-            - Erwähne Verfügbarkeit
-            - Bitte um persönliches Gespräch
-            - Selbstbewusst aber nicht arrogant
-            - Max. 2-3 Sätze`
+        return {
+            text: templates.standard(position),
+            alternatives: [
+                templates.experienced(position, years),
+                templates.standard(position, 'REF12345'),
+                `Bewerbung: ${position} - ${years} Jahre Erfahrung`
+            ]
         };
+    }
 
-        return sectionPrompts[section] || basePrompt;
+    function generateIntroduction(job, resume) {
+        const templates = LETTER_TEMPLATES.introduction;
+        const position = job.jobTitle.position;
+        const company = job.company.name;
+        
+        return {
+            text: templates.jobPortal(position, company),
+            alternatives: [
+                templates.initiative(company),
+                templates.recommendation(position, 'Ihrem Mitarbeiter Herrn Mustermann'),
+                `Ihre ausgeschriebene Stelle als ${position} hat mein großes Interesse geweckt.`
+            ]
+        };
+    }
+
+    function generateMain(job, resume) {
+        // Matching-Score zwischen Anforderungen und Skills berechnen
+        const matchingSkills = findMatchingSkills(job.requirements.hardSkills, resume.skills.technical);
+        const matchingSoftSkills = findMatchingSkills(job.requirements.softSkills, resume.skills.soft);
+        
+        // Relevante Erfahrungen identifizieren
+        const relevantExperience = findRelevantExperience(job, resume.experience);
+        
+        // Text generieren
+        const text = `
+Mit ${resume.personalInfo.yearsOfExperience} Jahren Erfahrung in der ${job.jobTitle.department}-Branche 
+bringe ich genau die Fähigkeiten mit, die Sie suchen. ${generateSkillsText(matchingSkills)}
+
+${generateExperienceText(relevantExperience)}
+
+${generateSoftSkillsText(matchingSoftSkills)}
+        `.trim();
+        
+        return {
+            text,
+            alternatives: [
+                generateAlternativeMain(job, resume, 1),
+                generateAlternativeMain(job, resume, 2)
+            ]
+        };
+    }
+
+    function findMatchingSkills(required, available) {
+        return required.filter(req => 
+            available.some(skill => 
+                skill.toLowerCase().includes(req.toLowerCase()) ||
+                req.toLowerCase().includes(skill.toLowerCase())
+            )
+        );
+    }
+
+    function findRelevantExperience(job, experience) {
+        return experience
+            .filter(exp => 
+                exp.position.toLowerCase().includes(job.jobTitle.position.toLowerCase()) ||
+                job.requirements.hardSkills.some(skill => 
+                    exp.achievements.some(achievement => 
+                        achievement.toLowerCase().includes(skill.toLowerCase())
+                    )
+                )
+            )
+            .sort((a, b) => {
+                // Neuere Erfahrungen zuerst
+                const aYear = parseInt(a.duration.split('-')[0]);
+                const bYear = parseInt(b.duration.split('-')[0]);
+                return bYear - aYear;
+            })
+            .slice(0, 2); // Maximal 2 relevante Erfahrungen
+    }
+
+    function generateSkillsText(matchingSkills) {
+        if (matchingSkills.length === 0) return '';
+        
+        return `Meine Kernkompetenzen liegen in den Bereichen ${matchingSkills.join(', ')}.`;
+    }
+
+    function generateExperienceText(relevantExperience) {
+        if (relevantExperience.length === 0) return '';
+        
+        return relevantExperience.map(exp => 
+            `Bei ${exp.company} habe ich als ${exp.position} ${exp.achievements[0] || 'wertvolle Erfahrungen gesammelt'}.`
+        ).join('\n\n');
+    }
+
+    function generateSoftSkillsText(matchingSoftSkills) {
+        if (matchingSoftSkills.length === 0) return '';
+        
+        return `Darüber hinaus zeichne ich mich durch ${matchingSoftSkills.join(', ')} aus.`;
+    }
+
+    function generateAlternativeMain(job, resume, version) {
+        // Verschiedene Versionen des Hauptteils
+        const templates = [
+            // Version 1: Fokus auf Projekterfolge
+            (job, resume) => {
+                const exp = resume.experience[0] || {};
+                return `
+In meiner aktuellen Position als ${exp.position} bei ${exp.company} 
+konnte ich bereits erfolgreich ${exp.achievements[0] || 'verschiedene Projekte umsetzen'}. 
+Meine Expertise in ${resume.skills.technical.slice(0, 3).join(', ')} 
+macht mich zu einem idealen Kandidaten für die Position als ${job.jobTitle.position}.
+                `.trim();
+            },
+            // Version 2: Fokus auf Entwicklung
+            (job, resume) => {
+                return `
+Meine bisherige Laufbahn im ${job.jobTitle.department}-Bereich hat mir ein tiefes Verständnis 
+für ${job.requirements.hardSkills[0] || 'die relevanten Technologien'} vermittelt. 
+Besonders reizt mich bei Ihrem Unternehmen die Möglichkeit, ${job.company.culture} zu arbeiten.
+                `.trim();
+            }
+        ];
+        
+        return templates[version - 1](job, resume);
+    }
+
+    function generateClosing(job) {
+        const templates = LETTER_TEMPLATES.closing;
+        
+        return {
+            text: templates.standard,
+            alternatives: [
+                templates.flexible,
+                templates.availability('nächsten Monat'),
+                'Gerne stelle ich Ihnen meine Erfahrungen in einem persönlichen Gespräch vor.'
+            ]
+        };
     }
 
     function applySuggestions(suggestions) {
@@ -503,15 +849,16 @@ document.addEventListener('DOMContentLoaded', function() {
         const file = event.target.files[0];
         if (!file) return;
 
-        const uploadArea = event.target.closest('.upload-area');
-        const container = uploadArea.closest('.upload-container');
+        const input = event.target;
+        const container = input.closest('.upload-container');
+        const uploadArea = container.querySelector('.upload-area');
         const preview = container.querySelector('.file-preview');
         const fileName = preview.querySelector('.file-name');
 
         try {
             // Validierung
             if (file.type !== 'application/pdf') {
-                throw new Error('Bitte laden Sie nur PDF-Dateien hoch');
+                throw new Error('Bitte nur PDF-Dateien hochladen');
             }
 
             if (file.size > 10 * 1024 * 1024) {
@@ -528,7 +875,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             // Speichere extrahierten Text
-            if (event.target.id === 'resumeUpload') {
+            if (input.id === 'resumeUpload') {
                 window.resumeText = text;
                 
                 // UI aktualisieren
@@ -549,30 +896,27 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 showSuccess('Lebenslauf erfolgreich verarbeitet');
                 
-                // Analyse-Button Status sofort aktualisieren
-                const jobPostingFilled = elements.jobPosting.value.trim().length > 0;
-                elements.analyzeBtn.disabled = !jobPostingFilled;
-                
-                if (!elements.analyzeBtn.disabled) {
-                    elements.analyzeBtn.classList.add('btn-primary');
-                    elements.analyzeBtn.classList.remove('btn-secondary');
-                }
+                // Analyse-Button Status aktualisieren
+                checkRequiredUploads();
             }
             
         } catch (error) {
             console.error('Error processing file:', error);
             showError(error.message || 'Fehler beim Verarbeiten der Datei');
-            event.target.value = '';
             
-            // UI zurücksetzen
+            // Input und UI zurücksetzen
+            input.value = '';
             uploadArea.style.display = 'block';
             preview.style.display = 'none';
             preview.classList.add('d-none');
             
-            // Gespeicherten Text löschen bei Fehler
-            if (event.target.id === 'resumeUpload') {
+            // Gespeicherten Text löschen
+            if (input.id === 'resumeUpload') {
                 window.resumeText = null;
             }
+            
+            // Button-Status aktualisieren
+            checkRequiredUploads();
         } finally {
             hideLoading(preview);
         }
@@ -742,72 +1086,72 @@ document.addEventListener('DOMContentLoaded', function() {
     // ===== Datei-Upload-Funktionen =====
     function initializeFileUpload() {
         const uploadAreas = document.querySelectorAll('.upload-area');
-        const fileInputs = document.querySelectorAll('input[type="file"]');
         
         uploadAreas.forEach(area => {
-            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-                area.addEventListener(eventName, preventDefaults, false);
-            });
-
-            function preventDefaults(e) {
-                e.preventDefault();
+            const input = area.querySelector('input[type="file"]');
+            const container = area.closest('.upload-container');
+            const preview = container.querySelector('.file-preview');
+            
+            // Drag & Drop Events
+            area.addEventListener('dragenter', handleDragEnter);
+            area.addEventListener('dragover', handleDragOver);
+            area.addEventListener('dragleave', handleDragLeave);
+            area.addEventListener('drop', handleDrop);
+            
+            // Click Events
+            area.addEventListener('click', () => input.click());
+            
+            // File Input Change Event
+            input.addEventListener('change', (e) => {
                 e.stopPropagation();
+                handleFileUpload(e);
+            });
+            
+            // Remove Button in Preview
+            const removeBtn = preview.querySelector('.btn-close');
+            if (removeBtn) {
+                removeBtn.addEventListener('click', () => handleFileRemove(input.id));
             }
-
-            // Visuelles Feedback während Drag
-            ['dragenter', 'dragover'].forEach(eventName => {
-                area.addEventListener(eventName, () => {
-                    area.classList.add('drag-over');
-                });
-            });
-
-            ['dragleave', 'drop'].forEach(eventName => {
-                area.addEventListener(eventName, () => {
-                    area.classList.remove('drag-over');
-                });
-            });
-
-            // Handle Drop
-            area.addEventListener('drop', (e) => {
-                const input = area.querySelector('input[type="file"]');
-                const dt = e.dataTransfer;
-                const files = dt.files;
-
-                if (files.length > 0) {
-                    input.files = files;
-                    handleFileUpload({ target: input });
-                }
-            });
-
-            // Click-Handler nur für Label, nicht für den gesamten Bereich
-            const label = area.querySelector('.upload-label');
-            if (label) {
-                label.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    const input = area.querySelector('input[type="file"]');
-                    if (input) {
-                        input.click();
-                    }
-                });
-            }
-        });
-
-        // Datei-Input Event-Handler
-        fileInputs.forEach(input => {
-            input.addEventListener('change', handleFileUpload);
-            // Verhindere Klick-Propagation
-            input.addEventListener('click', (e) => {
-                e.stopPropagation();
-            });
         });
     }
 
-    function handleFileRemove(event) {
-        const preview = event.target.closest('.file-preview');
-        const container = preview.closest('.upload-container');
+    function handleDragEnter(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        this.classList.add('drag-over');
+    }
+
+    function handleDragOver(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        this.classList.add('drag-over');
+    }
+
+    function handleDragLeave(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        this.classList.remove('drag-over');
+    }
+
+    function handleDrop(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        this.classList.remove('drag-over');
+        
+        const input = this.querySelector('input[type="file"]');
+        const files = e.dataTransfer.files;
+        
+        if (files.length > 0) {
+            input.files = files;
+            handleFileUpload({ target: input });
+        }
+    }
+
+    function handleFileRemove(inputId) {
+        const input = document.getElementById(inputId);
+        const container = input.closest('.upload-container');
         const uploadArea = container.querySelector('.upload-area');
-        const input = uploadArea.querySelector('input[type="file"]');
+        const preview = container.querySelector('.file-preview');
         
         // Animation für das Entfernen
         preview.style.opacity = '0';
@@ -818,14 +1162,11 @@ document.addEventListener('DOMContentLoaded', function() {
             // Gespeicherten Text löschen
             if (input.id === 'resumeUpload') {
                 window.resumeText = null;
-            } else if (input.id === 'coverLetterUpload') {
-                window.coverLetterText = null;
             }
             
             // UI zurücksetzen
             preview.style.opacity = '1';
             preview.classList.add('d-none');
-            uploadArea.classList.remove('d-none');
             uploadArea.style.display = 'block';
             
             // Button-Status aktualisieren
@@ -855,6 +1196,55 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
             elements.analyzeBtn.classList.add('btn-primary');
             elements.analyzeBtn.classList.remove('btn-secondary');
+        }
+    }
+
+    // ===== Hauptfunktion für die Analyse =====
+    async function handleAnalyze() {
+        try {
+            // Eingaben validieren
+            if (!validateInputs()) {
+                return;
+            }
+
+            // Analyse-Button deaktivieren und Ladeanimation anzeigen
+            const analyzeBtn = elements.analyzeBtn;
+            showLoading(analyzeBtn, 'Analysiere...');
+
+            // Stellenanzeige analysieren
+            const jobPosting = elements.jobPosting.value;
+            const jobAnalysis = await analyzeJobPosting(jobPosting);
+
+            // Lebenslauf analysieren
+            const resumeAnalysis = await analyzeResume(window.resumeText);
+
+            // Analyseergebnisse anzeigen
+            displayAnalysis(jobAnalysis);
+
+            // Vorschläge generieren
+            const suggestions = await generateSectionSuggestions('all', {
+                job: jobAnalysis,
+                resume: resumeAnalysis
+            });
+
+            // Vorschläge anwenden
+            applySuggestions(suggestions);
+
+            // Vorschau aktualisieren
+            updatePreview();
+
+            // Fortschritt aktualisieren
+            updateProgressStep(3);
+
+            // Erfolgsmeldung anzeigen
+            showSuccess('Analyse erfolgreich abgeschlossen');
+
+        } catch (error) {
+            console.error('Analysis error:', error);
+            showError(error.message || 'Fehler bei der Analyse');
+        } finally {
+            // Analyse-Button wieder aktivieren und Ladeanimation entfernen
+            hideLoading(elements.analyzeBtn, 'Analysieren und Anschreiben erstellen');
         }
     }
 
