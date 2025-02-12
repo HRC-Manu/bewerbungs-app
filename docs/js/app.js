@@ -77,9 +77,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 await extractTextFromPDF(elements.resumeUpload.files[0]) : '';
 
             const analysis = await analyzeJobPosting(jobPosting);
-            const coverLetter = await generateFullCoverLetter(analysis, resumeText);
+            const suggestions = await generateSectionSuggestions('all', analysis);
             
-            applySectionsToForm(coverLetter);
+            // Vorschläge in die Formularfelder einfügen
+            suggestions.forEach(suggestion => {
+                if (suggestion.section && elements.coverLetterSections[suggestion.section]) {
+                    elements.coverLetterSections[suggestion.section].value = suggestion.text;
+                }
+            });
+            
+            // Vorschau aktualisieren
+            updatePreview();
             showSuccess('Anschreiben erfolgreich generiert!');
         } catch (error) {
             showError('Fehler bei der Generierung: ' + error.message);
@@ -376,6 +384,86 @@ document.addEventListener('DOMContentLoaded', function() {
         toast.show();
     }
 
+    // ===== Validierung =====
+    function validateInputs() {
+        const jobPosting = elements.jobPosting.value.trim();
+        if (!jobPosting) {
+            showError('Bitte fügen Sie eine Stellenanzeige ein');
+            return false;
+        }
+        return true;
+    }
+
+    // ===== Vorschau-Funktionen =====
+    function updatePreview() {
+        const sections = elements.coverLetterSections;
+        let preview = '';
+        
+        // Anrede
+        if (sections.recipient.value) {
+            preview += `<p>${sections.recipient.value}</p>`;
+        }
+        
+        // Betreff
+        if (sections.subject.value) {
+            preview += `<p><strong>${sections.subject.value}</strong></p>`;
+        }
+        
+        // Einleitung
+        if (sections.introduction.value) {
+            preview += `<p>${sections.introduction.value}</p>`;
+        }
+        
+        // Hauptteil
+        if (sections.main.value) {
+            const paragraphs = sections.main.value.split('\n').filter(p => p.trim());
+            paragraphs.forEach(paragraph => {
+                preview += `<p>${paragraph}</p>`;
+            });
+        }
+        
+        // Abschluss
+        if (sections.closing.value) {
+            preview += `<p>${sections.closing.value}</p>`;
+        }
+        
+        // Grußformel
+        preview += `<p class="mt-4">Mit freundlichen Grüßen<br>[Ihr Name]</p>`;
+        
+        elements.coverLetterPreview.innerHTML = preview || 'Hier erscheint die Vorschau...';
+    }
+
+    function displaySuggestions(suggestions) {
+        const suggestionsList = document.getElementById('suggestionsList');
+        suggestionsList.innerHTML = '';
+        
+        suggestions.forEach((suggestion, index) => {
+            const button = document.createElement('button');
+            button.className = 'list-group-item list-group-item-action';
+            button.innerHTML = suggestion.text.replace(/\n/g, '<br>');
+            button.onclick = () => applySuggestion(suggestion);
+            suggestionsList.appendChild(button);
+        });
+        
+        elements.suggestionsModal.show();
+    }
+
+    function applySuggestion(suggestion) {
+        if (suggestion.section && elements.coverLetterSections[suggestion.section]) {
+            elements.coverLetterSections[suggestion.section].value = suggestion.text;
+            updatePreview();
+        }
+        elements.suggestionsModal.hide();
+    }
+
+    // ===== Event Listener für Textänderungen =====
+    function initializeTextareaListeners() {
+        Object.values(elements.coverLetterSections).forEach(textarea => {
+            textarea.addEventListener('input', updatePreview);
+        });
+    }
+
     // ===== Initialisierung =====
     initializeEventListeners();
+    initializeTextareaListeners();
 }); 
