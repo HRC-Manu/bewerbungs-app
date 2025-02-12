@@ -86,22 +86,39 @@ Qualifications:
         }
 
         showLoading(generateBtn, 'Generiere Dokumente...');
+        console.log('Generiere Dokumente...');
 
         try {
-            // Hier würde normalerweise die GitHub Action aufgerufen werden
-            // Für den Test generieren wir Beispiel-Dokumente
-            setTimeout(() => {
-                updatePreviews({
-                    coverLetter: coverLetterText.value || generateExampleCoverLetter(),
-                    resume: generateExampleResume()
-                });
-                showSuccess('Dokumente erfolgreich generiert!');
-                hideLoading(generateBtn, 'Generieren');
-            }, 2000);
+            // Für den Test generieren wir direkt die Vorschau
+            let coverLetterContent = '';
+            if (coverLetterText.value.trim()) {
+                coverLetterContent = coverLetterText.value;
+            } else if (coverLetterUpload.files[0]) {
+                coverLetterContent = 'PDF Anschreiben hochgeladen: ' + coverLetterUpload.files[0].name;
+            } else {
+                coverLetterContent = generateExampleCoverLetter();
+            }
+
+            let resumeContent = '';
+            if (resumeUpload.files[0]) {
+                resumeContent = 'PDF Lebenslauf hochgeladen: ' + resumeUpload.files[0].name + '\n\n' + generateExampleResume();
+            } else {
+                resumeContent = generateExampleResume();
+            }
+
+            // Aktualisiere die Vorschau
+            updatePreviews({
+                coverLetter: coverLetterContent,
+                resume: resumeContent
+            });
+
+            showSuccess('Dokumente erfolgreich generiert!');
+            console.log('Dokumente erfolgreich generiert');
 
         } catch (error) {
             showError('Fehler bei der Dokumentengenerierung: ' + error.message);
             console.error('Generation error:', error);
+        } finally {
             hideLoading(generateBtn, 'Generieren');
         }
     }
@@ -174,8 +191,19 @@ Qualifications:
 
     // Update preview sections with generated content
     function updatePreviews(data) {
-        coverLetterPreview.innerHTML = data.coverLetter.replace(/\n/g, '<br>');
-        resumePreview.innerHTML = data.resume.replace(/\n/g, '<br>');
+        console.log('Aktualisiere Vorschau:', data);
+        
+        // Formatiere den Text mit HTML-Zeilenumbrüchen
+        const formatText = (text) => {
+            return text
+                .replace(/\n\n/g, '</p><p>')  // Doppelte Zeilenumbrüche als neue Absätze
+                .replace(/\n/g, '<br>')       // Einzelne Zeilenumbrüche als <br>
+                .replace(/•/g, '&#8226;');    // Aufzählungspunkte korrekt darstellen
+        };
+
+        // Aktualisiere die Vorschau-Bereiche
+        coverLetterPreview.innerHTML = `<p>${formatText(data.coverLetter)}</p>`;
+        resumePreview.innerHTML = `<p>${formatText(data.resume)}</p>`;
     }
 
     // Generate example cover letter
@@ -236,4 +264,4 @@ HR Consultant | Accenture GmbH
         bsToast.show();
         console.error(message);
     }
-});
+}); 
