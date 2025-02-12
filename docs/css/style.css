@@ -183,6 +183,7 @@ textarea.form-control {
 .file-preview .alert {
     margin-bottom: 0;
     padding: 0.5rem 1rem;
+    cursor: pointer;
 }
 
 .file-preview .file-name {
@@ -192,6 +193,26 @@ textarea.form-control {
 
 .file-preview .btn-close {
     font-size: 0.8rem;
+}
+
+/* Mini Preview Modal */
+.mini-preview {
+    max-height: 300px;
+    overflow-y: auto;
+    background: white;
+    padding: 1rem;
+    border-radius: 6px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.mini-preview canvas {
+    width: 100%;
+    height: auto;
+}
+
+.preview-modal .modal-body {
+    max-height: 70vh;
+    overflow-y: auto;
 }
 
 /* Loading spinner */
