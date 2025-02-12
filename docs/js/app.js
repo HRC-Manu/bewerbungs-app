@@ -69,7 +69,11 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     function getApiKey() {
-        return API_SETTINGS.apiKey;
+        const apiKey = API_SETTINGS.apiKey;
+        if (!apiKey) {
+            throw new Error('Kein API-Schlüssel gefunden');
+        }
+        return apiKey;
     }
 
     // ===== Analyse-Funktionen =====
@@ -79,124 +83,159 @@ document.addEventListener('DOMContentLoaded', function() {
 
             showLoading(elements.analyzeBtn, 'Analysiere...');
             
+            // API Key prüfen
+            try {
+                getApiKey();
+            } catch (error) {
+                throw new Error('Bitte geben Sie einen gültigen API-Schlüssel ein');
+            }
+            
             const jobPosting = elements.jobPosting.value.trim();
             const resumeText = window.resumeText;
 
             // Fortschrittsanzeige aktualisieren
             updateProgressStep(2);
 
-            // Analyse der Stellenanzeige
-            const jobAnalysis = await analyzeJobPosting(jobPosting);
-            
-            // Analyse des Lebenslaufs
-            const resumeAnalysis = await analyzeResume(resumeText);
+            try {
+                // Analyse der Stellenanzeige
+                const jobAnalysis = await analyzeJobPosting(jobPosting);
+                
+                // Analyse des Lebenslaufs
+                const resumeAnalysis = await analyzeResume(resumeText);
 
-            // Analyse-Ergebnisse anzeigen
-            displayAnalysis(jobAnalysis);
-            
-            // Vorschläge generieren
-            const suggestions = await generateSectionSuggestions('all', {
-                job: jobAnalysis,
-                resume: resumeAnalysis
-            });
-            
-            // Vorschläge in die Formularfelder einfügen
-            applySuggestions(suggestions);
-            
-            // Vorschau aktualisieren
-            updatePreview();
-            
-            // Fortschrittsanzeige aktualisieren
-            updateProgressStep(3);
-            
-            showSuccess('Analyse und Vorschläge erfolgreich erstellt!');
+                // Analyse-Ergebnisse anzeigen
+                displayAnalysis(jobAnalysis);
+                
+                // Vorschläge generieren
+                const suggestions = await generateSectionSuggestions('all', {
+                    job: jobAnalysis,
+                    resume: resumeAnalysis
+                });
+                
+                // Vorschläge in die Formularfelder einfügen
+                applySuggestions(suggestions);
+                
+                // Vorschau aktualisieren
+                updatePreview();
+                
+                // Fortschrittsanzeige aktualisieren
+                updateProgressStep(3);
+                
+                showSuccess('Analyse und Vorschläge erfolgreich erstellt!');
+            } catch (error) {
+                console.error('API error:', error);
+                if (error.message.includes('API Anfrage fehlgeschlagen')) {
+                    throw new Error('Die API-Anfrage ist fehlgeschlagen. Bitte überprüfen Sie Ihre Internetverbindung und den API-Schlüssel.');
+                } else {
+                    throw error;
+                }
+            }
             
         } catch (error) {
             console.error('Analysis error:', error);
-            showError('Analyse fehlgeschlagen: ' + error.message);
+            showError(error.message || 'Ein unerwarteter Fehler ist aufgetreten');
         } finally {
             hideLoading(elements.analyzeBtn, 'Analysieren und Anschreiben erstellen');
         }
     }
 
-    async function analyzeJobPosting(jobPosting) {
+    async function makeApiRequest(endpoint, payload) {
         try {
-            const response = await fetch('https://api.openai.com/v1/chat/completions', {
+            const response = await fetch(endpoint, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${getApiKey()}`
                 },
-                body: JSON.stringify({
-                    model: "gpt-4",
-                    messages: [{
-                        role: "system",
-                        content: "Du bist ein Experte für Bewerbungsanalyse und Karriereberatung."
-                    }, {
-                        role: "user",
-                        content: `Analysiere diese Stellenanzeige detailliert und extrahiere alle relevanten Informationen:
-                        
-                        ${jobPosting}
-                        
-                        Liefere eine strukturierte Analyse im folgenden JSON-Format:
-                        {
-                            "jobTitle": {
-                                "position": "Titel der Position",
-                                "level": "Junior/Senior/Lead",
-                                "department": "Abteilung"
-                            },
-                            "company": {
-                                "name": "Firmenname",
-                                "industry": "Branche",
-                                "size": "Unternehmensgröße",
-                                "culture": "Unternehmenskultur",
-                                "values": ["Wert 1", "Wert 2"],
-                                "benefits": ["Benefit 1", "Benefit 2"]
-                            },
-                            "requirements": {
-                                "mustHave": {
-                                    "hardSkills": ["Skill 1", "Skill 2"],
-                                    "softSkills": ["Skill 1", "Skill 2"],
-                                    "experience": ["Erfahrung 1", "Erfahrung 2"],
-                                    "education": ["Ausbildung 1", "Ausbildung 2"]
-                                },
-                                "niceToHave": {
-                                    "hardSkills": ["Skill 1", "Skill 2"],
-                                    "softSkills": ["Skill 1", "Skill 2"],
-                                    "experience": ["Erfahrung 1", "Erfahrung 2"],
-                                    "education": ["Ausbildung 1", "Ausbildung 2"]
-                                }
-                            },
-                            "responsibilities": ["Aufgabe 1", "Aufgabe 2"],
-                            "workingModel": {
-                                "type": "remote/hybrid/office",
-                                "location": "Arbeitsort",
-                                "hours": "Arbeitszeit"
-                            },
-                            "tone": "formal/casual",
-                            "teamInfo": {
-                                "size": "Teamgröße",
-                                "structure": "Teamstruktur"
-                            }
-                        }`
-                    }],
-                    temperature: 0.7
-                })
+                body: JSON.stringify(payload)
             });
 
             if (!response.ok) {
-                throw new Error('API Anfrage fehlgeschlagen');
+                const errorData = await response.json().catch(() => ({}));
+                if (errorData.error) {
+                    throw new Error(errorData.error.message);
+                }
+                throw new Error(`HTTP error! status: ${response.status}`);
             }
 
             const data = await response.json();
-            if (data.error) {
-                throw new Error(data.error.message);
+            return data;
+        } catch (error) {
+            console.error('API request failed:', error);
+            if (error.message.includes('401')) {
+                throw new Error('Ungültiger API-Schlüssel. Bitte überprüfen Sie Ihre Einstellungen.');
+            } else if (error.message.includes('429')) {
+                throw new Error('Zu viele Anfragen. Bitte warten Sie einen Moment.');
+            } else if (error.message.includes('500')) {
+                throw new Error('Ein Serverfehler ist aufgetreten. Bitte versuchen Sie es später erneut.');
             }
+            throw new Error('API Anfrage fehlgeschlagen: ' + error.message);
+        }
+    }
 
+    async function analyzeJobPosting(jobPosting) {
+        try {
+            const payload = {
+                model: "gpt-4",
+                messages: [{
+                    role: "system",
+                    content: "Du bist ein Experte für Bewerbungsanalyse und Karriereberatung."
+                }, {
+                    role: "user",
+                    content: `Analysiere diese Stellenanzeige detailliert und extrahiere alle relevanten Informationen:
+                    
+                    ${jobPosting}
+                    
+                    Liefere eine strukturierte Analyse im folgenden JSON-Format:
+                    {
+                        "jobTitle": {
+                            "position": "Titel der Position",
+                            "level": "Junior/Senior/Lead",
+                            "department": "Abteilung"
+                        },
+                        "company": {
+                            "name": "Firmenname",
+                            "industry": "Branche",
+                            "size": "Unternehmensgröße",
+                            "culture": "Unternehmenskultur",
+                            "values": ["Wert 1", "Wert 2"],
+                            "benefits": ["Benefit 1", "Benefit 2"]
+                        },
+                        "requirements": {
+                            "mustHave": {
+                                "hardSkills": ["Skill 1", "Skill 2"],
+                                "softSkills": ["Skill 1", "Skill 2"],
+                                "experience": ["Erfahrung 1", "Erfahrung 2"],
+                                "education": ["Ausbildung 1", "Ausbildung 2"]
+                            },
+                            "niceToHave": {
+                                "hardSkills": ["Skill 1", "Skill 2"],
+                                "softSkills": ["Skill 1", "Skill 2"],
+                                "experience": ["Erfahrung 1", "Erfahrung 2"],
+                                "education": ["Ausbildung 1", "Ausbildung 2"]
+                            }
+                        },
+                        "responsibilities": ["Aufgabe 1", "Aufgabe 2"],
+                        "workingModel": {
+                            "type": "remote/hybrid/office",
+                            "location": "Arbeitsort",
+                            "hours": "Arbeitszeit"
+                        },
+                        "tone": "formal/casual",
+                        "teamInfo": {
+                            "size": "Teamgröße",
+                            "structure": "Teamstruktur"
+                        }
+                    }`
+                }],
+                temperature: 0.7
+            };
+
+            const data = await makeApiRequest('https://api.openai.com/v1/chat/completions', payload);
             return JSON.parse(data.choices[0].message.content);
         } catch (error) {
-            console.error('Fehler bei der Analyse:', error);
-            throw new Error('Analyse fehlgeschlagen: ' + error.message);
+            console.error('Job posting analysis failed:', error);
+            throw error;
         }
     }
 
