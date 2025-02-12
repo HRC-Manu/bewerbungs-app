@@ -25,6 +25,16 @@ body {
     padding: 1.5rem;
 }
 
+/* Upload section specific styles */
+.card-body .mb-3:last-child {
+    margin-bottom: 0 !important;
+}
+
+.form-label {
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+}
+
 .form-control {
     border: 1px solid #ced4da;
     border-radius: 6px;
@@ -37,7 +47,8 @@ body {
 
 .form-control-lg {
     font-size: 1rem;
-    padding: 1rem;
+    padding: 0.8rem;
+    margin-bottom: 0.5rem;
 }
 
 textarea.form-control {
