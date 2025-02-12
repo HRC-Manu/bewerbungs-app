@@ -311,12 +311,12 @@ Qualifications:
         };
 
         if (section === 'all') {
-            Object.keys(prompts).forEach(key => {
-                suggestions.push({
-                    section: key,
-                    text: prompts[key][Math.floor(Math.random() * prompts[key].length)]
-                });
-            });
+            const allSuggestions = [];
+            for (const sec of ['recipient', 'subject', 'introduction', 'main', 'closing']) {
+                const secSuggestions = await generateSuggestionsForSection(sec);
+                allSuggestions.push(secSuggestions[0]); // Take first suggestion of each section
+            }
+            return allSuggestions;
         } else {
             for (let i = 0; i < 3; i++) {
                 suggestions.push({
@@ -783,8 +783,105 @@ HR Consultant | Accenture GmbH
             // Analyze with ChatGPT
             const analysis = await analyzeWithChatGPT(jobPosting, resumeText);
             
-            // Generate suggestions
-            const suggestions = await generateCoverLetterSuggestions(section, jobPosting, analysis);
+            // Generate suggestions based on analysis
+            const suggestions = [];
+            const jobTitle = analysis.jobTitle;
+            const companyName = analysis.companyInfo.name || 'das Unternehmen';
+            const skills = analysis.matchingSkills || [];
+            const requirements = analysis.keyRequirements || [];
+            
+            switch(section) {
+                case 'recipient':
+                    suggestions.push({
+                        section: 'recipient',
+                        text: `Sehr geehrte Damen und Herren,`
+                    });
+                    if (analysis.companyInfo.name) {
+                        suggestions.push({
+                            section: 'recipient',
+                            text: `Sehr geehrte Frau [Name],\nSehr geehrter Herr [Name],`
+                        });
+                    }
+                    break;
+                    
+                case 'subject':
+                    suggestions.push({
+                        section: 'subject',
+                        text: `Bewerbung als ${jobTitle}`
+                    });
+                    suggestions.push({
+                        section: 'subject',
+                        text: `Bewerbung für die Position als ${jobTitle} - Referenz: [Jobcode]`
+                    });
+                    suggestions.push({
+                        section: 'subject',
+                        text: `Ihre Stellenanzeige: ${jobTitle} vom [Datum]`
+                    });
+                    break;
+                    
+                case 'introduction':
+                    suggestions.push({
+                        section: 'introduction',
+                        text: `mit großem Interesse habe ich Ihre Stellenanzeige für die Position als ${jobTitle} bei ${companyName} gelesen und bewerbe mich hiermit um diese spannende Aufgabe.`
+                    });
+                    suggestions.push({
+                        section: 'introduction',
+                        text: `Ihre ausgeschriebene Stelle als ${jobTitle} hat sofort mein Interesse geweckt, da sie perfekt zu meinem Profil passt.`
+                    });
+                    suggestions.push({
+                        section: 'introduction',
+                        text: `auf der Suche nach einer neuen beruflichen Herausforderung bin ich auf Ihre Stellenanzeige als ${jobTitle} gestoßen und möchte mich hiermit bewerben.`
+                    });
+                    break;
+                    
+                case 'main':
+                    const skillsText = skills.length > 0 ? 
+                        `Meine Erfahrungen in ${skills.join(', ')} passen optimal zu Ihren Anforderungen.` :
+                        'Meine bisherigen Erfahrungen passen optimal zu Ihren Anforderungen.';
+                    
+                    const requirementsText = requirements.length > 0 ?
+                        `Die von Ihnen gewünschten Qualifikationen wie ${requirements.slice(0, 3).join(', ')} bringe ich bereits mit.` :
+                        'Die gewünschten Qualifikationen bringe ich bereits mit.';
+                    
+                    suggestions.push({
+                        section: 'main',
+                        text: `${skillsText} ${requirementsText} ${analysis.companyInfo.culture || ''}`
+                    });
+                    suggestions.push({
+                        section: 'main',
+                        text: `Was mich besonders an der Position reizt, ist die Möglichkeit ${skills[0] || 'meine Fähigkeiten'} bei ${companyName} einzubringen und weiterzuentwickeln. ${requirementsText}`
+                    });
+                    suggestions.push({
+                        section: 'main',
+                        text: `In meiner bisherigen Laufbahn konnte ich bereits umfangreiche Erfahrungen in ${skills.slice(0, 2).join(' und ') || 'relevanten Bereichen'} sammeln. Diese Expertise möchte ich nun gerne bei ${companyName} einbringen.`
+                    });
+                    break;
+                    
+                case 'closing':
+                    suggestions.push({
+                        section: 'closing',
+                        text: `Über die Möglichkeit eines persönlichen Gesprächs freue ich mich sehr.`
+                    });
+                    suggestions.push({
+                        section: 'closing',
+                        text: `Gerne stelle ich Ihnen meine Qualifikationen in einem persönlichen Gespräch vor.`
+                    });
+                    suggestions.push({
+                        section: 'closing',
+                        text: `Ich freue mich darauf, Sie in einem persönlichen Gespräch von meiner Eignung zu überzeugen.`
+                    });
+                    break;
+                    
+                case 'all':
+                    // Generate suggestions for all sections recursively
+                    const allSuggestions = [];
+                    for (const sec of ['recipient', 'subject', 'introduction', 'main', 'closing']) {
+                        const secSuggestions = await generateSuggestionsForSection(sec);
+                        allSuggestions.push(secSuggestions[0]); // Take first suggestion of each section
+                    }
+                    return allSuggestions;
+            }
+            
             displaySuggestions(suggestions);
             
         } catch (error) {
@@ -809,7 +906,7 @@ HR Consultant | Accenture GmbH
         suggestions.forEach((suggestion, index) => {
             const button = document.createElement('button');
             button.className = 'list-group-item list-group-item-action';
-            button.innerHTML = suggestion.text;
+            button.innerHTML = suggestion.text.replace(/\n/g, '<br>');
             button.onclick = () => applySuggestion(index);
             suggestionsList.appendChild(button);
         });
@@ -820,6 +917,8 @@ HR Consultant | Accenture GmbH
     // Apply selected suggestion
     function applySuggestion(index) {
         const suggestion = currentSuggestions[index];
+        if (!suggestion) return;
+
         if (suggestion.section === 'all') {
             // Apply complete cover letter
             Object.keys(coverLetterSections).forEach(section => {
@@ -830,7 +929,10 @@ HR Consultant | Accenture GmbH
             });
         } else {
             // Apply specific section
-            coverLetterSections[suggestion.section].value = suggestion.text;
+            const targetSection = coverLetterSections[suggestion.section];
+            if (targetSection) {
+                targetSection.value = suggestion.text;
+            }
         }
         
         updateCoverLetterPreview();
