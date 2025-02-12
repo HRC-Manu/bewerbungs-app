@@ -774,7 +774,17 @@ HR Consultant | Accenture GmbH
                 return;
             }
 
-            const suggestions = await generateCoverLetterSuggestions(section, jobPosting);
+            // Extract text from resume if available
+            let resumeText = '';
+            if (resumeUpload.files[0]) {
+                resumeText = await extractTextFromPDF(resumeUpload.files[0]);
+            }
+
+            // Analyze with ChatGPT
+            const analysis = await analyzeWithChatGPT(jobPosting, resumeText);
+            
+            // Generate suggestions
+            const suggestions = await generateCoverLetterSuggestions(section, jobPosting, analysis);
             displaySuggestions(suggestions);
             
         } catch (error) {
@@ -829,21 +839,83 @@ HR Consultant | Accenture GmbH
 
     // Update cover letter preview
     function updateCoverLetterPreview() {
-        const coverLetter = [
-            coverLetterSections.recipient.value,
-            '',
-            coverLetterSections.subject.value,
-            '',
-            coverLetterSections.introduction.value,
-            '',
-            coverLetterSections.main.value,
-            '',
-            coverLetterSections.closing.value,
-            '',
-            'Mit freundlichen Grüßen',
-            '[Ihr Name]'
-        ].join('\n');
+        const sections = {
+            recipient: coverLetterSections.recipient.value,
+            subject: coverLetterSections.subject.value,
+            introduction: coverLetterSections.introduction.value,
+            main: coverLetterSections.main.value,
+            closing: coverLetterSections.closing.value
+        };
 
-        coverLetterPreview.innerHTML = `<p>${formatText(coverLetter)}</p>`;
+        let preview = '';
+        if (sections.recipient) preview += `<p class="mb-4">${sections.recipient}</p>`;
+        if (sections.subject) preview += `<p class="mb-4"><strong>${sections.subject}</strong></p>`;
+        if (sections.introduction) preview += `<p class="mb-3">${sections.introduction}</p>`;
+        if (sections.main) preview += `<p class="mb-3">${sections.main}</p>`;
+        if (sections.closing) preview += `<p class="mb-3">${sections.closing}</p>`;
+        if (preview) preview += `<p class="mt-4">Mit freundlichen Grüßen<br>[Ihr Name]</p>`;
+
+        coverLetterPreview.innerHTML = preview || 'Hier erscheint die Vorschau des Anschreibens...';
     }
+
+    // DOM Elements
+    const filePreviewModal = new bootstrap.Modal(document.getElementById('filePreviewModal'));
+    const filePreviewContent = document.getElementById('filePreviewContent');
+
+    // Add click handlers for file previews
+    coverLetterFilePreview.querySelector('.alert').addEventListener('click', (e) => {
+        if (!e.target.classList.contains('btn-close')) {
+            showFilePreview(coverLetterUpload.files[0], 'Anschreiben');
+        }
+    });
+
+    resumeFilePreview.querySelector('.alert').addEventListener('click', (e) => {
+        if (!e.target.classList.contains('btn-close')) {
+            showFilePreview(resumeUpload.files[0], 'Lebenslauf');
+        }
+    });
+
+    // Show file preview in modal
+    async function showFilePreview(file, title) {
+        if (!file) return;
+        
+        filePreviewModal._element.querySelector('.modal-title').textContent = title;
+        filePreviewContent.innerHTML = '<div class="text-center"><div class="spinner-border"></div></div>';
+        filePreviewModal.show();
+        
+        try {
+            const arrayBuffer = await file.arrayBuffer();
+            const pdf = await pdfjsLib.getDocument({data: arrayBuffer}).promise;
+            filePreviewContent.innerHTML = '';
+            
+            // Render all pages
+            for (let i = 1; i <= pdf.numPages; i++) {
+                const page = await pdf.getPage(i);
+                const viewport = page.getViewport({scale: 1.5});
+                
+                const canvas = document.createElement('canvas');
+                const context = canvas.getContext('2d');
+                canvas.height = viewport.height;
+                canvas.width = viewport.width;
+                
+                await page.render({
+                    canvasContext: context,
+                    viewport: viewport
+                }).promise;
+                
+                filePreviewContent.appendChild(canvas);
+                if (i < pdf.numPages) {
+                    filePreviewContent.appendChild(document.createElement('hr'));
+                }
+            }
+        } catch (error) {
+            console.error('Error previewing PDF:', error);
+            filePreviewContent.innerHTML = '<div class="alert alert-danger">Fehler beim Laden der Vorschau</div>';
+        }
+    }
+
+    // Update preview when any section changes
+    Object.values(coverLetterSections).forEach(section => {
+        section.addEventListener('input', updateCoverLetterPreview);
+    });
 }); 
