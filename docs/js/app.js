@@ -126,48 +126,216 @@ Qualifications:
         }
     }
 
-    // Handle generate button click
+    // Analyze documents and generate cover letter with ChatGPT
+    async function analyzeDocumentsAndGenerate() {
+        showLoading(generateBtn, 'Analysiere Dokumente...');
+        
+        try {
+            // Extract text from uploaded PDF resume
+            let resumeText = '';
+            if (resumeUpload.files[0]) {
+                resumeText = await extractTextFromPDF(resumeUpload.files[0]);
+            }
+
+            // Extract text from uploaded PDF cover letter if exists
+            let existingCoverLetter = '';
+            if (coverLetterUpload.files[0]) {
+                existingCoverLetter = await extractTextFromPDF(coverLetterUpload.files[0]);
+            }
+
+            // Get job posting text
+            const jobPosting = jobPostingTextarea.value.trim();
+            
+            // Analyze documents with ChatGPT
+            const analysis = await analyzeWithChatGPT(jobPosting, resumeText, existingCoverLetter);
+            
+            // Generate suggestions based on analysis
+            const suggestions = await generateCoverLetterSuggestions('all', jobPosting, analysis);
+            
+            // Display suggestions in modal
+            displaySuggestions(suggestions);
+            
+            showSuccess('Dokumente erfolgreich analysiert!');
+            
+        } catch (error) {
+            showError('Fehler bei der Analyse: ' + error.message);
+            console.error('Analysis error:', error);
+        } finally {
+            hideLoading(generateBtn, 'Generieren');
+        }
+    }
+
+    // Extract text from PDF using pdf.js
+    async function extractTextFromPDF(file) {
+        try {
+            const arrayBuffer = await file.arrayBuffer();
+            const pdf = await pdfjsLib.getDocument({data: arrayBuffer}).promise;
+            let fullText = '';
+            
+            // Extract text from all pages
+            for (let i = 1; i <= pdf.numPages; i++) {
+                const page = await pdf.getPage(i);
+                const textContent = await page.getTextContent();
+                const pageText = textContent.items.map(item => item.str).join(' ');
+                fullText += pageText + '\n\n';
+            }
+            
+            return fullText;
+            
+        } catch (error) {
+            console.error('Error extracting PDF text:', error);
+            throw new Error('PDF-Text konnte nicht extrahiert werden');
+        }
+    }
+
+    // Analyze documents with ChatGPT
+    async function analyzeWithChatGPT(jobPosting, resumeText, existingCoverLetter = '') {
+        // Simuliere ChatGPT API-Aufruf (später durch echte Integration ersetzen)
+        return {
+            jobTitle: extractJobTitle(jobPosting),
+            keyRequirements: extractKeyRequirements(jobPosting),
+            matchingSkills: findMatchingSkills(jobPosting, resumeText),
+            suggestedTone: determineTone(jobPosting),
+            companyInfo: extractCompanyInfo(jobPosting)
+        };
+    }
+
+    // Helper functions for analysis
+    function extractJobTitle(jobPosting) {
+        const titleMatch = jobPosting.match(/(?:position|stelle|role)\s+(?:als|as)\s+([^.\n]+)/i);
+        return titleMatch ? titleMatch[1].trim() : 'die ausgeschriebene Position';
+    }
+
+    function extractKeyRequirements(jobPosting) {
+        const requirements = [];
+        const reqSection = jobPosting.match(/(?:requirements|qualifications|anforderungen)[:]\s*((?:[^]*?)(?=\n\n|\n[A-Z]|$))/i);
+        
+        if (reqSection) {
+            const reqText = reqSection[1];
+            const bulletPoints = reqText.match(/[•-]\s*([^\n]+)/g);
+            if (bulletPoints) {
+                requirements.push(...bulletPoints.map(point => point.replace(/[•-]\s*/, '').trim()));
+            }
+        }
+        
+        return requirements;
+    }
+
+    function findMatchingSkills(jobPosting, resumeText) {
+        const skills = new Set();
+        const requirements = extractKeyRequirements(jobPosting);
+        
+        requirements.forEach(req => {
+            const skillWords = req.toLowerCase().match(/\b\w+\b/g) || [];
+            skillWords.forEach(skill => {
+                if (resumeText.toLowerCase().includes(skill)) {
+                    skills.add(skill);
+                }
+            });
+        });
+        
+        return Array.from(skills);
+    }
+
+    function determineTone(jobPosting) {
+        const formalIndicators = ['formal', 'professional', 'qualified', 'experienced'];
+        const casualIndicators = ['creative', 'dynamic', 'innovative', 'startup'];
+        
+        let formalCount = 0;
+        let casualCount = 0;
+        
+        const text = jobPosting.toLowerCase();
+        formalIndicators.forEach(word => {
+            if (text.includes(word)) formalCount++;
+        });
+        casualIndicators.forEach(word => {
+            if (text.includes(word)) casualCount++;
+        });
+        
+        return formalCount >= casualCount ? 'formal' : 'casual';
+    }
+
+    function extractCompanyInfo(jobPosting) {
+        const companyInfo = {
+            name: '',
+            culture: '',
+            values: []
+        };
+        
+        // Extract company name
+        const nameMatch = jobPosting.match(/(?:at|bei)\s+([A-Z][A-Za-z]*(?:\s+[A-Z][A-Za-z]*)*)/);
+        if (nameMatch) {
+            companyInfo.name = nameMatch[1];
+        }
+        
+        // Extract culture and values
+        const cultureSection = jobPosting.match(/(?:culture|kultur|values|werte)[^.]*\./i);
+        if (cultureSection) {
+            companyInfo.culture = cultureSection[0];
+        }
+        
+        return companyInfo;
+    }
+
+    // Generate suggestions using ChatGPT with analysis
+    async function generateCoverLetterSuggestions(section, jobPosting, analysis) {
+        const suggestions = [];
+        
+        // Customize prompts based on analysis
+        const prompts = {
+            recipient: [
+                "Sehr geehrte Damen und Herren,",
+                `Sehr geehrte Frau ${analysis?.companyInfo?.name || '[Name]'},`,
+                `Sehr geehrter Herr ${analysis?.companyInfo?.name || '[Name]'},`,
+            ],
+            subject: [
+                `Bewerbung als ${analysis?.jobTitle || '[Position]'} - Referenz: [Jobcode]`,
+                `Ihre Stellenanzeige: ${analysis?.jobTitle || '[Position]'} vom [Datum]`,
+                `Bewerbung für die Position als ${analysis?.jobTitle || '[Position]'}`,
+            ],
+            introduction: [
+                `mit großem Interesse habe ich Ihre Stellenanzeige für die Position als ${analysis?.jobTitle} gelesen und bewerbe mich um diese spannende Aufgabe.`,
+                `Ihre ausgeschriebene Stelle als ${analysis?.jobTitle} hat sofort mein Interesse geweckt, da sie perfekt zu meinem Profil passt.`,
+                `auf der Suche nach einer neuen beruflichen Herausforderung bin ich auf Ihre Stellenanzeige als ${analysis?.jobTitle} gestoßen und möchte mich hiermit bewerben.`,
+            ],
+            main: [
+                `Durch meine Erfahrung in ${analysis?.matchingSkills?.join(', ') || '[Bereiche]'} bringe ich ideale Voraussetzungen mit. ${analysis?.companyInfo?.culture || ''}`,
+                `Meine Stärken liegen besonders in ${analysis?.matchingSkills?.slice(0, 2).join(' und ') || '[Kompetenzen]'}. Diese konnte ich in meinen bisherigen Positionen erfolgreich einsetzen und weiterentwickeln.`,
+                `Was mich besonders an der Position reizt, ist die Möglichkeit, meine Erfahrungen in ${analysis?.matchingSkills?.[0] || '[Bereich]'} einzubringen und dabei in einem innovativen Umfeld zu arbeiten.`,
+            ],
+            closing: [
+                "Über die Möglichkeit eines persönlichen Gesprächs freue ich mich sehr.",
+                "Gerne stelle ich Ihnen meine Qualifikationen in einem persönlichen Gespräch vor.",
+                "Ich freue mich darauf, Sie in einem persönlichen Gespräch von meiner Eignung zu überzeugen.",
+            ],
+        };
+
+        if (section === 'all') {
+            Object.keys(prompts).forEach(key => {
+                suggestions.push({
+                    section: key,
+                    text: prompts[key][Math.floor(Math.random() * prompts[key].length)]
+                });
+            });
+        } else {
+            for (let i = 0; i < 3; i++) {
+                suggestions.push({
+                    section: section,
+                    text: prompts[section][i % prompts[section].length]
+                });
+            }
+        }
+
+        return suggestions;
+    }
+
+    // Update handle generate click to use new analysis
     async function handleGenerate() {
         if (!validateInputs()) {
             return;
         }
 
-        showLoading(generateBtn, 'Generiere Dokumente...');
-        console.log('Generiere Dokumente...');
-
-        try {
-            // Für den Test generieren wir direkt die Vorschau
-            let coverLetterContent = '';
-            if (coverLetterText.value.trim()) {
-                coverLetterContent = coverLetterText.value;
-            } else if (coverLetterUpload.files[0]) {
-                coverLetterContent = 'PDF Anschreiben hochgeladen: ' + coverLetterUpload.files[0].name;
-            } else {
-                coverLetterContent = generateExampleCoverLetter();
-            }
-
-            let resumeContent = '';
-            if (resumeUpload.files[0]) {
-                resumeContent = 'PDF Lebenslauf hochgeladen: ' + resumeUpload.files[0].name + '\n\n' + generateExampleResume();
-            } else {
-                resumeContent = generateExampleResume();
-            }
-
-            // Aktualisiere die Vorschau
-            updatePreviews({
-                coverLetter: coverLetterContent,
-                resume: resumeContent
-            });
-
-            showSuccess('Dokumente erfolgreich generiert!');
-            console.log('Dokumente erfolgreich generiert');
-
-        } catch (error) {
-            showError('Fehler bei der Dokumentengenerierung: ' + error.message);
-            console.error('Generation error:', error);
-        } finally {
-            hideLoading(generateBtn, 'Generieren');
-        }
+        await analyzeDocumentsAndGenerate();
     }
 
     // Validate user inputs with detailed feedback
@@ -549,58 +717,10 @@ HR Consultant | Accenture GmbH
         }
     }
 
-    // Generate suggestions using ChatGPT
-    async function generateCoverLetterSuggestions(section, jobPosting) {
-        // Simuliere API-Aufruf (später durch echte ChatGPT-Integration ersetzen)
-        const suggestions = [];
-        
-        const prompts = {
-            recipient: [
-                "Sehr geehrte Damen und Herren,",
-                "Sehr geehrte Frau [Name],",
-                "Sehr geehrter Herr [Name],",
-            ],
-            subject: [
-                "Bewerbung als [Position] - Referenz: [Jobcode]",
-                "Ihre Stellenanzeige: [Position] vom [Datum]",
-                "Bewerbung für die Position als [Position]",
-            ],
-            introduction: [
-                "mit großem Interesse habe ich Ihre Stellenanzeige gelesen und bewerbe mich um die ausgeschriebene Position.",
-                "Ihre ausgeschriebene Stelle als [Position] hat sofort mein Interesse geweckt.",
-                "auf der Suche nach einer neuen beruflichen Herausforderung bin ich auf Ihre Stellenanzeige gestoßen.",
-            ],
-            main: [
-                "Durch meine bisherige Tätigkeit als [Position] bei [Unternehmen] bringe ich bereits umfangreiche Erfahrung in [Bereich] mit.",
-                "Meine Stärken liegen besonders in [Kompetenz 1] und [Kompetenz 2]. Diese konnte ich in meiner aktuellen Position bei [Unternehmen] erfolgreich einsetzen.",
-                "Was mich besonders an der Position reizt, ist die Möglichkeit [Aspekt der Stelle]. Hier kann ich meine Erfahrungen in [Bereich] optimal einbringen.",
-            ],
-            closing: [
-                "Über die Möglichkeit eines persönlichen Gesprächs freue ich mich sehr.",
-                "Gerne stelle ich Ihnen meine Qualifikationen in einem persönlichen Gespräch vor.",
-                "Ich freue mich darauf, Sie in einem persönlichen Gespräch von meiner Eignung zu überzeugen.",
-            ],
-        };
-
-        if (section === 'all') {
-            // Generate complete cover letter
-            Object.keys(prompts).forEach(key => {
-                suggestions.push({
-                    section: key,
-                    text: prompts[key][Math.floor(Math.random() * prompts[key].length)]
-                });
-            });
-        } else {
-            // Generate suggestions for specific section
-            for (let i = 0; i < 3; i++) {
-                suggestions.push({
-                    section: section,
-                    text: prompts[section][i % prompts[section].length]
-                });
-            }
-        }
-
-        return suggestions;
+    // Generate more suggestions
+    function generateMoreSuggestions() {
+        // Implement logic to generate more suggestions
+        showError('Feature not implemented yet');
     }
 
     // Display suggestions in modal
@@ -657,11 +777,5 @@ HR Consultant | Accenture GmbH
         ].join('\n');
 
         coverLetterPreview.innerHTML = `<p>${formatText(coverLetter)}</p>`;
-    }
-
-    // Generate more suggestions
-    function generateMoreSuggestions() {
-        // Implement logic to generate more suggestions
-        showError('Feature not implemented yet');
     }
 }); 
