@@ -525,6 +525,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
+            // Prüfen ob der Lebenslauf bereits hochgeladen wurde
+            if (!window.resumeText) {
+                showError('Bitte laden Sie zuerst Ihren Lebenslauf hoch');
+                return;
+            }
+
             // Analyse-Button deaktivieren und Ladeanimation anzeigen
             const analyzeBtn = elements.analyzeBtn;
             showLoading(analyzeBtn, 'Analysiere...');
@@ -546,16 +552,20 @@ document.addEventListener('DOMContentLoaded', function() {
             });
 
             // Vorschläge anwenden
-            applySuggestions(suggestions);
+            if (suggestions && suggestions.length > 0) {
+                applySuggestions(suggestions);
 
-            // Vorschau aktualisieren
-            updatePreview();
+                // Vorschau aktualisieren
+                updatePreview();
 
-            // Fortschritt aktualisieren
-            updateProgressStep(3);
+                // Fortschritt aktualisieren
+                updateProgressStep(3);
 
-            // Erfolgsmeldung anzeigen
-            showSuccess('Analyse erfolgreich abgeschlossen');
+                // Erfolgsmeldung anzeigen
+                showSuccess('Analyse erfolgreich abgeschlossen');
+            } else {
+                throw new Error('Keine Vorschläge generiert');
+            }
 
         } catch (error) {
             console.error('Analysis error:', error);
@@ -591,39 +601,59 @@ document.addEventListener('DOMContentLoaded', function() {
             showLoading(preview, 'Verarbeite Datei...');
             
             // Text aus PDF extrahieren
-            const text = await extractTextFromPDF(file);
-            if (!text.trim()) {
-                throw new Error('Keine Textinhalte in der PDF-Datei gefunden');
-            }
-            
-            // Speichere extrahierten Text
-            if (input.id === 'resumeUpload') {
-                window.resumeText = text;
+            extractTextFromPDF(file).then(text => {
+                if (!text.trim()) {
+                    throw new Error('Keine Textinhalte in der PDF-Datei gefunden');
+                }
                 
-                // UI aktualisieren
-                uploadArea.style.display = 'none';
-                preview.classList.remove('d-none');
-                preview.style.display = 'block';
-                
-                // Dateinamen anzeigen
-                fileName.innerHTML = `
-                    <div class="d-flex align-items-center">
-                        <i class="bi bi-file-pdf me-2"></i>
-                        <div>
-                            <div class="fw-bold">${file.name}</div>
-                            <small class="text-muted">${formatFileSize(file.size)}</small>
+                // Speichere extrahierten Text
+                if (input.id === 'resumeUpload') {
+                    window.resumeText = text;
+                    
+                    // UI aktualisieren
+                    uploadArea.style.display = 'none';
+                    preview.classList.remove('d-none');
+                    preview.style.display = 'block';
+                    
+                    // Dateinamen anzeigen
+                    fileName.innerHTML = `
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-file-pdf me-2"></i>
+                            <div>
+                                <div class="fw-bold">${file.name}</div>
+                                <small class="text-muted">${formatFileSize(file.size)}</small>
+                            </div>
                         </div>
-                    </div>
-                `;
+                    `;
+                    
+                    showSuccess('Lebenslauf erfolgreich verarbeitet');
+                    
+                    // Analyse-Button Status aktualisieren
+                    checkRequiredUploads();
+                }
+            }).catch(error => {
+                console.error('Error processing file:', error);
+                showError(error.message || 'Fehler beim Verarbeiten der Datei');
                 
-                showSuccess('Lebenslauf erfolgreich verarbeitet');
+                // Input und UI zurücksetzen
+                input.value = '';
+                uploadArea.style.display = 'block';
+                preview.style.display = 'none';
+                preview.classList.add('d-none');
                 
-                // Analyse-Button Status aktualisieren
+                // Gespeicherten Text löschen
+                if (input.id === 'resumeUpload') {
+                    window.resumeText = null;
+                }
+                
+                // Button-Status aktualisieren
                 checkRequiredUploads();
-            }
+            }).finally(() => {
+                hideLoading(preview);
+            });
             
         } catch (error) {
-            console.error('Error processing file:', error);
+            console.error('Error handling file:', error);
             showError(error.message || 'Fehler beim Verarbeiten der Datei');
             
             // Input und UI zurücksetzen
@@ -639,7 +669,6 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Button-Status aktualisieren
             checkRequiredUploads();
-        } finally {
             hideLoading(preview);
         }
     }
@@ -918,55 +947,6 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
             elements.analyzeBtn.classList.add('btn-primary');
             elements.analyzeBtn.classList.remove('btn-secondary');
-        }
-    }
-
-    // ===== Hauptfunktion für die Analyse =====
-    async function handleAnalyze() {
-        try {
-            // Eingaben validieren
-            if (!validateInputs()) {
-                return;
-            }
-
-            // Analyse-Button deaktivieren und Ladeanimation anzeigen
-            const analyzeBtn = elements.analyzeBtn;
-            showLoading(analyzeBtn, 'Analysiere...');
-
-            // Stellenanzeige analysieren
-            const jobPosting = elements.jobPosting.value;
-            const jobAnalysis = await analyzeJobPosting(jobPosting);
-
-            // Lebenslauf analysieren
-            const resumeAnalysis = await analyzeResume(window.resumeText);
-
-            // Analyseergebnisse anzeigen
-            displayAnalysis(jobAnalysis);
-
-            // Vorschläge generieren
-            const suggestions = await generateSectionSuggestions('all', {
-                job: jobAnalysis,
-                resume: resumeAnalysis
-            });
-
-            // Vorschläge anwenden
-            applySuggestions(suggestions);
-
-            // Vorschau aktualisieren
-            updatePreview();
-
-            // Fortschritt aktualisieren
-            updateProgressStep(3);
-
-            // Erfolgsmeldung anzeigen
-            showSuccess('Analyse erfolgreich abgeschlossen');
-
-        } catch (error) {
-            console.error('Analysis error:', error);
-            showError(error.message || 'Fehler bei der Analyse');
-        } finally {
-            // Analyse-Button wieder aktivieren und Ladeanimation entfernen
-            hideLoading(elements.analyzeBtn, 'Analysieren und Anschreiben erstellen');
         }
     }
 
