@@ -202,29 +202,68 @@ Qualifications:
 
     // Helper functions for analysis
     function extractJobTitle(jobPosting) {
-        const titleMatch = jobPosting.match(/(?:position|stelle|role)\s+(?:als|as)\s+([^.\n]+)/i);
-        return titleMatch ? titleMatch[1].trim() : 'die ausgeschriebene Position';
+        // Erweiterte Suche nach Jobtitel mit mehr Kontexten
+        const titlePatterns = [
+            /(?:position|stelle|role)\s+(?:als|as)\s+([^.\n]+)/i,
+            /^([^.\n]+)\s*(?:gesucht|wanted|position)/i,
+            /job:\s*([^.\n]+)/i,
+            /title:\s*([^.\n]+)/i
+        ];
+
+        for (const pattern of titlePatterns) {
+            const match = jobPosting.match(pattern);
+            if (match) {
+                return match[1].trim();
+            }
+        }
+
+        return 'die ausgeschriebene Position';
     }
 
     function extractKeyRequirements(jobPosting) {
+        const requirementSections = [
+            /(?:requirements|qualifications|anforderungen)[:]\s*((?:[^]*?)(?=\n\n|\n[A-Z]|$))/i,
+            /(?:we\s+expect|wir\s+erwarten)[:]\s*((?:[^]*?)(?=\n\n|\n[A-Z]|$))/i,
+            /(?:skills|fähigkeiten)[:]\s*((?:[^]*?)(?=\n\n|\n[A-Z]|$))/i
+        ];
+
         const requirements = [];
-        const reqSection = jobPosting.match(/(?:requirements|qualifications|anforderungen)[:]\s*((?:[^]*?)(?=\n\n|\n[A-Z]|$))/i);
-        
-        if (reqSection) {
-            const reqText = reqSection[1];
-            const bulletPoints = reqText.match(/[•-]\s*([^\n]+)/g);
-            if (bulletPoints) {
-                requirements.push(...bulletPoints.map(point => point.replace(/[•-]\s*/, '').trim()));
+        for (const pattern of requirementSections) {
+            const reqSection = jobPosting.match(pattern);
+            if (reqSection) {
+                const reqText = reqSection[1];
+                const bulletPoints = reqText.match(/[•\-*]\s*([^\n]+)/g) || 
+                                     reqText.match(/\d+\.\s*([^\n]+)/g);
+                
+                if (bulletPoints) {
+                    requirements.push(...bulletPoints.map(point => 
+                        point.replace(/[•\-*\d.]\s*/, '').trim()
+                    ));
+                }
             }
         }
-        
-        return requirements;
+
+        // Fallback: Extrahiere wichtige Schlüsselwörter
+        if (requirements.length === 0) {
+            const keywords = jobPosting.match(/\b(erfahrung|skills?|qualifikation|kenntnisse?|fähigkeiten?)\b/gi);
+            if (keywords) {
+                requirements.push(...keywords);
+            }
+        }
+
+        return requirements.slice(0, 5); // Begrenze auf 5 Anforderungen
     }
 
     function findMatchingSkills(jobPosting, resumeText) {
-        const skills = new Set();
         const requirements = extractKeyRequirements(jobPosting);
-        
+        const skills = new Set();
+
+        // Extrahiere Fachbegriffe und Schlüsselkompetenzen
+        const skillPatterns = [
+            /\b(management|consulting|project|entwicklung|strategie|kommunikation|analyse)\b/gi,
+            /\b(erfahrung|expertise|spezialisiert|kenntnisse)\s+in\s+([^\n.]+)/gi
+        ];
+
         requirements.forEach(req => {
             const skillWords = req.toLowerCase().match(/\b\w+\b/g) || [];
             skillWords.forEach(skill => {
@@ -233,8 +272,19 @@ Qualifications:
                 }
             });
         });
-        
-        return Array.from(skills);
+
+        // Zusätzliche Skill-Extraktion aus der Stellenanzeige
+        skillPatterns.forEach(pattern => {
+            const matches = jobPosting.matchAll(pattern);
+            for (const match of matches) {
+                const skill = match[1] || match[2];
+                if (skill) {
+                    skills.add(skill.toLowerCase().trim());
+                }
+            }
+        });
+
+        return Array.from(skills).slice(0, 4); // Begrenze auf 4 Skills
     }
 
     function determineTone(jobPosting) {
@@ -262,18 +312,44 @@ Qualifications:
             values: []
         };
         
-        // Extract company name
-        const nameMatch = jobPosting.match(/(?:at|bei)\s+([A-Z][A-Za-z]*(?:\s+[A-Z][A-Za-z]*)*)/);
-        if (nameMatch) {
-            companyInfo.name = nameMatch[1];
+        // Verbesserte Extraktion des Unternehmensnamens
+        const namePatterns = [
+            /(?:at|bei)\s+([A-Z][A-Za-z\s]+)/,
+            /company:\s*([A-Z][A-Za-z\s]+)/i,
+            /unternehmen:\s*([A-Z][A-Za-z\s]+)/i
+        ];
+
+        for (const pattern of namePatterns) {
+            const nameMatch = jobPosting.match(pattern);
+            if (nameMatch) {
+                companyInfo.name = nameMatch[1].trim();
+                break;
+            }
         }
-        
-        // Extract culture and values
-        const cultureSection = jobPosting.match(/(?:culture|kultur|values|werte)[^.]*\./i);
-        if (cultureSection) {
-            companyInfo.culture = cultureSection[0];
+
+        // Extraktion von Unternehmenskultur und Werten
+        const culturePatterns = [
+            /(?:culture|kultur)[:]\s*([^.]+)/i,
+            /(?:values|werte)[:]\s*([^.]+)/i,
+            /unsere\s+kultur\s*[:]\s*([^.]+)/i
+        ];
+
+        for (const pattern of culturePatterns) {
+            const cultureMatch = jobPosting.match(pattern);
+            if (cultureMatch) {
+                companyInfo.culture = cultureMatch[1].trim();
+                break;
+            }
         }
-        
+
+        // Fallback: Extrahiere Schlüsselwörter zur Unternehmenskultur
+        if (!companyInfo.culture) {
+            const cultureKeywords = jobPosting.match(/\b(innovativ|dynamisch|kreativ|modern|teamorientiert)\b/gi);
+            if (cultureKeywords) {
+                companyInfo.culture = cultureKeywords.join(', ');
+            }
+        }
+
         return companyInfo;
     }
 
