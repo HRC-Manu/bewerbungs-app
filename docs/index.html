@@ -22,19 +22,16 @@
     <main class="container mt-4">
         <div class="row">
             <div class="col-md-6">
-                <!-- Anschreiben Upload -->
+                <!-- Upload Section -->
                 <div class="card mb-4">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <h5 class="card-title mb-0">Anschreiben</h5>
-                        <div>
-                            <button class="btn btn-sm btn-outline-primary me-2" id="loadExampleCoverLetterBtn">Beispiel laden</button>
-                            <button class="btn btn-sm btn-outline-success" id="generateSuggestionsBtn">KI-Vorschläge</button>
-                        </div>
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Dokumente hochladen</h5>
                     </div>
                     <div class="card-body">
-                        <div class="mb-3">
+                        <!-- Anschreiben Upload -->
+                        <div class="mb-4">
                             <label for="coverLetterUpload" class="form-label">PDF-Anschreiben hochladen</label>
-                            <input class="form-control" type="file" id="coverLetterUpload" accept=".pdf">
+                            <input class="form-control form-control-lg" type="file" id="coverLetterUpload" accept=".pdf">
                             <div id="coverLetterFilePreview" class="file-preview mt-2 d-none">
                                 <div class="alert alert-info d-flex align-items-center justify-content-between">
                                     <span class="file-name"></span>
@@ -42,8 +39,42 @@
                                 </div>
                             </div>
                         </div>
-                        
-                        <!-- Anschreiben Builder -->
+
+                        <!-- Lebenslauf Upload -->
+                        <div class="mb-3">
+                            <label for="resumeUpload" class="form-label">PDF-Lebenslauf hochladen</label>
+                            <input class="form-control form-control-lg" type="file" id="resumeUpload" accept=".pdf">
+                            <div id="resumeFilePreview" class="file-preview mt-2 d-none">
+                                <div class="alert alert-info d-flex align-items-center justify-content-between">
+                                    <span class="file-name"></span>
+                                    <button type="button" class="btn-close" aria-label="Löschen"></button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stellenanzeige -->
+                <div class="card mb-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">Stellenanzeige</h5>
+                        <button class="btn btn-sm btn-outline-primary" id="loadExampleJobBtn">Beispiel laden</button>
+                    </div>
+                    <div class="card-body">
+                        <textarea class="form-control" id="jobPosting" rows="10" placeholder="Füge hier die Stellenanzeige ein..."></textarea>
+                    </div>
+                </div>
+
+                <!-- Anschreiben Builder -->
+                <div class="card mb-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">Anschreiben Generator</h5>
+                        <div>
+                            <button class="btn btn-sm btn-outline-primary me-2" id="loadExampleCoverLetterBtn">Beispiel laden</button>
+                            <button class="btn btn-sm btn-outline-success" id="generateSuggestionsBtn">KI-Vorschläge</button>
+                        </div>
+                    </div>
+                    <div class="card-body">
                         <div id="coverLetterBuilder" class="mb-3">
                             <!-- Empfänger -->
                             <div class="section mb-3">
@@ -95,6 +126,36 @@
                         <textarea class="form-control mt-3 d-none" id="coverLetterText" rows="10" placeholder="Oder füge hier dein Anschreiben ein..."></textarea>
                     </div>
                 </div>
+            </div>
+
+            <div class="col-md-6">
+                <!-- Vorschau -->
+                <div class="card mb-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">Vorschau</h5>
+                        <div class="btn-group">
+                            <button class="btn btn-primary" id="generateBtn">Generieren</button>
+                            <button class="btn btn-success dropdown-toggle" type="button" id="exportDropdown" data-bs-toggle="dropdown">
+                                Exportieren
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="#" id="exportWordBtn">Als Word exportieren</a></li>
+                                <li><a class="dropdown-item" href="#" id="exportPdfBtn">Als PDF exportieren</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div id="documentPreview" class="preview-content">
+                            <div id="coverLetterPreview">
+                                Hier erscheint die Vorschau des Anschreibens...
+                            </div>
+                            <hr class="my-4">
+                            <div id="resumePreview">
+                                Hier erscheint die Vorschau des Lebenslaufs...
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
                 <!-- Suggestions Modal -->
                 <div class="modal fade" id="suggestionsModal" tabindex="-1">
@@ -112,91 +173,6 @@
                             <div class="modal-footer">
                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Schließen</button>
                                 <button type="button" class="btn btn-primary" id="generateMoreBtn">Weitere Vorschläge</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Stellenanzeige -->
-                <div class="card mb-4">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <h5 class="card-title mb-0">Stellenanzeige</h5>
-                        <button class="btn btn-sm btn-outline-primary" id="loadExampleJobBtn">Beispiel laden</button>
-                    </div>
-                    <div class="card-body">
-                        <textarea class="form-control" id="jobPosting" rows="10" placeholder="Füge hier die Stellenanzeige ein..."></textarea>
-                    </div>
-                </div>
-
-                <!-- Lebenslauf Upload -->
-                <div class="card">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <h5 class="card-title mb-0">Lebenslauf</h5>
-                        <button class="btn btn-sm btn-outline-primary" id="loadExampleResumeBtn">Beispiel laden</button>
-                    </div>
-                    <div class="card-body">
-                        <div class="mb-3">
-                            <label for="resumeUpload" class="form-label">PDF-Lebenslauf hochladen</label>
-                            <div class="d-grid">
-                                <input class="form-control form-control-lg" type="file" id="resumeUpload" accept=".pdf">
-                            </div>
-                            <div id="resumeFilePreview" class="file-preview mt-2 d-none">
-                                <div class="alert alert-info d-flex align-items-center justify-content-between">
-                                    <span class="file-name"></span>
-                                    <button type="button" class="btn-close" aria-label="Löschen"></button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-md-6">
-                <!-- Vorschau -->
-                <div class="card mb-4">
-                    <div class="card-header">
-                        <h5 class="card-title mb-0">Vorschau</h5>
-                    </div>
-                    <div class="card-body">
-                        <ul class="nav nav-tabs" id="previewTabs" role="tablist">
-                            <li class="nav-item" role="presentation">
-                                <button class="nav-link active" id="coverLetter-tab" data-bs-toggle="tab" data-bs-target="#coverLetter" type="button" role="tab">Anschreiben</button>
-                            </li>
-                            <li class="nav-item" role="presentation">
-                                <button class="nav-link" id="resume-tab" data-bs-toggle="tab" data-bs-target="#resume" type="button" role="tab">Lebenslauf</button>
-                            </li>
-                        </ul>
-                        <div class="tab-content mt-3" id="previewTabsContent">
-                            <div class="tab-pane fade show active" id="coverLetter" role="tabpanel">
-                                <div id="coverLetterPreview" class="preview-content">
-                                    Hier erscheint die Vorschau des Anschreibens...
-                                </div>
-                            </div>
-                            <div class="tab-pane fade" id="resume" role="tabpanel">
-                                <div id="resumePreview" class="preview-content">
-                                    Hier erscheint die Vorschau des Lebenslaufs...
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Aktionen -->
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="card-title mb-0">Aktionen</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="d-flex gap-2">
-                            <button class="btn btn-primary flex-grow-1" id="generateBtn">Generieren</button>
-                            <div class="btn-group flex-grow-1">
-                                <button class="btn btn-success dropdown-toggle" type="button" id="exportDropdown" data-bs-toggle="dropdown">
-                                    Exportieren
-                                </button>
-                                <ul class="dropdown-menu">
-                                    <li><a class="dropdown-item" href="#" id="exportWordBtn">Als Word exportieren</a></li>
-                                    <li><a class="dropdown-item" href="#" id="exportPdfBtn">Als PDF exportieren</a></li>
-                                </ul>
                             </div>
                         </div>
                     </div>
