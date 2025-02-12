@@ -1,0 +1,70 @@
+name: Export Documents
+
+on:
+  workflow_dispatch:
+    inputs:
+      format:
+        description: 'Export format (word/pdf)'
+        required: true
+        type: choice
+        options:
+          - word
+          - pdf
+      cover_letter:
+        description: 'HTML content of cover letter'
+        required: true
+      resume:
+        description: 'HTML content of resume'
+        required: true
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        cache: 'pip'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        
+    - name: Install LibreOffice
+      if: inputs.format == 'pdf'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libreoffice
+
+    - name: Prepare input files
+      run: |
+        mkdir -p input
+        echo "${{ github.event.inputs.cover_letter }}" > input/cover_letter.html
+        echo "${{ github.event.inputs.resume }}" > input/resume.html
+
+    - name: Export documents
+      run: |
+        python scripts/export.py --format ${{ github.event.inputs.format }}
+
+    - name: Upload exported documents
+      uses: actions/upload-artifact@v3
+      with:
+        name: exported-documents
+        path: |
+          output/bewerbung.docx
+          output/bewerbung.pdf
+        retention-days: 1
+
+    - name: Return document path
+      id: document
+      run: |
+        if [[ "${{ github.event.inputs.format }}" == "pdf" ]]; then
+          echo "path=output/bewerbung.pdf" >> $GITHUB_OUTPUT
+        else
+          echo "path=output/bewerbung.docx" >> $GITHUB_OUTPUT
+        fi 
