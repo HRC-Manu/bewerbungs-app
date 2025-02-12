@@ -122,6 +122,11 @@ body {
     padding: 1.5rem;
 }
 
+/* Upload Container */
+.upload-container {
+    position: relative;
+}
+
 /* Upload Area */
 .upload-area {
     border: 2px dashed var(--border);
@@ -137,6 +142,12 @@ body {
     background: rgba(13,110,253,0.02);
 }
 
+.upload-area.drag-over {
+    border-color: var(--primary);
+    background: rgba(13,110,253,0.05);
+    transform: scale(1.01);
+}
+
 .upload-label {
     cursor: pointer;
     margin: 0;
@@ -145,6 +156,36 @@ body {
 .upload-label i {
     color: var(--primary);
     margin-bottom: 1rem;
+}
+
+/* File Preview */
+.file-preview {
+    margin-top: 1rem;
+    transition: all 0.3s ease;
+}
+
+.file-preview .alert {
+    margin-bottom: 0;
+    padding: 0.75rem 1rem;
+    border: none;
+    background: rgba(13,110,253,0.1);
+}
+
+.file-preview .file-name {
+    font-size: 0.9rem;
+    color: var(--primary);
+    font-weight: 500;
+}
+
+.file-preview .btn-close {
+    padding: 0.5rem;
+    margin: -0.5rem -0.5rem -0.5rem 0.5rem;
+    transition: all 0.2s ease;
+}
+
+.file-preview .btn-close:hover {
+    background-color: rgba(0,0,0,0.1);
+    transform: scale(1.1);
 }
 
 /* Form Elements */
