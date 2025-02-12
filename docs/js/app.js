@@ -71,12 +71,44 @@ Qualifications:
     loadExampleCoverLetterBtn.addEventListener('click', loadExampleCoverLetter);
 
     // Event Listeners for Cover Letter Builder
-    generateSuggestionsBtn.addEventListener('click', () => generateSuggestionsForSection('all'));
-    generateMoreBtn.addEventListener('click', () => generateMoreSuggestions());
+    generateSuggestionsBtn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        showLoading(generateSuggestionsBtn, 'Generiere Vorschläge...');
+        try {
+            await generateSuggestionsForSection('all');
+        } catch (error) {
+            showError('Fehler bei der Generierung der Vorschläge: ' + error.message);
+        } finally {
+            hideLoading(generateSuggestionsBtn, 'KI-Vorschläge generieren');
+        }
+    });
+
+    generateMoreBtn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        showLoading(generateMoreBtn, 'Generiere weitere...');
+        try {
+            await generateMoreSuggestions();
+        } catch (error) {
+            showError('Fehler bei der Generierung weiterer Vorschläge: ' + error.message);
+        } finally {
+            hideLoading(generateMoreBtn, 'Weitere Vorschläge');
+        }
+    });
+
     suggestButtons.forEach(btn => {
-        btn.addEventListener('click', (e) => {
+        btn.addEventListener('click', async (e) => {
+            e.preventDefault();
             const section = e.target.dataset.section;
-            generateSuggestionsForSection(section);
+            const button = e.target;
+            
+            showLoading(button, 'Generiere...');
+            try {
+                await generateSuggestionsForSection(section);
+            } catch (error) {
+                showError('Fehler bei der Generierung der Vorschläge: ' + error.message);
+            } finally {
+                hideLoading(button, `Vorschläge für ${section}`);
+            }
         });
     });
 
@@ -189,15 +221,52 @@ Qualifications:
     }
 
     // Analyze documents with ChatGPT
-    async function analyzeWithChatGPT(jobPosting, resumeText, existingCoverLetter = '') {
-        // Simuliere ChatGPT API-Aufruf (später durch echte Integration ersetzen)
-        return {
-            jobTitle: extractJobTitle(jobPosting),
-            keyRequirements: extractKeyRequirements(jobPosting),
-            matchingSkills: findMatchingSkills(jobPosting, resumeText),
-            suggestedTone: determineTone(jobPosting),
-            companyInfo: extractCompanyInfo(jobPosting)
-        };
+    async function analyzeWithChatGPT(jobPosting, resumeText = '', existingCoverLetter = '') {
+        try {
+            // Detaillierte Analyse der Stellenanzeige
+            const jobAnalysis = {
+                jobTitle: extractJobTitle(jobPosting),
+                keyRequirements: extractKeyRequirements(jobPosting),
+                responsibilities: extractResponsibilities(jobPosting),
+                companyInfo: extractCompanyInfo(jobPosting),
+                suggestedTone: determineTone(jobPosting),
+                workEnvironment: extractWorkEnvironment(jobPosting),
+                projectDetails: extractProjectInfo(jobPosting),
+                teamStructure: extractTeamInfo(jobPosting)
+            };
+
+            // Analyse des Lebenslaufs, falls vorhanden
+            let resumeAnalysis = {};
+            if (resumeText) {
+                resumeAnalysis = {
+                    matchingSkills: findMatchingSkills(jobPosting, resumeText),
+                    relevantExperience: findRelevantExperience(jobPosting, resumeText),
+                    educationMatch: analyzeEducationMatch(jobPosting, resumeText),
+                    industryExperience: analyzeIndustryExperience(jobPosting, resumeText),
+                    achievements: extractAchievements(resumeText)
+                };
+            }
+
+            // Analyse des bestehenden Anschreibens, falls vorhanden
+            let coverLetterAnalysis = {};
+            if (existingCoverLetter) {
+                coverLetterAnalysis = {
+                    structure: analyzeCoverLetterStructure(existingCoverLetter),
+                    keyPhrases: extractKeyPhrases(existingCoverLetter),
+                    tone: analyzeCoverLetterTone(existingCoverLetter),
+                    style: analyzeCoverLetterStyle(existingCoverLetter)
+                };
+            }
+
+            return {
+                jobAnalysis,
+                resumeAnalysis,
+                coverLetterAnalysis
+            };
+        } catch (error) {
+            console.error('Error in analyzeWithChatGPT:', error);
+            throw error;
+        }
     }
 
     // Helper functions for analysis
@@ -368,10 +437,14 @@ Qualifications:
 
             // Ensure analysis object has all required properties
             const safeAnalysis = {
-                jobTitle: analysis.jobTitle || 'die ausgeschriebene Position',
-                companyInfo: analysis.companyInfo || { name: 'das Unternehmen', culture: '' },
-                matchingSkills: analysis.matchingSkills || [],
-                keyRequirements: analysis.keyRequirements || []
+                jobTitle: analysis.jobAnalysis.jobTitle || 'die ausgeschriebene Position',
+                companyInfo: analysis.jobAnalysis.companyInfo || { name: 'das Unternehmen', culture: '' },
+                matchingSkills: analysis.jobAnalysis.resumeAnalysis.matchingSkills || [],
+                keyRequirements: analysis.jobAnalysis.keyRequirements || [],
+                responsibilities: analysis.jobAnalysis.responsibilities || [],
+                workEnvironment: analysis.jobAnalysis.workEnvironment || '',
+                projectDetails: analysis.jobAnalysis.projectDetails || '',
+                teamStructure: analysis.jobAnalysis.teamStructure || ''
             };
 
             console.log('Safe Analysis:', safeAnalysis);
@@ -879,24 +952,37 @@ HR Consultant | Accenture GmbH
                 return [];
             }
 
-            // Extract text from resume if available
+            // Extract text from resume and cover letter if available
             let resumeText = '';
+            let existingCoverLetter = '';
+            
             if (resumeUpload.files[0]) {
                 resumeText = await extractTextFromPDF(resumeUpload.files[0]);
             }
+            
+            if (coverLetterUpload.files[0]) {
+                existingCoverLetter = await extractTextFromPDF(coverLetterUpload.files[0]);
+            }
 
             // Analyze with ChatGPT
-            const analysis = await analyzeWithChatGPT(jobPosting, resumeText);
+            const analysis = await analyzeWithChatGPT(jobPosting, resumeText, existingCoverLetter);
             
             // Generate suggestions based on analysis
             const suggestions = [];
-            const jobTitle = analysis.jobTitle;
-            const companyName = analysis.companyInfo.name || 'das Unternehmen';
-            const skills = analysis.matchingSkills || [];
-            const requirements = analysis.keyRequirements || [];
+            const jobTitle = analysis.jobAnalysis.jobTitle;
+            const companyName = analysis.jobAnalysis.companyInfo.name || 'das Unternehmen';
+            const skills = analysis.resumeAnalysis.matchingSkills || [];
+            const requirements = analysis.jobAnalysis.keyRequirements || [];
+            const responsibilities = analysis.jobAnalysis.responsibilities || [];
+            const workEnvironment = analysis.jobAnalysis.workEnvironment || '';
+            const teamInfo = analysis.jobAnalysis.teamStructure || '';
+            
+            // Verwende Struktur und Phrasen aus bestehendem Anschreiben, falls vorhanden
+            const existingStyle = analysis.coverLetterAnalysis.style || {};
+            const existingTone = analysis.coverLetterAnalysis.tone || 'formal';
+            const existingPhrases = analysis.coverLetterAnalysis.keyPhrases || [];
             
             if (section === 'all') {
-                // Generate suggestions for each section
                 const allSections = ['recipient', 'subject', 'introduction', 'main', 'closing'];
                 const allSuggestions = [];
                 
@@ -918,7 +1004,7 @@ HR Consultant | Accenture GmbH
                         section: 'recipient',
                         text: `Sehr geehrte Damen und Herren,`
                     });
-                    if (analysis.companyInfo.name) {
+                    if (companyName !== 'das Unternehmen') {
                         suggestions.push({
                             section: 'recipient',
                             text: `Sehr geehrte Frau [Name],\nSehr geehrter Herr [Name],`
@@ -942,17 +1028,17 @@ HR Consultant | Accenture GmbH
                     break;
                     
                 case 'introduction':
-                    suggestions.push({
-                        section: 'introduction',
-                        text: `mit großem Interesse habe ich Ihre Stellenanzeige für die Position als ${jobTitle} bei ${companyName} gelesen und bewerbe mich hiermit um diese spannende Aufgabe.`
-                    });
-                    suggestions.push({
-                        section: 'introduction',
-                        text: `Ihre ausgeschriebene Stelle als ${jobTitle} hat sofort mein Interesse geweckt, da sie perfekt zu meinem Profil passt.`
-                    });
-                    suggestions.push({
-                        section: 'introduction',
-                        text: `auf der Suche nach einer neuen beruflichen Herausforderung bin ich auf Ihre Stellenanzeige als ${jobTitle} gestoßen und möchte mich hiermit bewerben.`
+                    const introTemplates = [
+                        `mit großem Interesse habe ich Ihre Stellenanzeige für die Position als ${jobTitle} bei ${companyName} gelesen und bewerbe mich hiermit um diese spannende Aufgabe.`,
+                        `Ihre ausgeschriebene Stelle als ${jobTitle} hat sofort mein Interesse geweckt, da sie perfekt zu meinem Profil passt.`,
+                        `auf der Suche nach einer neuen beruflichen Herausforderung bin ich auf Ihre Stellenanzeige als ${jobTitle} gestoßen und möchte mich hiermit bewerben.`
+                    ];
+                    
+                    introTemplates.forEach(template => {
+                        suggestions.push({
+                            section: 'introduction',
+                            text: template
+                        });
                     });
                     break;
                     
@@ -965,14 +1051,28 @@ HR Consultant | Accenture GmbH
                         `Die von Ihnen gewünschten Qualifikationen wie ${requirements.slice(0, 3).join(', ')} bringe ich bereits mit.` :
                         'Die gewünschten Qualifikationen bringe ich bereits mit.';
                     
+                    const responsibilitiesText = responsibilities.length > 0 ?
+                        `Besonders reizen mich die Aufgaben ${responsibilities.slice(0, 2).join(' und ')}.` :
+                        '';
+                    
+                    const environmentText = workEnvironment ?
+                        `Das ${workEnvironment} spricht mich besonders an.` :
+                        '';
+                    
+                    const teamText = teamInfo ?
+                        `Die Aussicht, mit ${teamInfo} zusammenzuarbeiten, motiviert mich sehr.` :
+                        '';
+                    
                     suggestions.push({
                         section: 'main',
-                        text: `${skillsText} ${requirementsText} ${analysis.companyInfo.culture || ''}`
+                        text: `${skillsText} ${requirementsText} ${responsibilitiesText}`
                     });
+                    
                     suggestions.push({
                         section: 'main',
-                        text: `Was mich besonders an der Position reizt, ist die Möglichkeit ${skills[0] || 'meine Fähigkeiten'} bei ${companyName} einzubringen und weiterzuentwickeln. ${requirementsText}`
+                        text: `Was mich besonders an der Position reizt, ist die Möglichkeit ${skills[0] || 'meine Fähigkeiten'} bei ${companyName} einzubringen und weiterzuentwickeln. ${environmentText} ${teamText}`
                     });
+                    
                     suggestions.push({
                         section: 'main',
                         text: `In meiner bisherigen Laufbahn konnte ich bereits umfangreiche Erfahrungen in ${skills.slice(0, 2).join(' und ') || 'relevanten Bereichen'} sammeln. Diese Expertise möchte ich nun gerne bei ${companyName} einbringen.`
@@ -1136,4 +1236,188 @@ HR Consultant | Accenture GmbH
     Object.values(coverLetterSections).forEach(section => {
         section.addEventListener('input', updateCoverLetterPreview);
     });
+
+    // Neue Analysefunktionen
+    function extractResponsibilities(jobPosting) {
+        const responsibilities = [];
+        const sections = jobPosting.match(/(?:responsibilities|aufgaben|tätigkeiten)[:]\s*((?:[^]*?)(?=\n\n|\n[A-Z]|$))/i);
+        
+        if (sections) {
+            const bulletPoints = sections[1].match(/[•\-*]\s*([^\n]+)/g);
+            if (bulletPoints) {
+                responsibilities.push(...bulletPoints.map(point => point.replace(/[•\-*]\s*/, '').trim()));
+            }
+        }
+        
+        return responsibilities;
+    }
+
+    function extractWorkEnvironment(jobPosting) {
+        const environmentPatterns = [
+            /(?:environment|arbeitsumgebung|umfeld)[:]\s*([^.]+)/i,
+            /(?:we offer|wir bieten)[:]\s*([^.]+)/i,
+            /(?:benefits|vorteile)[:]\s*([^.]+)/i
+        ];
+
+        for (const pattern of environmentPatterns) {
+            const match = jobPosting.match(pattern);
+            if (match) {
+                return match[1].trim();
+            }
+        }
+
+        return '';
+    }
+
+    function extractProjectInfo(jobPosting) {
+        const projectPatterns = [
+            /(?:projects?|projekte?)[:]\s*([^.]+)/i,
+            /(?:initiatives?|initiativen?)[:]\s*([^.]+)/i
+        ];
+
+        for (const pattern of projectPatterns) {
+            const match = jobPosting.match(pattern);
+            if (match) {
+                return match[1].trim();
+            }
+        }
+
+        return '';
+    }
+
+    function extractTeamInfo(jobPosting) {
+        const teamPatterns = [
+            /(?:team|gruppe|abteilung)[:]\s*([^.]+)/i,
+            /(?:you will work with|du arbeitest mit|sie arbeiten mit)[:]\s*([^.]+)/i
+        ];
+
+        for (const pattern of teamPatterns) {
+            const match = jobPosting.match(pattern);
+            if (match) {
+                return match[1].trim();
+            }
+        }
+
+        return '';
+    }
+
+    function findRelevantExperience(jobPosting, resumeText) {
+        const relevantExperience = [];
+        const requirements = extractKeyRequirements(jobPosting);
+        
+        // Suche nach Erfahrungen im Lebenslauf, die zu den Anforderungen passen
+        const experienceBlocks = resumeText.split(/\n{2,}/);
+        
+        experienceBlocks.forEach(block => {
+            requirements.forEach(req => {
+                if (block.toLowerCase().includes(req.toLowerCase())) {
+                    relevantExperience.push({
+                        requirement: req,
+                        experience: block.trim()
+                    });
+                }
+            });
+        });
+        
+        return relevantExperience;
+    }
+
+    function analyzeEducationMatch(jobPosting, resumeText) {
+        const requiredEducation = jobPosting.match(/(?:education|ausbildung|studium)[:]\s*([^.]+)/i);
+        const educationSection = resumeText.match(/(?:education|ausbildung|studium)[\s\S]*?(?=\n\n|\n[A-Z]|$)/i);
+        
+        return {
+            required: requiredEducation ? requiredEducation[1].trim() : '',
+            actual: educationSection ? educationSection[0].trim() : '',
+            matches: educationSection && requiredEducation ? 
+                     educationSection[0].toLowerCase().includes(requiredEducation[1].toLowerCase()) : 
+                     false
+        };
+    }
+
+    function analyzeIndustryExperience(jobPosting, resumeText) {
+        const industries = new Set();
+        const industryPatterns = [
+            /(?:industry|branche|sektor)[:]\s*([^.]+)/i,
+            /(?:experience in|erfahrung in)[:]\s*([^.]+)/i
+        ];
+
+        industryPatterns.forEach(pattern => {
+            const matches = jobPosting.match(pattern);
+            if (matches) {
+                industries.add(matches[1].trim());
+            }
+        });
+
+        return Array.from(industries);
+    }
+
+    function extractAchievements(resumeText) {
+        const achievements = [];
+        const achievementPatterns = [
+            /(?:achievements?|erfolge?|leistungen?)[:]\s*([^.]+)/i,
+            /(?:accomplished|erreicht|umgesetzt)[:]\s*([^.]+)/i
+        ];
+
+        achievementPatterns.forEach(pattern => {
+            const matches = resumeText.match(pattern);
+            if (matches) {
+                achievements.push(matches[1].trim());
+            }
+        });
+
+        return achievements;
+    }
+
+    function analyzeCoverLetterStructure(coverLetter) {
+        const structure = {
+            hasRecipient: /sehr geehrte/i.test(coverLetter),
+            hasSubject: /betreff|bewerbung als/i.test(coverLetter),
+            hasIntroduction: /interesse|bewerbe/i.test(coverLetter),
+            hasMainBody: /.{200,}/i.test(coverLetter),
+            hasClosing: /freue|grüße/i.test(coverLetter)
+        };
+
+        return structure;
+    }
+
+    function extractKeyPhrases(coverLetter) {
+        const phrases = [];
+        const paragraphs = coverLetter.split(/\n{2,}/);
+        
+        paragraphs.forEach(paragraph => {
+            if (paragraph.length > 50) {
+                phrases.push(paragraph.trim());
+            }
+        });
+
+        return phrases;
+    }
+
+    function analyzeCoverLetterTone(coverLetter) {
+        const formalIndicators = ['sehr geehrte', 'hochachtungsvoll', 'freundlichen grüßen'];
+        const casualIndicators = ['hallo', 'hi', 'beste grüße'];
+        
+        let formalCount = 0;
+        let casualCount = 0;
+        
+        formalIndicators.forEach(indicator => {
+            if (coverLetter.toLowerCase().includes(indicator)) formalCount++;
+        });
+        
+        casualIndicators.forEach(indicator => {
+            if (coverLetter.toLowerCase().includes(indicator)) casualCount++;
+        });
+        
+        return formalCount > casualCount ? 'formal' : 'casual';
+    }
+
+    function analyzeCoverLetterStyle(coverLetter) {
+        return {
+            length: coverLetter.length,
+            paragraphs: coverLetter.split(/\n{2,}/).length,
+            hasGreeting: /^sehr|^hallo|^liebe/im.test(coverLetter),
+            hasSignature: /grüße|hochachtungsvoll/i.test(coverLetter)
+        };
+    }
 }); 
