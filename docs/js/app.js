@@ -5,6 +5,41 @@ document.addEventListener('DOMContentLoaded', function() {
         help: new bootstrap.Modal(document.getElementById('helpModal'))
     };
 
+    // ===== Schreibassistent Konstanten =====
+    const WRITING_STYLES = {
+        formal: {
+            name: 'Formell',
+            description: 'Professionell und geschäftlich',
+            examples: {
+                greetings: ['Sehr geehrte Damen und Herren,', 'Sehr geehrte Frau [Name],', 'Sehr geehrter Herr [Name],'],
+                closings: ['Mit freundlichen Grüßen', 'Beste Grüße', 'Freundliche Grüße']
+            }
+        },
+        casual: {
+            name: 'Modern',
+            description: 'Professionell aber persönlich',
+            examples: {
+                greetings: ['Guten Tag,', 'Hallo Frau [Name],', 'Hallo Herr [Name],'],
+                closings: ['Viele Grüße', 'Beste Grüße', 'Mit besten Grüßen']
+            }
+        }
+    };
+
+    const IMPROVEMENT_PATTERNS = {
+        passive: {
+            pattern: /wurde|werden|worden/g,
+            suggestion: 'Verwenden Sie aktive Formulierungen für mehr Wirkung'
+        },
+        filler: {
+            pattern: /eigentlich|quasi|sozusagen|gewissermaßen/g,
+            suggestion: 'Vermeiden Sie Füllwörter für präzisere Aussagen'
+        },
+        weak: {
+            pattern: /vielleicht|eventuell|möglicherweise|könnte|würde/g,
+            suggestion: 'Nutzen Sie stärkere Formulierungen für mehr Überzeugungskraft'
+        }
+    };
+
     // ===== DOM Elemente =====
     const elements = {
         // Eingabefelder
@@ -128,37 +163,42 @@ document.addEventListener('DOMContentLoaded', function() {
 
     async function analyzeJobPosting(jobPosting) {
         try {
+            if (!jobPosting || typeof jobPosting !== 'string') {
+                throw new Error('Ungültige Stellenanzeige');
+            }
+
             const text = jobPosting.toLowerCase();
             
             // Position analysieren
-            const position = findBestMatch(text, ANALYSIS_SETTINGS.positions);
-            const level = findBestMatch(text, ANALYSIS_SETTINGS.levels);
-            const department = findBestMatch(text, ANALYSIS_SETTINGS.departments);
+            const position = findBestMatch(text, ANALYSIS_SETTINGS.positions) || { name: 'Nicht spezifiziert', score: 0 };
+            const level = findBestMatch(text, ANALYSIS_SETTINGS.levels) || { name: 'Nicht spezifiziert', score: 0 };
+            const department = findBestMatch(text, ANALYSIS_SETTINGS.departments) || { name: 'Nicht spezifiziert', score: 0 };
             
             // Unternehmensdetails extrahieren
-            const companyInfo = extractCompanyInfo(text);
+            const companyInfo = extractCompanyInfo(text) || { name: 'Nicht angegeben', industry: 'Nicht spezifiziert', culture: 'Klassisch' };
             
             // Anforderungen analysieren
-            const requirements = analyzeRequirements(text);
+            const requirements = analyzeRequirements(text) || { hardSkills: [], softSkills: [] };
             
             return {
                 jobTitle: {
-                    position: position.name,
-                    level: level.name,
-                    department: department.name
+                    position: position.name || 'Nicht spezifiziert',
+                    level: level.name || 'Nicht spezifiziert',
+                    department: department.name || 'Nicht spezifiziert'
                 },
                 company: {
-                    name: companyInfo.name,
-                    industry: companyInfo.industry,
-                    culture: companyInfo.culture
+                    name: companyInfo.name || 'Nicht angegeben',
+                    industry: companyInfo.industry || 'Nicht spezifiziert',
+                    culture: companyInfo.culture || 'Klassisch'
                 },
                 requirements: {
-                    hardSkills: requirements.hardSkills,
-                    softSkills: requirements.softSkills
+                    hardSkills: requirements.hardSkills || [],
+                    softSkills: requirements.softSkills || []
                 }
             };
         } catch (error) {
-            throw new Error(`Analyse fehlgeschlagen: ${error.message}`);
+            console.error('Job posting analysis error:', error);
+            throw new Error(`Analyse der Stellenanzeige fehlgeschlagen: ${error.message}`);
         }
     }
 
@@ -799,30 +839,128 @@ Besonders reizt mich bei Ihrem Unternehmen die Möglichkeit, ${job.company.cultu
         suggestionsList.innerHTML = '';
         
         suggestions.forEach((suggestion, index) => {
+            // Verbessere den Vorschlag mit dem Schreibassistenten
+            const improved = improveText(suggestion.text);
+            const alternatives = generateAlternatives(suggestion.text);
+            
             const card = document.createElement('div');
             card.className = 'suggestion-card';
             card.innerHTML = `
                 <div class="card mb-3">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <h6 class="mb-0">Vorschlag ${index + 1}</h6>
-                        <button class="btn btn-sm btn-outline-primary apply-suggestion">
-                            <i class="bi bi-check-lg"></i> Übernehmen
-                        </button>
+                        <div class="btn-group">
+                            <button class="btn btn-sm btn-outline-primary apply-suggestion">
+                                <i class="bi bi-check-lg"></i> Übernehmen
+                            </button>
+                            <button class="btn btn-sm btn-outline-secondary show-alternatives">
+                                <i class="bi bi-lightning"></i> Alternativen
+                            </button>
+                        </div>
                     </div>
                     <div class="card-body">
-                        <div class="suggestion-text">${suggestion.text.replace(/\n/g, '<br>')}</div>
+                        <div class="suggestion-text">${improved.text.replace(/\n/g, '<br>')}</div>
+                        ${improved.improvements.length > 0 ? `
+                            <div class="mt-3 border-top pt-3">
+                                <small class="text-muted">Verbesserungsvorschläge:</small>
+                                <ul class="list-unstyled small">
+                                    ${improved.improvements.map(imp => `
+                                        <li><i class="bi bi-arrow-right-short"></i> ${imp}</li>
+                                    `).join('')}
+                                </ul>
+                            </div>
+                        ` : ''}
                     </div>
                 </div>
             `;
             
+            // Event-Handler für Buttons
             card.querySelector('.apply-suggestion').onclick = () => {
-                applySuggestion(suggestion);
+                applySuggestion({
+                    ...suggestion,
+                    text: improved.text
+                });
+            };
+            
+            card.querySelector('.show-alternatives').onclick = () => {
+                showAlternatives({
+                    ...suggestion,
+                    text: improved.text,
+                    alternatives: alternatives
+                });
             };
             
             suggestionsList.appendChild(card);
         });
         
         elements.suggestionsModal.show();
+    }
+
+    function showAlternatives(suggestion) {
+        const modalHtml = `
+            <div class="modal fade" tabindex="-1">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">
+                                <i class="bi bi-lightning me-2"></i>
+                                Alternative Formulierungen
+                            </h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="alternatives-list">
+                                ${suggestion.alternatives.map((alt, i) => `
+                                    <div class="alternative-item p-3 ${i < suggestion.alternatives.length - 1 ? 'border-bottom' : ''}">
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <div>
+                                                <span class="badge bg-primary me-2">Variante ${i + 1}</span>
+                                                <span class="badge bg-light text-dark">
+                                                    ${i === 0 ? 'Formell' : i === 1 ? 'Selbstbewusst' : 'Modern'}
+                                                </span>
+                                            </div>
+                                            <button class="btn btn-sm btn-outline-primary use-alternative">
+                                                <i class="bi bi-check-lg me-1"></i>
+                                                Verwenden
+                                            </button>
+                                        </div>
+                                        <div>${alt.replace(/\n/g, '<br>')}</div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Schließen</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        const modalElement = document.createElement('div');
+        modalElement.innerHTML = modalHtml;
+        document.body.appendChild(modalElement);
+        
+        const modal = new bootstrap.Modal(modalElement.querySelector('.modal'));
+        
+        // Event-Handler für "Verwenden" Buttons
+        modalElement.querySelectorAll('.use-alternative').forEach((btn, index) => {
+            btn.onclick = () => {
+                applySuggestion({
+                    ...suggestion,
+                    text: suggestion.alternatives[index]
+                });
+                modal.hide();
+            };
+        });
+        
+        // Modal anzeigen
+        modal.show();
+        
+        // Aufräumen nach dem Schließen
+        modalElement.querySelector('.modal').addEventListener('hidden.bs.modal', () => {
+            document.body.removeChild(modalElement);
+        });
     }
 
     function applySuggestion(suggestion) {
@@ -1246,6 +1384,80 @@ Besonders reizt mich bei Ihrem Unternehmen die Möglichkeit, ${job.company.cultu
             // Analyse-Button wieder aktivieren und Ladeanimation entfernen
             hideLoading(elements.analyzeBtn, 'Analysieren und Anschreiben erstellen');
         }
+    }
+
+    // ===== Schreibassistent Funktionen =====
+    function improveText(text, style = 'formal') {
+        let improvements = [];
+        let improvedText = text;
+
+        // Stil-spezifische Verbesserungen
+        if (style === 'formal') {
+            improvedText = improvedText.replace(/hallo/gi, 'Sehr geehrte Damen und Herren');
+            improvedText = improvedText.replace(/hi/gi, 'Sehr geehrte Damen und Herren');
+        }
+
+        // Allgemeine Textverbesserungen
+        for (const [type, check] of Object.entries(IMPROVEMENT_PATTERNS)) {
+            if (check.pattern.test(text)) {
+                improvements.push(check.suggestion);
+            }
+        }
+
+        return {
+            text: improvedText,
+            improvements: improvements
+        };
+    }
+
+    function generateAlternatives(text, count = 3) {
+        const alternatives = [];
+        const sentences = text.split(/[.!?]+/).filter(s => s.trim());
+
+        for (let i = 0; i < count; i++) {
+            let alternative = sentences.map(sentence => {
+                return rephraseSentence(sentence, i === 0 ? 'formal' : i === 1 ? 'confident' : 'casual');
+            }).join('. ');
+
+            if (alternative.trim()) {
+                alternatives.push(alternative.trim() + '.');
+            }
+        }
+
+        return alternatives;
+    }
+
+    function rephraseSentence(sentence, style) {
+        const stylePatterns = {
+            formal: [
+                [/ich kann/gi, 'es ist mir möglich'],
+                [/ich habe/gi, 'ich verfüge über'],
+                [/ich möchte/gi, 'ich beabsichtige'],
+                [/ich bin/gi, 'als [Position] bin ich']
+            ],
+            confident: [
+                [/ich kann/gi, 'ich werde'],
+                [/ich könnte/gi, 'ich kann'],
+                [/ich würde/gi, 'ich werde'],
+                [/ich denke/gi, 'ich bin überzeugt']
+            ],
+            casual: [
+                [/aufgrund/gi, 'wegen'],
+                [/des Weiteren/gi, 'außerdem'],
+                [/darüber hinaus/gi, 'zusätzlich'],
+                [/demzufolge/gi, 'daher']
+            ]
+        };
+
+        let rephrased = sentence.trim();
+        
+        if (stylePatterns[style]) {
+            stylePatterns[style].forEach(([pattern, replacement]) => {
+                rephrased = rephrased.replace(pattern, replacement);
+            });
+        }
+
+        return rephrased;
     }
 
     // ===== Initialisierung =====
