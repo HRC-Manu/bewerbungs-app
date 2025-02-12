@@ -786,6 +786,23 @@ HR Consultant | Accenture GmbH
             const skills = analysis.matchingSkills || [];
             const requirements = analysis.keyRequirements || [];
             
+            if (section === 'all') {
+                // Generate suggestions for each section
+                const allSections = ['recipient', 'subject', 'introduction', 'main', 'closing'];
+                const allSuggestions = [];
+                
+                for (const sec of allSections) {
+                    const secSuggestions = await generateSuggestionsForSection(sec);
+                    if (secSuggestions && secSuggestions.length > 0) {
+                        allSuggestions.push(secSuggestions[0]);
+                    }
+                }
+                
+                displaySuggestions(allSuggestions);
+                return allSuggestions;
+            }
+            
+            // Generate section-specific suggestions
             switch(section) {
                 case 'recipient':
                     suggestions.push({
@@ -867,16 +884,6 @@ HR Consultant | Accenture GmbH
                         text: `Ich freue mich darauf, Sie in einem persönlichen Gespräch von meiner Eignung zu überzeugen.`
                     });
                     break;
-                    
-                case 'all':
-                    const allSuggestions = [];
-                    for (const sec of ['recipient', 'subject', 'introduction', 'main', 'closing']) {
-                        const secSuggestions = await generateSuggestionsForSection(sec);
-                        if (secSuggestions && secSuggestions.length > 0) {
-                            allSuggestions.push(secSuggestions[0]);
-                        }
-                    }
-                    return allSuggestions;
             }
             
             if (section !== 'all') {
@@ -889,12 +896,6 @@ HR Consultant | Accenture GmbH
             showError('Fehler bei der Generierung der Vorschläge: ' + error.message);
             console.error('Suggestion generation error:', error);
             return [];
-        } finally {
-            if (section === 'all') {
-                hideLoading(generateBtn, 'Generieren');
-            } else {
-                hideLoading(generateSuggestionsBtn, 'KI-Vorschläge');
-            }
         }
     }
 
