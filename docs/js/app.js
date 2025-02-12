@@ -1220,6 +1220,17 @@ document.addEventListener('DOMContentLoaded', function() {
         elements.coverLetterPreview.innerHTML = preview || 'Hier erscheint die Vorschau...';
     }
 
+    // Neue Funktion zur Anwendung der Vorschläge
+    function applySuggestions(suggestions) {
+        if (!suggestions || !Array.isArray(suggestions)) return;
+        suggestions.forEach(suggestion => {
+            if (elements.coverLetterSections[suggestion.section]) {
+                elements.coverLetterSections[suggestion.section].value = suggestion.text;
+            }
+        });
+        updatePreview();
+    }
+
     // ===== Event Listener für Textänderungen =====
     function initializeTextareaListeners() {
         // Füge Event Listener für jobPosting textarea hinzu
