@@ -327,6 +327,14 @@ Qualifications:
             }
         }
 
+        // Fallback: Verwende das erste Wort der Stellenanzeige, wenn es großgeschrieben ist
+        if (!companyInfo.name) {
+            const fallbackMatch = jobPosting.match(/^([A-Z][a-zA-Z0-9]+)/);
+            if (fallbackMatch) {
+                companyInfo.name = fallbackMatch[1].trim();
+            }
+        }
+
         // Extraktion von Unternehmenskultur und Werten
         const culturePatterns = [
             /(?:culture|kultur)[:]\s*([^.]+)/i,
