@@ -27,6 +27,52 @@ body {
 .navbar-brand {
     font-weight: 600;
     font-size: 1.25rem;
+    color: white !important;
+}
+
+.navbar .btn-outline-light {
+    border-color: rgba(255, 255, 255, 0.5);
+    color: white;
+    transition: all 0.2s ease;
+}
+
+.navbar .btn-outline-light:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-color: white;
+    transform: translateY(-1px);
+}
+
+.navbar .btn-outline-light:active {
+    transform: translateY(0);
+}
+
+.navbar .btn-outline-light i {
+    font-size: 1.1rem;
+}
+
+/* Dropdown Menüs in der Navigation */
+.navbar .dropdown-menu {
+    background-color: white;
+    border: none;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px var(--shadow);
+    margin-top: 0.5rem;
+}
+
+.navbar .dropdown-item {
+    color: var(--dark);
+    padding: 0.75rem 1rem;
+    transition: all 0.2s ease;
+}
+
+.navbar .dropdown-item:hover {
+    background-color: rgba(13, 110, 253, 0.05);
+    color: var(--primary);
+}
+
+.navbar .dropdown-item i {
+    margin-right: 0.5rem;
+    color: var(--gray);
 }
 
 /* Progress Stepper */
@@ -412,6 +458,37 @@ textarea.form-control {
 
 .toast-body {
     padding: 1rem;
+}
+
+.toast.bg-success {
+    background-color: #198754 !important;
+    color: white;
+}
+
+.toast.bg-danger {
+    background-color: #dc3545 !important;
+    color: white;
+}
+
+.toast .toast-header {
+    background-color: transparent;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    color: inherit;
+}
+
+.toast.bg-success .toast-header,
+.toast.bg-danger .toast-header {
+    color: white;
+    border-bottom-color: rgba(255, 255, 255, 0.2);
+}
+
+.toast .btn-close {
+    filter: none;
+}
+
+.toast.bg-success .btn-close,
+.toast.bg-danger .btn-close {
+    filter: invert(1) grayscale(100%) brightness(200%);
 }
 
 /* Responsive Design */
