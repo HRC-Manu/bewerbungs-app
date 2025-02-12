@@ -1,4 +1,3 @@
-// Hauptanwendungslogik
 document.addEventListener('DOMContentLoaded', function() {
     // ===== Bootstrap Modals =====
     const modals = {
