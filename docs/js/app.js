@@ -136,13 +136,32 @@ document.addEventListener('DOMContentLoaded', function() {
                         Liefere die Analyse in folgendem JSON-Format:
                         {
                             "jobTitle": "Titel der Position",
-                            "company": "Firmenname",
-                            "requirements": ["Anforderung 1", "Anforderung 2", ...],
-                            "responsibilities": ["Aufgabe 1", "Aufgabe 2", ...],
-                            "skills": ["Skill 1", "Skill 2", ...],
-                            "culture": "Unternehmenskultur",
-                            "benefits": ["Benefit 1", "Benefit 2", ...],
-                            "tone": "formal/casual"
+                            "company": {
+                                "name": "Firmenname",
+                                "industry": "Branche",
+                                "size": "Unternehmensgröße",
+                                "culture": "Unternehmenskultur"
+                            },
+                            "requirements": {
+                                "mustHave": ["Pflicht-Anforderung 1", "Pflicht-Anforderung 2"],
+                                "niceToHave": ["Optional 1", "Optional 2"]
+                            },
+                            "responsibilities": ["Aufgabe 1", "Aufgabe 2"],
+                            "skills": {
+                                "technical": ["Skill 1", "Skill 2"],
+                                "soft": ["Soft Skill 1", "Soft Skill 2"]
+                            },
+                            "benefits": ["Benefit 1", "Benefit 2"],
+                            "workingModel": {
+                                "type": "remote/hybrid/office",
+                                "location": "Arbeitsort",
+                                "hours": "Arbeitszeit"
+                            },
+                            "tone": "formal/casual",
+                            "teamInfo": {
+                                "size": "Teamgröße",
+                                "structure": "Teamstruktur"
+                            }
                         }`
                     }],
                     temperature: 0.7
@@ -218,10 +237,13 @@ document.addEventListener('DOMContentLoaded', function() {
         const basePrompt = `
         Stellendetails:
         Position: ${analysis.jobTitle}
-        Firma: ${analysis.company}
-        Anforderungen: ${analysis.requirements.join(', ')}
+        Firma: ${analysis.company.name}
+        Branche: ${analysis.company.industry}
+        Größe: ${analysis.company.size}
+        Unternehmenskultur: ${analysis.company.culture}
+        Anforderungen: ${analysis.requirements.mustHave.join(', ')} und ${analysis.requirements.niceToHave.join(', ')}
         Aufgaben: ${analysis.responsibilities.join(', ')}
-        Skills: ${analysis.skills.join(', ')}
+        Skills: ${analysis.skills.technical.join(', ')} und ${analysis.skills.soft.join(', ')}
         Ton: ${analysis.tone}
         
         Generiere einen überzeugenden ${section}-Abschnitt für das Anschreiben.
@@ -290,10 +312,13 @@ document.addEventListener('DOMContentLoaded', function() {
                         
                         Stellendetails:
                         Position: ${analysis.jobTitle}
-                        Firma: ${analysis.company}
-                        Anforderungen: ${analysis.requirements.join(', ')}
+                        Firma: ${analysis.company.name}
+                        Branche: ${analysis.company.industry}
+                        Größe: ${analysis.company.size}
+                        Unternehmenskultur: ${analysis.company.culture}
+                        Anforderungen: ${analysis.requirements.mustHave.join(', ')} und ${analysis.requirements.niceToHave.join(', ')}
                         Aufgaben: ${analysis.responsibilities.join(', ')}
-                        Skills: ${analysis.skills.join(', ')}
+                        Skills: ${analysis.skills.technical.join(', ')} und ${analysis.skills.soft.join(', ')}
                         Ton: ${analysis.tone}
                         
                         ${resumeText ? `Lebenslauf:\n${resumeText}` : ''}
@@ -369,43 +394,58 @@ document.addEventListener('DOMContentLoaded', function() {
         return text;
     }
 
-    function analyzeCoverLetter(text) {
-        // Einfache Analyse des bestehenden Anschreibens
-        const sections = {
-            recipient: '',
-            subject: '',
-            introduction: '',
-            main: '',
-            closing: ''
-        };
+    async function analyzeCoverLetter(text) {
+        try {
+            const response = await fetch('https://api.openai.com/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
+                },
+                body: JSON.stringify({
+                    model: "gpt-4",
+                    messages: [{
+                        role: "system",
+                        content: "Analysiere den Stil und die Struktur von Anschreiben."
+                    }, {
+                        role: "user",
+                        content: `Analysiere dieses Anschreiben und extrahiere die wichtigsten Merkmale:
+                        
+                        ${text}
+                        
+                        Liefere die Analyse in folgendem JSON-Format:
+                        {
+                            "style": {
+                                "tone": "formell/informell",
+                                "complexity": "einfach/mittel/komplex",
+                                "personality": "zurückhaltend/ausgewogen/selbstbewusst"
+                            },
+                            "structure": {
+                                "sections": ["vorhandene Abschnitte"],
+                                "length": "kurz/mittel/lang",
+                                "formatting": "minimal/standard/aufwendig"
+                            },
+                            "content": {
+                                "keyPhrases": ["wichtige Phrasen"],
+                                "uniquePoints": ["Alleinstellungsmerkmale"],
+                                "achievements": ["genannte Erfolge"]
+                            },
+                            "improvement": {
+                                "suggestions": ["Verbesserungsvorschläge"],
+                                "missingElements": ["fehlende Elemente"]
+                            }
+                        }`
+                    }],
+                    temperature: 0.7
+                })
+            });
 
-        // Versuche, die Abschnitte zu identifizieren
-        const lines = text.split('\n');
-        let currentSection = '';
-
-        lines.forEach(line => {
-            line = line.trim();
-            if (!line) return;
-
-            if (line.toLowerCase().includes('sehr geehrte')) {
-                currentSection = 'recipient';
-                sections.recipient = line;
-            } else if (line.toLowerCase().includes('betreff') || line.toLowerCase().includes('bewerbung')) {
-                currentSection = 'subject';
-                sections.subject = line;
-            } else if (currentSection === 'recipient' && !sections.introduction) {
-                currentSection = 'introduction';
-                sections.introduction = line;
-            } else if (line.toLowerCase().includes('freue') || line.toLowerCase().includes('grüß')) {
-                currentSection = 'closing';
-                sections.closing = line;
-            } else if (currentSection === 'introduction' || currentSection === 'main') {
-                currentSection = 'main';
-                sections.main += line + '\n';
-            }
-        });
-
-        return sections;
+            const data = await response.json();
+            return JSON.parse(data.choices[0].message.content);
+        } catch (error) {
+            console.error('Fehler bei der Analyse:', error);
+            throw new Error('Analyse fehlgeschlagen');
+        }
     }
 
     function applySectionsToForm(sections) {
@@ -449,10 +489,43 @@ document.addEventListener('DOMContentLoaded', function() {
     // ===== Validierung =====
     function validateInputs() {
         const jobPosting = elements.jobPosting.value.trim();
+        
+        // Validiere Stellenanzeige
         if (!jobPosting) {
             showError('Bitte fügen Sie eine Stellenanzeige ein');
             return false;
         }
+        
+        if (jobPosting.length < 100) {
+            showError('Die Stellenanzeige scheint zu kurz zu sein. Bitte fügen Sie den vollständigen Text ein.');
+            return false;
+        }
+        
+        // Validiere PDF-Dateien
+        if (elements.resumeUpload.files[0]) {
+            const resumeFile = elements.resumeUpload.files[0];
+            if (resumeFile.size === 0) {
+                showError('Die hochgeladene Lebenslauf-Datei scheint leer zu sein');
+                return false;
+            }
+            if (resumeFile.size > 10 * 1024 * 1024) {
+                showError('Die Lebenslauf-Datei ist zu groß (max. 10 MB)');
+                return false;
+            }
+        }
+        
+        if (elements.coverLetterUpload.files[0]) {
+            const coverLetterFile = elements.coverLetterUpload.files[0];
+            if (coverLetterFile.size === 0) {
+                showError('Die hochgeladene Anschreiben-Datei scheint leer zu sein');
+                return false;
+            }
+            if (coverLetterFile.size > 10 * 1024 * 1024) {
+                showError('Die Anschreiben-Datei ist zu groß (max. 10 MB)');
+                return false;
+            }
+        }
+        
         return true;
     }
 
