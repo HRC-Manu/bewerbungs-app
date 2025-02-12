@@ -762,14 +762,11 @@ HR Consultant | Accenture GmbH
 
     // Generate suggestions for a specific section
     async function generateSuggestionsForSection(section) {
-        currentSection = section;
-        showLoading(generateSuggestionsBtn, 'Generiere...');
-        
         try {
             const jobPosting = jobPostingTextarea.value.trim();
             if (!jobPosting) {
                 showError('Bitte füge zuerst eine Stellenanzeige ein');
-                return;
+                return [];
             }
 
             // Extract text from resume if available
@@ -871,22 +868,32 @@ HR Consultant | Accenture GmbH
                     break;
                     
                 case 'all':
-                    // Generate suggestions for all sections recursively
                     const allSuggestions = [];
                     for (const sec of ['recipient', 'subject', 'introduction', 'main', 'closing']) {
                         const secSuggestions = await generateSuggestionsForSection(sec);
-                        allSuggestions.push(secSuggestions[0]); // Take first suggestion of each section
+                        if (secSuggestions && secSuggestions.length > 0) {
+                            allSuggestions.push(secSuggestions[0]);
+                        }
                     }
                     return allSuggestions;
             }
             
-            displaySuggestions(suggestions);
+            if (section !== 'all') {
+                displaySuggestions(suggestions);
+            }
+            
+            return suggestions;
             
         } catch (error) {
             showError('Fehler bei der Generierung der Vorschläge: ' + error.message);
             console.error('Suggestion generation error:', error);
+            return [];
         } finally {
-            hideLoading(generateSuggestionsBtn, 'KI-Vorschläge');
+            if (section === 'all') {
+                hideLoading(generateBtn, 'Generieren');
+            } else {
+                hideLoading(generateSuggestionsBtn, 'KI-Vorschläge');
+            }
         }
     }
 
