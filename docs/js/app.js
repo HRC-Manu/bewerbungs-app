@@ -141,28 +141,42 @@ document.addEventListener('DOMContentLoaded', function() {
 
     async function makeApiRequest(endpoint, payload) {
         try {
+            console.log('Starting API request to:', endpoint);
             const response = await fetch(endpoint, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${getApiKey()}`
+                    'Authorization': `Bearer ${getApiKey()}`,
+                    'Accept': 'application/json',
+                    'Origin': window.location.origin
                 },
+                mode: 'cors',
+                cache: 'no-cache',
+                credentials: 'same-origin',
                 body: JSON.stringify(payload)
             });
 
+            console.log('API Response Status:', response.status);
+            
             if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}));
-                if (errorData.error) {
-                    throw new Error(errorData.error.message);
+                const errorText = await response.text();
+                console.error('API Error Response:', errorText);
+                try {
+                    const errorData = JSON.parse(errorText);
+                    throw new Error(errorData.error?.message || `HTTP error! status: ${response.status}`);
+                } catch (e) {
+                    throw new Error(`HTTP error! status: ${response.status}, body: ${errorText}`);
                 }
-                throw new Error(`HTTP error! status: ${response.status}`);
             }
 
             const data = await response.json();
+            console.log('API Response Data:', data);
             return data;
         } catch (error) {
             console.error('API request failed:', error);
-            if (error.message.includes('401')) {
+            if (error.message.includes('Failed to fetch')) {
+                throw new Error('Verbindung zum API-Server fehlgeschlagen. Bitte überprüfen Sie Ihre Internetverbindung.');
+            } else if (error.message.includes('401')) {
                 throw new Error('Ungültiger API-Schlüssel. Bitte überprüfen Sie Ihre Einstellungen.');
             } else if (error.message.includes('429')) {
                 throw new Error('Zu viele Anfragen. Bitte warten Sie einen Moment.');
@@ -175,76 +189,67 @@ document.addEventListener('DOMContentLoaded', function() {
 
     async function analyzeJobPosting(jobPosting) {
         try {
-            const response = await fetch('https://api.openai.com/v1/chat/completions', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${getApiKey()}`
-                },
-                body: JSON.stringify({
-                    model: "gpt-4",
-                    messages: [{
-                        role: "system",
-                        content: "Du bist ein Experte für Bewerbungsanalyse und Karriereberatung."
-                    }, {
-                        role: "user",
-                        content: `Analysiere diese Stellenanzeige detailliert und extrahiere alle relevanten Informationen:
-                        
-                        ${jobPosting}
-                        
-                        Liefere eine strukturierte Analyse im folgenden JSON-Format:
-                        {
-                            "jobTitle": {
-                                "position": "Titel der Position",
-                                "level": "Junior/Senior/Lead",
-                                "department": "Abteilung"
-                            },
-                            "company": {
-                                "name": "Firmenname",
-                                "industry": "Branche",
-                                "size": "Unternehmensgröße",
-                                "culture": "Unternehmenskultur",
-                                "values": ["Wert 1", "Wert 2"],
-                                "benefits": ["Benefit 1", "Benefit 2"]
-                            },
-                            "requirements": {
-                                "hardSkills": ["Skill 1", "Skill 2"],
-                                "softSkills": ["Skill 1", "Skill 2"],
-                                "experience": ["Erfahrung 1", "Erfahrung 2"],
-                                "education": ["Ausbildung 1", "Ausbildung 2"]
-                            },
-                            "responsibilities": ["Aufgabe 1", "Aufgabe 2"],
-                            "workingModel": {
-                                "type": "remote/hybrid/office",
-                                "location": "Arbeitsort",
-                                "hours": "Arbeitszeit"
-                            }
-                        }`
-                    }],
-                    temperature: 0.7
-                })
+            console.log('Starting job posting analysis');
+            const data = await makeApiRequest('https://api.openai.com/v1/chat/completions', {
+                model: "gpt-4",
+                messages: [{
+                    role: "system",
+                    content: "Du bist ein Experte für Bewerbungsanalyse und Karriereberatung."
+                }, {
+                    role: "user",
+                    content: `Analysiere diese Stellenanzeige detailliert und extrahiere alle relevanten Informationen:
+                    
+                    ${jobPosting}
+                    
+                    Liefere eine strukturierte Analyse im folgenden JSON-Format:
+                    {
+                        "jobTitle": {
+                            "position": "Titel der Position",
+                            "level": "Junior/Senior/Lead",
+                            "department": "Abteilung"
+                        },
+                        "company": {
+                            "name": "Firmenname",
+                            "industry": "Branche",
+                            "size": "Unternehmensgröße",
+                            "culture": "Unternehmenskultur",
+                            "values": ["Wert 1", "Wert 2"],
+                            "benefits": ["Benefit 1", "Benefit 2"]
+                        },
+                        "requirements": {
+                            "hardSkills": ["Skill 1", "Skill 2"],
+                            "softSkills": ["Skill 1", "Skill 2"],
+                            "experience": ["Erfahrung 1", "Erfahrung 2"],
+                            "education": ["Ausbildung 1", "Ausbildung 2"]
+                        },
+                        "responsibilities": ["Aufgabe 1", "Aufgabe 2"],
+                        "workingModel": {
+                            "type": "remote/hybrid/office",
+                            "location": "Arbeitsort",
+                            "hours": "Arbeitszeit"
+                        }
+                    }`
+                }],
+                temperature: 0.7
             });
 
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}));
-                console.error('API Response not OK:', response.status, errorData);
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
-            const data = await response.json();
-            if (!data.choices || !data.choices[0] || !data.choices[0].message || !data.choices[0].message.content) {
+            console.log('Job posting analysis response:', data);
+            
+            if (!data.choices?.[0]?.message?.content) {
                 console.error('Invalid API response structure:', data);
-                throw new Error('Ungültige API-Antwort');
+                throw new Error('Ungültige API-Antwort: Fehlende Daten in der Antwort');
             }
 
             try {
-                return JSON.parse(data.choices[0].message.content);
+                const parsedContent = JSON.parse(data.choices[0].message.content);
+                console.log('Parsed job analysis:', parsedContent);
+                return parsedContent;
             } catch (parseError) {
-                console.error('Error parsing API response:', parseError);
-                throw new Error('Fehler beim Parsen der API-Antwort');
+                console.error('Error parsing job analysis:', parseError);
+                throw new Error('Fehler beim Parsen der Analyse-Ergebnisse');
             }
         } catch (error) {
-            console.error('Job posting analysis error:', error);
+            console.error('Job posting analysis failed:', error);
             throw new Error(`Analyse fehlgeschlagen: ${error.message}`);
         }
     }
