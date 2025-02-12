@@ -95,28 +95,145 @@ document.addEventListener('DOMContentLoaded', function() {
             const type = apiKeyInput.type === 'password' ? 'text' : 'password';
             apiKeyInput.type = type;
         });
+
+        // Initialisiere Einstellungen
+        initializeSettings();
     }
 
     // ===== API Key Management =====
+    const API_SETTINGS = {
+        defaultPassword: 'admin',
+        encryptionKey: 'bewerbungsassistent-2024', // Schlüssel für die Verschlüsselung
+        currentService: 'openai'
+    };
+
+    function initializeSettings() {
+        // Password aus localStorage laden oder Standardpasswort setzen
+        if (!localStorage.getItem('settings_password')) {
+            localStorage.setItem('settings_password', 
+                CryptoJS.AES.encrypt(API_SETTINGS.defaultPassword, API_SETTINGS.encryptionKey).toString()
+            );
+        }
+
+        // Event Listener für Service-Auswahl
+        document.getElementById('aiServiceSelect').addEventListener('change', (e) => {
+            const service = e.target.value;
+            API_SETTINGS.currentService = service;
+            
+            // Alle API-Settings ausblenden
+            document.querySelectorAll('.api-settings').forEach(el => el.classList.add('d-none'));
+            
+            // Gewählte API-Settings einblenden
+            document.getElementById(`${service}Settings`).classList.remove('d-none');
+        });
+
+        // Event Listener für Passwort-Entsperrung
+        document.getElementById('unlockSettings').addEventListener('click', unlockSettings);
+
+        // Event Listener für API Key Toggle Buttons
+        document.querySelectorAll('.toggle-password').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const input = e.target.closest('.input-group').querySelector('input');
+                const type = input.type === 'password' ? 'text' : 'password';
+                input.type = type;
+                e.target.querySelector('i').classList.toggle('bi-eye');
+                e.target.querySelector('i').classList.toggle('bi-eye-slash');
+            });
+        });
+    }
+
+    async function unlockSettings() {
+        const input = document.getElementById('settingsPasswordInput');
+        const password = input.value;
+        
+        // Gespeichertes Passwort entschlüsseln und vergleichen
+        const storedPassword = CryptoJS.AES.decrypt(
+            localStorage.getItem('settings_password'), 
+            API_SETTINGS.encryptionKey
+        ).toString(CryptoJS.enc.Utf8);
+        
+        if (password === storedPassword) {
+            // Passwort-Bereich ausblenden und API-Settings einblenden
+            document.getElementById('settingsPassword').classList.add('d-none');
+            document.getElementById('apiSettings').classList.remove('d-none');
+            
+            // Gespeicherte API Keys laden
+            loadApiKeys();
+        } else {
+            showError('Falsches Passwort');
+        }
+    }
+
+    function loadApiKeys() {
+        // Verschlüsselte API Keys aus localStorage laden und entschlüsseln
+        ['openai', 'anthropic', 'google'].forEach(service => {
+            const encryptedKey = localStorage.getItem(`${service}_api_key`);
+            if (encryptedKey) {
+                const decryptedKey = CryptoJS.AES.decrypt(
+                    encryptedKey, 
+                    API_SETTINGS.encryptionKey
+                ).toString(CryptoJS.enc.Utf8);
+                document.getElementById(`${service}ApiKey`).value = decryptedKey;
+            }
+        });
+        
+        // Gespeicherte Einstellungen laden
+        const savedService = localStorage.getItem('current_service') || 'openai';
+        document.getElementById('aiServiceSelect').value = savedService;
+        document.getElementById(`${savedService}Settings`).classList.remove('d-none');
+    }
+
     function saveSettings() {
-        const apiKey = elements.apiKey.value.trim();
-        if (!apiKey) {
-            showError('Bitte geben Sie einen API Key ein');
-            return;
+        const newPassword = document.getElementById('newPassword').value;
+        if (newPassword) {
+            // Neues Passwort verschlüsselt speichern
+            localStorage.setItem('settings_password', 
+                CryptoJS.AES.encrypt(newPassword, API_SETTINGS.encryptionKey).toString()
+            );
         }
         
-        localStorage.setItem('openai_api_key', apiKey);
+        // API Keys verschlüsselt speichern
+        ['openai', 'anthropic', 'google'].forEach(service => {
+            const key = document.getElementById(`${service}ApiKey`).value.trim();
+            if (key) {
+                localStorage.setItem(`${service}_api_key`,
+                    CryptoJS.AES.encrypt(key, API_SETTINGS.encryptionKey).toString()
+                );
+            }
+        });
+        
+        // Aktuelle Service-Auswahl speichern
+        const currentService = document.getElementById('aiServiceSelect').value;
+        localStorage.setItem('current_service', currentService);
+        API_SETTINGS.currentService = currentService;
+        
+        // Andere Einstellungen speichern
+        localStorage.setItem('language', document.getElementById('languageSelect').value);
+        localStorage.setItem('style', document.getElementById('styleSelect').value);
+        
         elements.settingsModal.hide();
-        showSuccess('Einstellungen gespeichert');
+        showSuccess('Einstellungen erfolgreich gespeichert');
+        
+        // Modal zurücksetzen
+        document.getElementById('settingsPassword').classList.remove('d-none');
+        document.getElementById('apiSettings').classList.add('d-none');
+        document.getElementById('settingsPasswordInput').value = '';
+        document.getElementById('newPassword').value = '';
     }
 
     function getApiKey() {
-        const apiKey = localStorage.getItem('openai_api_key');
-        if (!apiKey) {
+        const service = API_SETTINGS.currentService;
+        const encryptedKey = localStorage.getItem(`${service}_api_key`);
+        
+        if (!encryptedKey) {
             elements.settingsModal.show();
-            throw new Error('Bitte geben Sie zuerst Ihren OpenAI API Key ein');
+            throw new Error(`Bitte geben Sie zuerst Ihren ${service.toUpperCase()} API Key ein`);
         }
-        return apiKey;
+        
+        return CryptoJS.AES.decrypt(
+            encryptedKey, 
+            API_SETTINGS.encryptionKey
+        ).toString(CryptoJS.enc.Utf8);
     }
 
     // ===== Hauptfunktionen =====
