@@ -35,8 +35,13 @@ body {
     box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
 }
 
+.form-control-lg {
+    font-size: 1rem;
+    padding: 1rem;
+}
+
 textarea.form-control {
-    min-height: 200px;
+    min-height: 150px;
     resize: vertical;
 }
 
@@ -112,6 +117,7 @@ textarea.form-control {
     border-radius: 6px;
     white-space: pre-wrap;
     font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    line-height: 1.6;
 }
 
 .dropdown-menu {
@@ -156,6 +162,11 @@ textarea.form-control {
     border-width: 0.15em;
 }
 
+/* Gap utility */
+.gap-2 {
+    gap: 0.5rem;
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
     .container {
@@ -177,5 +188,13 @@ textarea.form-control {
     
     .dropdown-toggle {
         width: 100%;
+    }
+    
+    .d-flex {
+        flex-direction: column;
+    }
+    
+    .gap-2 {
+        gap: 0.5rem;
     }
 }
