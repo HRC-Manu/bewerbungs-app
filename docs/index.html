@@ -16,6 +16,14 @@
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
         <div class="container">
             <a class="navbar-brand" href="#">Job Application Assistant</a>
+            <div class="d-flex">
+                <button class="btn btn-outline-light me-2" id="settingsBtn">
+                    <i class="bi bi-gear"></i> Einstellungen
+                </button>
+                <button class="btn btn-outline-light" id="loadExampleBtn">
+                    <i class="bi bi-file-text"></i> Beispiel laden
+                </button>
+            </div>
         </div>
     </nav>
 
@@ -145,13 +153,30 @@
                         </div>
                     </div>
                     <div class="card-body">
-                        <div id="documentPreview" class="preview-content">
-                            <div id="coverLetterPreview">
-                                Hier erscheint die Vorschau des Anschreibens...
+                        <div class="progress-container">
+                            <div class="progress mb-3 d-none" id="generationProgress">
+                                <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
                             </div>
-                            <hr class="my-4">
-                            <div id="resumePreview">
-                                Hier erscheint die Vorschau des Lebenslaufs...
+                        </div>
+                        <div class="preview-container">
+                            <div class="preview-toolbar mb-2">
+                                <div class="btn-group">
+                                    <button class="btn btn-sm btn-outline-secondary" id="copyBtn">
+                                        <i class="bi bi-clipboard"></i> Kopieren
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-secondary" id="downloadBtn">
+                                        <i class="bi bi-download"></i> Herunterladen
+                                    </button>
+                                </div>
+                            </div>
+                            <div id="documentPreview" class="preview-content">
+                                <div id="coverLetterPreview">
+                                    Hier erscheint die Vorschau des Anschreibens...
+                                </div>
+                                <hr class="my-4">
+                                <div id="resumePreview">
+                                    Hier erscheint die Vorschau des Lebenslaufs...
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -204,6 +229,29 @@
                     <div id="filePreviewContent" class="mini-preview">
                         <!-- Preview content will be inserted here -->
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Füge API Key Konfiguration hinzu -->
+    <div class="modal fade" id="settingsModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Einstellungen</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="apiKey" class="form-label">OpenAI API Key</label>
+                        <input type="password" class="form-control" id="apiKey" placeholder="sk-...">
+                        <div class="form-text">Ihr OpenAI API Key wird lokal in Ihrem Browser gespeichert.</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Schließen</button>
+                    <button type="button" class="btn btn-primary" id="saveSettingsBtn">Speichern</button>
                 </div>
             </div>
         </div>
