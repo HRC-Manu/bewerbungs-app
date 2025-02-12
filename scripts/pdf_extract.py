@@ -1,161 +1,112 @@
 #!/usr/bin/env python3
 """
-Document export utility for the Job Application Assistant.
-Converts generated documents to Word and PDF formats.
+PDF text extraction utility for the Job Application Assistant.
+Extracts text content from PDF resumes while preserving structure.
 """
 
 import os
 import sys
-import logging
 from typing import Dict, Any
-from docx import Document
-from docx.shared import Pt, Cm
-from docx.enum.text import WD_ALIGN_PARAGRAPH
-import markdown
-from bs4 import BeautifulSoup
-import argparse
-from docx2pdf import convert
+import json
+import pypdf
+import logging
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-class DocumentExporter:
-    """Handles the export of documents to various formats."""
+class PDFExtractor:
+    """Handles the extraction of text from PDF files."""
     
-    def __init__(self, input_dir: str = 'input', output_dir: str = 'output'):
-        """Initialize the exporter with input and output directories."""
-        self.input_dir = input_dir
-        self.output_dir = output_dir
-        os.makedirs(output_dir, exist_ok=True)
+    def __init__(self, input_file: str):
+        """Initialize the PDF extractor with input file path."""
+        self.input_file = input_file
+        self.text_content = ""
+        self.metadata = {}
         
-    def html_to_text(self, html_content: str) -> str:
-        """Convert HTML content to plain text while preserving structure."""
-        soup = BeautifulSoup(html_content, 'html.parser')
-        return soup.get_text()
-    
-    def create_word_document(self) -> Document:
-        """Create and format a new Word document."""
-        doc = Document()
-        
-        # Set page margins
-        sections = doc.sections
-        for section in sections:
-            section.top_margin = Cm(2.5)
-            section.bottom_margin = Cm(2)
-            section.left_margin = Cm(2.5)
-            section.right_margin = Cm(2)
-        
-        return doc
-        
-    def export_to_word(self) -> Dict[str, Any]:
-        """Export the documents to Word format."""
+    def extract(self) -> Dict[str, Any]:
+        """
+        Extract text and metadata from the PDF file.
+        Returns a dictionary containing the extracted content.
+        """
         try:
-            # Create a new Word document
-            doc = self.create_word_document()
-            
-            # Add cover letter
-            with open(os.path.join(self.input_dir, 'cover_letter.html'), 'r', encoding='utf-8') as f:
-                cover_letter_html = f.read()
-            
-            cover_letter_text = self.html_to_text(cover_letter_html)
-            
-            # Format cover letter
-            heading = doc.add_heading('Anschreiben', level=1)
-            heading.alignment = WD_ALIGN_PARAGRAPH.CENTER
-            
-            # Add cover letter text with proper formatting
-            paragraphs = cover_letter_text.split('\n\n')
-            for p_text in paragraphs:
-                if p_text.strip():
-                    p = doc.add_paragraph(p_text.strip())
-                    p.paragraph_format.space_after = Pt(12)
-            
-            # Add page break
-            doc.add_page_break()
-            
-            # Add resume
-            with open(os.path.join(self.input_dir, 'resume.html'), 'r', encoding='utf-8') as f:
-                resume_html = f.read()
-            
-            resume_text = self.html_to_text(resume_html)
-            
-            # Format resume
-            heading = doc.add_heading('Lebenslauf', level=1)
-            heading.alignment = WD_ALIGN_PARAGRAPH.CENTER
-            
-            # Add resume text with proper formatting
-            paragraphs = resume_text.split('\n\n')
-            for p_text in paragraphs:
-                if p_text.strip():
-                    p = doc.add_paragraph(p_text.strip())
-                    p.paragraph_format.space_after = Pt(12)
-            
-            # Save the document
-            output_path = os.path.join(self.output_dir, 'bewerbung.docx')
-            doc.save(output_path)
-            
-            logger.info(f"Documents exported to Word: {output_path}")
-            return {
-                'path': output_path,
-                'success': True
-            }
-            
+            with open(self.input_file, 'rb') as file:
+                # Create PDF reader object
+                reader = pypdf.PdfReader(file)
+                
+                # Extract metadata
+                self.metadata = {
+                    'title': reader.metadata.get('/Title', ''),
+                    'author': reader.metadata.get('/Author', ''),
+                    'creator': reader.metadata.get('/Creator', ''),
+                    'pages': len(reader.pages)
+                }
+                
+                # Extract text from all pages
+                text_content = []
+                for page in reader.pages:
+                    text = page.extract_text()
+                    if text:
+                        text_content.append(text)
+                
+                self.text_content = '\n'.join(text_content)
+                
+                return {
+                    'text': self.text_content,
+                    'metadata': self.metadata,
+                    'success': True
+                }
+                
         except Exception as e:
-            logger.error(f"Error exporting to Word: {str(e)}")
+            logger.error(f"Error extracting PDF content: {str(e)}")
             return {
-                'path': '',
+                'text': '',
+                'metadata': {},
                 'success': False,
                 'error': str(e)
             }
     
-    def export_to_pdf(self) -> Dict[str, Any]:
-        """Export the documents to PDF format."""
+    def save_extracted_content(self, output_file: str):
+        """Save the extracted content to a JSON file."""
         try:
-            # First export to Word
-            word_result = self.export_to_word()
-            if not word_result['success']:
-                raise Exception("Word export failed")
-            
-            # Convert Word to PDF
-            word_path = word_result['path']
-            pdf_path = os.path.join(self.output_dir, 'bewerbung.pdf')
-            
-            convert(word_path, pdf_path)
-            
-            logger.info(f"Documents exported to PDF: {pdf_path}")
-            return {
-                'path': pdf_path,
-                'success': True
+            content = {
+                'text': self.text_content,
+                'metadata': self.metadata
             }
+            
+            with open(output_file, 'w', encoding='utf-8') as f:
+                json.dump(content, f, ensure_ascii=False, indent=2)
+                
+            logger.info(f"Extracted content saved to {output_file}")
+            return True
             
         except Exception as e:
-            logger.error(f"Error exporting to PDF: {str(e)}")
-            return {
-                'path': '',
-                'success': False,
-                'error': str(e)
-            }
+            logger.error(f"Error saving extracted content: {str(e)}")
+            return False
 
 def main():
-    """Main function to run the document exporter."""
-    parser = argparse.ArgumentParser(description='Export documents to various formats')
-    parser.add_argument('--format', choices=['word', 'pdf'], required=True,
-                      help='Output format (word or pdf)')
-    args = parser.parse_args()
+    """Main function to run the PDF extractor."""
+    if len(sys.argv) < 2:
+        print("Usage: python pdf_extract.py <input_pdf> [output_json]")
+        sys.exit(1)
+        
+    input_file = sys.argv[1]
+    output_file = sys.argv[2] if len(sys.argv) > 2 else 'extracted_content.json'
     
-    exporter = DocumentExporter()
-    
-    if args.format == 'word':
-        result = exporter.export_to_word()
-    else:
-        result = exporter.export_to_pdf()
+    if not os.path.exists(input_file):
+        print(f"Error: Input file '{input_file}' not found.")
+        sys.exit(1)
+        
+    extractor = PDFExtractor(input_file)
+    result = extractor.extract()
     
     if result['success']:
-        print(f"Successfully exported documents to {result['path']}")
+        if extractor.save_extracted_content(output_file):
+            print(f"Successfully extracted content to {output_file}")
+        else:
+            print("Error saving extracted content")
     else:
-        print(f"Error exporting documents: {result.get('error', 'Unknown error')}")
-        sys.exit(1)
+        print(f"Error extracting PDF content: {result.get('error', 'Unknown error')}")
 
 if __name__ == '__main__':
     main() 
