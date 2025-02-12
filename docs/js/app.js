@@ -1175,6 +1175,374 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    // ===== Vorschlagsgenerierung =====
+    async function generateSectionSuggestions(section, analysisData) {
+        try {
+            const { job, resume } = analysisData;
+            
+            // Kontext-basierte Vorschlagsgenerierung
+            const context = {
+                matchScore: calculateMatchScore(job, resume),
+                relevantExperience: findMostRelevantExperience(job, resume),
+                keySkills: identifyKeySkills(job, resume),
+                cultureFit: analyzeCultureFit(job, resume)
+            };
+            
+            if (section === 'all') {
+                const sections = ['recipient', 'subject', 'introduction', 'main', 'closing'];
+                return Promise.all(sections.map(async (sec) => {
+                    const suggestion = await generateEnhancedSection(sec, analysisData, context);
+                    return {
+                        section: sec,
+                        text: suggestion.text,
+                        alternatives: suggestion.alternatives,
+                        context: suggestion.context
+                    };
+                }));
+            }
+            
+            const suggestion = await generateEnhancedSection(section, analysisData, context);
+            return [{
+                section,
+                text: suggestion.text,
+                alternatives: suggestion.alternatives,
+                context: suggestion.context
+            }];
+        } catch (error) {
+            console.error('Suggestion generation error:', error);
+            throw new Error('Generierung fehlgeschlagen: ' + error.message);
+        }
+    }
+
+    async function generateEnhancedSection(section, analysisData, context) {
+        const { job, resume } = analysisData;
+        
+        // Wähle den besten Stil basierend auf Unternehmenskultur und Position
+        const style = determineOptimalStyle(job, context);
+        
+        // Generiere personalisierte Vorschläge
+        const suggestion = generatePersonalizedContent(section, analysisData, style, context);
+        
+        // Generiere kontextbezogene Alternativen
+        const alternatives = generateContextualAlternatives(suggestion, style, context);
+        
+        return {
+            text: suggestion,
+            alternatives: alternatives,
+            context: {
+                style,
+                matchScore: context.matchScore,
+                keyPoints: extractKeyPoints(suggestion)
+            }
+        };
+    }
+
+    function determineOptimalStyle(job, context) {
+        const { culture } = job.company;
+        const { matchScore } = context;
+        
+        if (culture.formal && culture.formal.score > 0.5) {
+            return 'formal';
+        } else if (matchScore > 0.8) {
+            return 'confident';
+        } else {
+            return 'casual';
+        }
+    }
+
+    function displayAnalysis(jobAnalysis) {
+        // Position anzeigen
+        const jobTitleAnalysis = document.getElementById('jobTitleAnalysis');
+        if (jobTitleAnalysis) {
+            jobTitleAnalysis.innerHTML = `
+                <div><strong>${jobAnalysis.jobTitle.position}</strong></div>
+                <div class="text-muted">${jobAnalysis.jobTitle.level} - ${jobAnalysis.jobTitle.department}</div>
+            `;
+        }
+
+        // Unternehmen anzeigen
+        const companyAnalysis = document.getElementById('companyAnalysis');
+        if (companyAnalysis) {
+            companyAnalysis.innerHTML = `
+                <div><strong>${jobAnalysis.company.name}</strong></div>
+                <div class="text-muted">${jobAnalysis.company.industry}</div>
+                <div class="mt-2">
+                    <small class="text-muted">Unternehmenskultur:</small><br>
+                    ${Object.entries(jobAnalysis.company.culture)
+                        .map(([key, value]) => `${key}: ${Math.round(value.score * 100)}%`)
+                        .join('<br>')}
+                </div>
+            `;
+        }
+
+        // Anforderungen anzeigen
+        const mustHaveList = document.getElementById('mustHaveList');
+        const niceToHaveList = document.getElementById('niceToHaveList');
+
+        if (mustHaveList) {
+            mustHaveList.innerHTML = jobAnalysis.requirements.essential
+                .map(skill => `<li>${skill}</li>`).join('');
+        }
+
+        if (niceToHaveList) {
+            niceToHaveList.innerHTML = jobAnalysis.requirements.preferred
+                .map(skill => `<li>${skill}</li>`).join('');
+        }
+
+        // Analyse-Sektion anzeigen
+        const jobAnalysisSection = document.getElementById('jobAnalysis');
+        if (jobAnalysisSection) {
+            jobAnalysisSection.classList.remove('d-none');
+        }
+    }
+
+    function updateProgressStep(step) {
+        // Alle Steps zurücksetzen
+        document.querySelectorAll('.progress-stepper .step').forEach(el => {
+            el.classList.remove('active');
+        });
+
+        // Aktiven Step setzen
+        const activeStep = document.getElementById(`step${step}`);
+        if (activeStep) {
+            activeStep.classList.add('active');
+        }
+    }
+
+    function extractCompanyName(text) {
+        try {
+            // Suche nach typischen Firmenbezeichnungen
+            const companyPatterns = [
+                /(?:firma|unternehmen|arbeitgeber|gesellschaft|gmbh|ag|kg):\s*([^\n.]+)/i,
+                /(?:wir sind|über uns)(?:[^.]*?)(?:die|der)\s+([^\n.]+?)(?:\s+(?:gmbh|ag|kg|group|holding))/i,
+                /([^\n.]+?)(?:\s+(?:gmbh|ag|kg|group|holding))/i
+            ];
+
+            for (const pattern of companyPatterns) {
+                const match = text.match(pattern);
+                if (match && match[1]) {
+                    return match[1].trim();
+                }
+            }
+
+            return 'Unbekanntes Unternehmen';
+        } catch (error) {
+            console.error('Error extracting company name:', error);
+            return 'Unbekanntes Unternehmen';
+        }
+    }
+
+    function determineIndustry(text) {
+        try {
+            const industries = {
+                it: ['software', 'it', 'technologie', 'digital', 'computer', 'internet'],
+                finance: ['bank', 'finanz', 'versicherung', 'investment'],
+                manufacturing: ['produktion', 'fertigung', 'industrie', 'maschinenbau'],
+                healthcare: ['gesundheit', 'medizin', 'pharma', 'krankenhaus'],
+                retail: ['handel', 'einzelhandel', 'verkauf', 'shopping'],
+                consulting: ['beratung', 'consulting', 'dienstleistung']
+            };
+
+            let bestMatch = { industry: 'Sonstige', score: 0 };
+
+            for (const [industry, keywords] of Object.entries(industries)) {
+                const matches = keywords.filter(keyword => text.toLowerCase().includes(keyword));
+                const score = matches.length / keywords.length;
+
+                if (score > bestMatch.score) {
+                    bestMatch = { industry, score };
+                }
+            }
+
+            return bestMatch.industry;
+        } catch (error) {
+            console.error('Error determining industry:', error);
+            return 'Sonstige';
+        }
+    }
+
+    function determineCompanySize(text) {
+        try {
+            const sizePatterns = {
+                small: ['startup', 'klein', 'bis 50 mitarbeiter'],
+                medium: ['mittelständisch', '50-250 mitarbeiter', 'mittelstand'],
+                large: ['großunternehmen', 'über 250 mitarbeiter', 'konzern']
+            };
+
+            for (const [size, patterns] of Object.entries(sizePatterns)) {
+                if (patterns.some(pattern => text.toLowerCase().includes(pattern))) {
+                    return size;
+                }
+            }
+
+            return 'unknown';
+        } catch (error) {
+            console.error('Error determining company size:', error);
+            return 'unknown';
+        }
+    }
+
+    function checkRemoteWork(text) {
+        try {
+            const remoteIndicators = [
+                'remote', 'homeoffice', 'home office', 'remote-arbeit',
+                'telearbeit', 'von zuhause', 'hybrid', 'flexibel'
+            ];
+
+            return remoteIndicators.some(indicator => 
+                text.toLowerCase().includes(indicator)
+            );
+        } catch (error) {
+            console.error('Error checking remote work:', error);
+            return false;
+        }
+    }
+
+    function extractLocation(text) {
+        try {
+            // Suche nach Postleitzahl und Ort
+            const locationPattern = /(?:\b\d{5}\s+)?(?:in\s+)?([A-ZÄÖÜa-zäöüß-]+(?:\s+[A-ZÄÖÜa-zäöüß-]+)*)/;
+            const match = text.match(locationPattern);
+
+            return match ? match[1].trim() : 'Nicht angegeben';
+        } catch (error) {
+            console.error('Error extracting location:', error);
+            return 'Nicht angegeben';
+        }
+    }
+
+    function extractTeamSize(text) {
+        try {
+            const teamPatterns = [
+                /team\s+von\s+(\d+)(?:\s*-\s*(\d+))?\s+mitarbeiter/i,
+                /(\d+)(?:\s*-\s*(\d+))?\s+kollegen/i
+            ];
+
+            for (const pattern of teamPatterns) {
+                const match = text.match(pattern);
+                if (match) {
+                    if (match[2]) {
+                        return `${match[1]}-${match[2]} Mitarbeiter`;
+                    }
+                    return `${match[1]} Mitarbeiter`;
+                }
+            }
+
+            return 'Nicht spezifiziert';
+        } catch (error) {
+            console.error('Error extracting team size:', error);
+            return 'Nicht spezifiziert';
+        }
+    }
+
+    function extractBenefits(text) {
+        try {
+            const benefitPatterns = [
+                'flexible arbeitszeiten', 'homeoffice', 'weiterbildung',
+                'betriebliche altersvorsorge', 'firmenwagen', 'fitness',
+                'kantine', 'obstkorb', 'kinderbetreuung', 'urlaubstage'
+            ];
+
+            return benefitPatterns
+                .filter(benefit => text.toLowerCase().includes(benefit))
+                .map(benefit => benefit.charAt(0).toUpperCase() + benefit.slice(1));
+        } catch (error) {
+            console.error('Error extracting benefits:', error);
+            return [];
+        }
+    }
+
+    function extractTechnologies(text) {
+        try {
+            const techPatterns = [
+                'java', 'python', 'javascript', 'typescript', 'react', 'angular',
+                'vue', 'node.js', 'sql', 'nosql', 'aws', 'azure', 'docker',
+                'kubernetes', 'git', 'ci/cd', 'agile', 'scrum'
+            ];
+
+            return techPatterns
+                .filter(tech => text.toLowerCase().includes(tech))
+                .map(tech => tech.toUpperCase());
+        } catch (error) {
+            console.error('Error extracting technologies:', error);
+            return [];
+        }
+    }
+
+    function extractExperienceRequirements(text) {
+        try {
+            const experiencePattern = /(\d+)(?:\s*-\s*(\d+))?\s+jahr(?:e)?\s+(?:berufs)?erfahrung/i;
+            const match = text.match(experiencePattern);
+
+            if (match) {
+                if (match[2]) {
+                    return `${match[1]}-${match[2]} Jahre`;
+                }
+                return `${match[1]} Jahre`;
+            }
+
+            return 'Nicht spezifiziert';
+        } catch (error) {
+            console.error('Error extracting experience requirements:', error);
+            return 'Nicht spezifiziert';
+        }
+    }
+
+    function extractEducationRequirements(text) {
+        try {
+            const educationPatterns = {
+                university: ['studium', 'master', 'bachelor', 'diplom'],
+                vocational: ['ausbildung', 'berufsausbildung', 'lehre'],
+                school: ['abitur', 'fachabitur', 'hochschulreife']
+            };
+
+            for (const [level, patterns] of Object.entries(educationPatterns)) {
+                if (patterns.some(pattern => text.toLowerCase().includes(pattern))) {
+                    return level;
+                }
+            }
+
+            return 'Nicht spezifiziert';
+        } catch (error) {
+            console.error('Error extracting education requirements:', error);
+            return 'Nicht spezifiziert';
+        }
+    }
+
+    function extractTechnicalSkills(text) {
+        try {
+            const technicalPatterns = [
+                'programmierung', 'entwicklung', 'software', 'datenbank',
+                'netzwerk', 'security', 'cloud', 'architektur', 'testing',
+                'devops', 'frontend', 'backend'
+            ];
+
+            return technicalPatterns
+                .filter(skill => text.toLowerCase().includes(skill))
+                .map(skill => skill.charAt(0).toUpperCase() + skill.slice(1));
+        } catch (error) {
+            console.error('Error extracting technical skills:', error);
+            return [];
+        }
+    }
+
+    function extractSoftSkills(text) {
+        try {
+            const softSkillPatterns = [
+                'kommunikation', 'teamfähigkeit', 'selbstständig',
+                'analytisch', 'kreativ', 'flexibel', 'belastbar',
+                'organisiert', 'motiviert', 'lernbereit'
+            ];
+
+            return softSkillPatterns
+                .filter(skill => text.toLowerCase().includes(skill))
+                .map(skill => skill.charAt(0).toUpperCase() + skill.slice(1));
+        } catch (error) {
+            console.error('Error extracting soft skills:', error);
+            return [];
+        }
+    }
+
     // ===== Initialisierung =====
     initializeEventListeners();
     initializeTextareaListeners();
