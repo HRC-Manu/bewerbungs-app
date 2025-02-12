@@ -70,9 +70,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function getApiKey() {
         const apiKey = API_SETTINGS.apiKey;
+        
         if (!apiKey) {
-            throw new Error('Kein API-Schlüssel gefunden');
+            throw new Error('Kein API-Schlüssel gefunden. Bitte überprüfen Sie die Repository-Einstellungen.');
         }
+        
+        // Validate API key format
+        if (!apiKey.startsWith('sk-') || apiKey.length < 20) {
+            throw new Error('Ungültiger API-Schlüssel Format. Bitte überprüfen Sie den Schlüssel.');
+        }
+        
         return apiKey;
     }
 
@@ -140,12 +147,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${getApiKey()}`,
-                    'Accept': 'application/json',
-                    'Origin': window.location.origin
+                    'Accept': 'application/json'
                 },
-                mode: 'cors',
-                cache: 'no-cache',
-                credentials: 'same-origin',
                 body: JSON.stringify(payload)
             });
 
@@ -154,29 +157,30 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!response.ok) {
                 const errorText = await response.text();
                 console.error('API Error Response:', errorText);
+                
+                // Spezifische Fehlermeldungen für verschiedene Status Codes
+                if (response.status === 401) {
+                    throw new Error('API-Schlüssel ist ungültig oder abgelaufen');
+                } else if (response.status === 429) {
+                    throw new Error('Zu viele Anfragen. Bitte warten Sie einen Moment');
+                } else if (response.status === 500) {
+                    throw new Error('OpenAI Server-Fehler. Bitte versuchen Sie es später erneut');
+                }
+                
                 try {
                     const errorData = JSON.parse(errorText);
                     throw new Error(errorData.error?.message || `HTTP error! status: ${response.status}`);
                 } catch (e) {
-                    throw new Error(`HTTP error! status: ${response.status}, body: ${errorText}`);
+                    throw new Error(`API Fehler: ${response.status}, ${errorText}`);
                 }
             }
 
             const data = await response.json();
-            console.log('API Response Data:', data);
+            console.log('API Response received successfully');
             return data;
         } catch (error) {
             console.error('API request failed:', error);
-            if (error.message.includes('Failed to fetch')) {
-                throw new Error('Verbindung zum API-Server fehlgeschlagen. Bitte überprüfen Sie Ihre Internetverbindung.');
-            } else if (error.message.includes('401')) {
-                throw new Error('Ungültiger API-Schlüssel. Bitte überprüfen Sie Ihre Einstellungen.');
-            } else if (error.message.includes('429')) {
-                throw new Error('Zu viele Anfragen. Bitte warten Sie einen Moment.');
-            } else if (error.message.includes('500')) {
-                throw new Error('Ein Serverfehler ist aufgetreten. Bitte versuchen Sie es später erneut.');
-            }
-            throw new Error('API Anfrage fehlgeschlagen: ' + error.message);
+            throw new Error(`API Anfrage fehlgeschlagen: ${error.message}`);
         }
     }
 
@@ -188,28 +192,25 @@ document.addEventListener('DOMContentLoaded', function() {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${getApiKey()}`,
-                    'Accept': 'application/json'
+                    'Authorization': `Bearer ${getApiKey()}`
                 },
                 body: JSON.stringify({
-                    model: "gpt-4",
+                    model: "gpt-3.5-turbo",
                     messages: [{
                         role: "system",
-                        content: "Du bist ein Experte für Bewerbungsanalyse und Karriereberatung."
+                        content: "Du bist ein Experte für Bewerbungsanalyse. Analysiere die Stellenanzeige und gib die Informationen im folgenden JSON-Format zurück: { jobTitle: { position, level, department }, company: { name, industry, culture }, requirements: { hardSkills: [], softSkills: [] } }"
                     }, {
                         role: "user",
-                        content: `Analysiere diese Stellenanzeige detailliert und extrahiere alle relevanten Informationen:\n\n${jobPosting}`
+                        content: `Analysiere diese Stellenanzeige und gib die Informationen im spezifizierten JSON-Format zurück:\n\n${jobPosting}`
                     }],
                     temperature: 0.7
                 })
             });
 
-            console.log('API Response Status:', response.status);
-            
             if (!response.ok) {
                 const errorText = await response.text();
                 console.error('API Error Response:', errorText);
-                throw new Error(`HTTP error! status: ${response.status}`);
+                throw new Error(`API Fehler: ${response.status}`);
             }
 
             const data = await response.json();
@@ -221,26 +222,12 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             try {
-                const content = data.choices[0].message.content;
-                console.log('Processing API response content:', content);
-                return {
-                    jobTitle: {
-                        position: "Analysierte Position",
-                        level: "Analysiertes Level",
-                        department: "Analysierte Abteilung"
-                    },
-                    company: {
-                        name: "Analysiertes Unternehmen",
-                        industry: "Analysierte Branche",
-                        culture: "Analysierte Unternehmenskultur"
-                    },
-                    requirements: {
-                        hardSkills: ["Analysierte Hard Skills"],
-                        softSkills: ["Analysierte Soft Skills"]
-                    }
-                };
+                // Parse the content as JSON
+                const parsedContent = JSON.parse(data.choices[0].message.content);
+                console.log('Parsed content:', parsedContent);
+                return parsedContent;
             } catch (parseError) {
-                console.error('Error processing response:', parseError);
+                console.error('Error parsing response:', parseError);
                 throw new Error('Fehler bei der Verarbeitung der API-Antwort');
             }
         } catch (error) {
@@ -258,17 +245,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     'Authorization': `Bearer ${getApiKey()}`
                 },
                 body: JSON.stringify({
-                    model: "gpt-4",
+                    model: "gpt-3.5-turbo",
                     messages: [{
                         role: "system",
-                        content: "Analysiere den Lebenslauf und extrahiere relevante Informationen."
+                        content: "Du bist ein Experte für Lebenslaufanalyse. Analysiere den Lebenslauf und gib die Informationen im spezifizierten JSON-Format zurück."
                     }, {
                         role: "user",
-                        content: `Analysiere diesen Lebenslauf und extrahiere die wichtigsten Informationen:
-                        
-                        ${resumeText}
-                        
-                        Liefere das Ergebnis im folgenden JSON-Format:
+                        content: `Analysiere diesen Lebenslauf und gib die Informationen im folgenden JSON-Format zurück:
                         {
                             "personalInfo": {
                                 "name": "Name des Bewerbers",
@@ -294,28 +277,36 @@ document.addEventListener('DOMContentLoaded', function() {
                                     "year": "Jahr"
                                 }
                             ]
-                        }`
+                        }
+
+                        Lebenslauf zum Analysieren:
+                        ${resumeText}`
                     }],
                     temperature: 0.7
                 })
             });
 
             if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}));
-                console.error('API Response not OK:', response.status, errorData);
-                throw new Error(`HTTP error! status: ${response.status}`);
+                const errorText = await response.text();
+                console.error('API Error Response:', errorText);
+                throw new Error(`API Fehler: ${response.status}`);
             }
 
             const data = await response.json();
-            if (!data.choices || !data.choices[0] || !data.choices[0].message || !data.choices[0].message.content) {
+            console.log('API Response received:', data);
+
+            if (!data.choices?.[0]?.message?.content) {
                 console.error('Invalid API response structure:', data);
-                throw new Error('Ungültige API-Antwort');
+                throw new Error('Ungültige API-Antwort: Fehlende Daten');
             }
 
             try {
-                return JSON.parse(data.choices[0].message.content);
+                // Parse the content as JSON
+                const parsedContent = JSON.parse(data.choices[0].message.content);
+                console.log('Parsed content:', parsedContent);
+                return parsedContent;
             } catch (parseError) {
-                console.error('Error parsing API response:', parseError);
+                console.error('Error parsing response:', parseError);
                 throw new Error('Fehler beim Parsen der API-Antwort');
             }
         } catch (error) {
