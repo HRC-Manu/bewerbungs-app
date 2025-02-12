@@ -2,7 +2,6 @@
 document.addEventListener('DOMContentLoaded', function() {
     // ===== Bootstrap Modals =====
     const modals = {
-        settings: new bootstrap.Modal(document.getElementById('settingsModal')),
         suggestions: new bootstrap.Modal(document.getElementById('suggestionsModal')),
         help: new bootstrap.Modal(document.getElementById('helpModal'))
     };
@@ -13,13 +12,10 @@ document.addEventListener('DOMContentLoaded', function() {
         jobPosting: document.getElementById('jobPosting'),
         resumeUpload: document.getElementById('resumeUpload'),
         coverLetterUpload: document.getElementById('coverLetterUpload'),
-        apiKey: document.getElementById('apiKey'),
         
         // Buttons
         analyzeBtn: document.getElementById('analyzeBtn'),
         generateSuggestionsBtn: document.getElementById('generateSuggestionsBtn'),
-        saveSettingsBtn: document.getElementById('saveSettingsBtn'),
-        settingsBtn: document.getElementById('settingsBtn'),
         
         // Vorschau
         coverLetterPreview: document.getElementById('coverLetterPreview'),
@@ -35,7 +31,6 @@ document.addEventListener('DOMContentLoaded', function() {
         },
         
         // Modals und Toasts
-        settingsModal: modals.settings,
         suggestionsModal: modals.suggestions,
         helpModal: modals.help,
         messageToast: new bootstrap.Toast(document.getElementById('messageToast'))
@@ -43,22 +38,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // ===== Event Listener =====
     function initializeEventListeners() {
-        // Settings Button
-        elements.settingsBtn.addEventListener('click', () => {
-            console.log('Settings button clicked');
-            elements.settingsModal.show();
-        });
-
-        // Analyze Button
-        elements.analyzeBtn.addEventListener('click', handleAnalyze);
-        
         // Help Button
         document.getElementById('helpBtn').addEventListener('click', () => {
             elements.helpModal.show();
         });
-        
-        // Save Settings Button
-        elements.saveSettingsBtn.addEventListener('click', saveSettings);
+
+        // Analyze Button
+        elements.analyzeBtn.addEventListener('click', handleAnalyze);
 
         // Datei-Uploads
         if (elements.resumeUpload) {
@@ -73,41 +59,8 @@ document.addEventListener('DOMContentLoaded', function() {
             btn.addEventListener('click', handleFileRemove);
         });
 
-        // Unlock Settings Button
-        const unlockBtn = document.getElementById('unlockSettings');
-        if (unlockBtn) {
-            unlockBtn.addEventListener('click', unlockSettings);
-        }
-
-        // API Key Toggle Buttons
-        document.querySelectorAll('.toggle-password').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const input = e.target.closest('.input-group').querySelector('input');
-                const type = input.type === 'password' ? 'text' : 'password';
-                input.type = type;
-                e.target.querySelector('i').classList.toggle('bi-eye');
-                e.target.querySelector('i').classList.toggle('bi-eye-slash');
-            });
-        });
-
-        // Service Selection
-        const serviceSelect = document.getElementById('aiServiceSelect');
-        if (serviceSelect) {
-            serviceSelect.addEventListener('change', (e) => {
-                const service = e.target.value;
-                document.querySelectorAll('.api-settings').forEach(el => el.classList.add('d-none'));
-                document.getElementById(`${service}Settings`).classList.remove('d-none');
-            });
-        }
-
-        // API Key aus localStorage laden
-        const savedApiKey = localStorage.getItem('openai_api_key');
-        if (savedApiKey) {
-            elements.apiKey.value = savedApiKey;
-        }
-
-        // Initialisiere Einstellungen
-        initializeSettings();
+        // Initialisiere Textbereich-Listener
+        initializeTextareaListeners();
     }
 
     // ===== API Key Management =====
@@ -115,75 +68,6 @@ document.addEventListener('DOMContentLoaded', function() {
         currentService: 'openai',
         apiKey: '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' // GitHub API Key
     };
-
-    function initializeSettings() {
-        try {
-            // Lade gespeicherte Service-Auswahl
-            const savedService = localStorage.getItem('current_service') || 'openai';
-            const serviceSelect = document.getElementById('aiServiceSelect');
-            if (serviceSelect) {
-                serviceSelect.value = savedService;
-                API_SETTINGS.currentService = savedService;
-            }
-
-            // Lade andere Einstellungen
-            loadGeneralSettings();
-
-            // API Settings direkt anzeigen
-            const apiSettings = document.getElementById('apiSettings');
-            if (apiSettings) {
-                apiSettings.classList.remove('d-none');
-            }
-
-            // Passwort-Bereich ausblenden
-            const settingsPassword = document.getElementById('settingsPassword');
-            if (settingsPassword) {
-                settingsPassword.classList.add('d-none');
-            }
-
-        } catch (error) {
-            console.error('Error initializing settings:', error);
-            showError('Fehler beim Initialisieren der Einstellungen');
-        }
-    }
-
-    function loadGeneralSettings() {
-        // Lade Sprache und Stil
-        const savedLanguage = localStorage.getItem('language') || 'de';
-        const savedStyle = localStorage.getItem('style') || 'professional';
-        
-        const languageSelect = document.getElementById('languageSelect');
-        const styleSelect = document.getElementById('styleSelect');
-        
-        if (languageSelect) languageSelect.value = savedLanguage;
-        if (styleSelect) styleSelect.value = savedStyle;
-    }
-
-    function saveSettings() {
-        try {
-            // Service-Auswahl speichern
-            const serviceSelect = document.getElementById('aiServiceSelect');
-            if (serviceSelect) {
-                const currentService = serviceSelect.value;
-                localStorage.setItem('current_service', currentService);
-                API_SETTINGS.currentService = currentService;
-            }
-            
-            // Andere Einstellungen speichern
-            const languageSelect = document.getElementById('languageSelect');
-            const styleSelect = document.getElementById('styleSelect');
-            
-            if (languageSelect) localStorage.setItem('language', languageSelect.value);
-            if (styleSelect) localStorage.setItem('style', styleSelect.value);
-            
-            elements.settingsModal.hide();
-            showSuccess('Einstellungen erfolgreich gespeichert');
-            
-        } catch (error) {
-            console.error('Error saving settings:', error);
-            showError('Fehler beim Speichern der Einstellungen');
-        }
-    }
 
     function getApiKey() {
         return API_SETTINGS.apiKey;
@@ -198,6 +82,9 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // API Key prüfen
             const apiKey = getApiKey();
+            if (!apiKey) {
+                throw new Error('API Key nicht gefunden');
+            }
             
             const jobPosting = elements.jobPosting.value.trim();
             const resumeText = window.resumeText;
