@@ -1069,18 +1069,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 showError(error.message || 'Fehler beim Verarbeiten der Datei');
                 
                 // Input und UI zurücksetzen
-                input.value = '';
-                uploadArea.style.display = 'block';
-                preview.style.display = 'none';
-                preview.classList.add('d-none');
-                
-                // Gespeicherten Text löschen
-                if (input.id === 'resumeUpload') {
-                    window.resumeText = null;
-                }
-                
-                // Button-Status aktualisieren
-                checkRequiredUploads();
+                resetFileUpload(input);
             }).finally(() => {
                 hideLoading(preview);
             });
@@ -1090,18 +1079,7 @@ document.addEventListener('DOMContentLoaded', function() {
             showError(error.message || 'Fehler beim Verarbeiten der Datei');
             
             // Input und UI zurücksetzen
-            input.value = '';
-            uploadArea.style.display = 'block';
-            preview.style.display = 'none';
-            preview.classList.add('d-none');
-            
-            // Gespeicherten Text löschen
-            if (input.id === 'resumeUpload') {
-                window.resumeText = null;
-            }
-            
-            // Button-Status aktualisieren
-            checkRequiredUploads();
+            resetFileUpload(input);
             hideLoading(preview);
         }
     }
@@ -2104,4 +2082,19 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeEventListeners();
     initializeTextareaListeners();
     initializeFileUpload();
+
+    // Hinzufügen der Hilfsfunktion resetFileUpload
+    function resetFileUpload(input) {
+        const container = input.closest('.upload-container');
+        const uploadArea = container.querySelector('.upload-area');
+        const preview = container.querySelector('.file-preview');
+        input.value = '';
+        if (input.id === 'resumeUpload') {
+            window.resumeText = null;
+        }
+        uploadArea.style.display = 'block';
+        preview.style.display = 'none';
+        preview.classList.add('d-none');
+        checkRequiredUploads();
+    }
 }); 
