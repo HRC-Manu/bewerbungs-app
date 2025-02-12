@@ -379,37 +379,218 @@ document.addEventListener('DOMContentLoaded', function() {
     // ===== Analyse-Hilfsfunktionen =====
     function calculateMatchScore(job, resume) {
         try {
-            let score = 0;
-            const totalCriteria = 3;
+            const scoringCriteria = {
+                position: {
+                    weight: 0.25,
+                    score: calculatePositionMatch(job, resume)
+                },
+                skills: {
+                    weight: 0.3,
+                    score: calculateSkillsMatch(job, resume)
+                },
+                experience: {
+                    weight: 0.2,
+                    score: calculateExperienceMatch(job, resume)
+                },
+                education: {
+                    weight: 0.1,
+                    score: calculateEducationMatch(job, resume)
+                },
+                softSkills: {
+                    weight: 0.15,
+                    score: calculateSoftSkillsMatch(job, resume)
+                }
+            };
             
-            // Vergleiche Position
-            if (resume.personalInfo.position.toLowerCase().includes(job.jobTitle.position.toLowerCase())) {
-                score += 1;
+            let totalScore = 0;
+            let totalWeight = 0;
+            
+            for (const [criterion, details] of Object.entries(scoringCriteria)) {
+                totalScore += details.score * details.weight;
+                totalWeight += details.weight;
             }
             
-            // Vergleiche Skills
-            const requiredSkills = [...job.requirements.skills.technical, ...job.requirements.skills.soft];
-            const candidateSkills = [...resume.skills.technical, ...resume.skills.soft];
-            const skillMatch = requiredSkills.filter(skill => 
-                candidateSkills.some(candidateSkill => 
-                    candidateSkill.toLowerCase().includes(skill.toLowerCase())
-                )
-            ).length;
+            // Normalisiere den Score
+            const normalizedScore = totalScore / totalWeight;
             
-            if (skillMatch / requiredSkills.length > 0.5) {
-                score += 1;
-            }
-            
-            // Vergleiche Erfahrung
-            if (resume.experience && resume.experience.length > 0) {
-                score += 1;
-            }
-            
-            return score / totalCriteria;
+            return {
+                overallScore: normalizedScore,
+                detailedScores: scoringCriteria
+            };
         } catch (error) {
             console.error('Error calculating match score:', error);
-            return 0;
+            return {
+                overallScore: 0,
+                detailedScores: {}
+            };
         }
+    }
+
+    function calculatePositionMatch(job, resume) {
+        const jobPosition = job.jobTitle.position.toLowerCase();
+        const resumePosition = resume.personalInfo.position.toLowerCase();
+        
+        const positionSimilarityMap = {
+            'entwickler': ['software engineer', 'programmierer', 'web developer'],
+            'manager': ['teamleiter', 'projektleiter', 'abteilungsleiter'],
+            'berater': ['consultant', 'spezialist', 'architekt']
+        };
+        
+        // Exakte Übereinstimmung
+        if (resumePosition === jobPosition) return 1;
+        
+        // Ähnliche Positionen
+        for (const [basePosition, similarPositions] of Object.entries(positionSimilarityMap)) {
+            if (jobPosition.includes(basePosition) && 
+                similarPositions.some(pos => resumePosition.includes(pos))) {
+                return 0.8;
+            }
+        }
+        
+        // Teilweise Übereinstimmung
+        const commonWords = jobPosition.split(' ').filter(word => 
+            resumePosition.includes(word)
+        );
+        
+        return commonWords.length / jobPosition.split(' ').length;
+    }
+
+    function calculateSkillsMatch(job, resume) {
+        const requiredTechnicalSkills = job.requirements.skills.technical;
+        const requiredSoftSkills = job.requirements.skills.soft;
+        
+        const resumeTechnicalSkills = resume.skills.technical.flatMap(skill => 
+            skill.skills || [skill]
+        );
+        const resumeSoftSkills = resume.skills.soft.flatMap(skill => 
+            skill.skills || [skill]
+        );
+        
+        const technicalSkillScore = calculateSkillCategoryMatch(
+            requiredTechnicalSkills, 
+            resumeTechnicalSkills
+        );
+        
+        const softSkillScore = calculateSkillCategoryMatch(
+            requiredSoftSkills, 
+            resumeSoftSkills
+        );
+        
+        // Gewichtete Bewertung von technischen und Soft Skills
+        return (technicalSkillScore * 0.7) + (softSkillScore * 0.3);
+    }
+
+    function calculateSkillCategoryMatch(requiredSkills, candidateSkills) {
+        if (requiredSkills.length === 0) return 1;
+        
+        const matchedSkills = requiredSkills.filter(requiredSkill => 
+            candidateSkills.some(candidateSkill => 
+                candidateSkill.toLowerCase().includes(requiredSkill.toLowerCase())
+            )
+        );
+        
+        return matchedSkills.length / requiredSkills.length;
+    }
+
+    function calculateExperienceMatch(job, resume) {
+        const jobExperienceRequirement = extractExperienceYears(job.requirements.experience);
+        const candidateExperience = resume.experience;
+        
+        if (!candidateExperience || candidateExperience.length === 0) return 0;
+        
+        const totalExperience = candidateExperience.reduce(
+            (total, exp) => total + exp.duration, 
+            0
+        );
+        
+        // Vergleiche Gesamterfahrung mit Anforderungen
+        if (totalExperience >= jobExperienceRequirement.min) {
+            return Math.min(1, totalExperience / jobExperienceRequirement.max);
+        }
+        
+        return 0;
+    }
+
+    function extractExperienceYears(experienceText) {
+        const yearPattern = /(\d+)\s*-?\s*(\d+)?\s*(?:jahre?)?/i;
+        const match = experienceText.match(yearPattern);
+        
+        if (match) {
+            return {
+                min: parseInt(match[1]),
+                max: match[2] ? parseInt(match[2]) : parseInt(match[1]) + 2
+            };
+        }
+        
+        return { min: 0, max: 5 };
+    }
+
+    function calculateEducationMatch(job, resume) {
+        const jobEducationRequirement = job.requirements.education;
+        const candidateEducation = resume.education;
+        
+        if (!candidateEducation || candidateEducation.length === 0) return 0;
+        
+        const educationLevels = {
+            university: ['bachelor', 'master', 'diplom', 'magister'],
+            vocational: ['ausbildung', 'berufsausbildung'],
+            school: ['abitur', 'fachabitur']
+        };
+        
+        const candidateDegrees = candidateEducation.map(edu => 
+            edu.degree.toLowerCase()
+        );
+        
+        // Prüfe Übereinstimmung mit Bildungsanforderungen
+        for (const [level, degrees] of Object.entries(educationLevels)) {
+            if (level === jobEducationRequirement && 
+                candidateDegrees.some(degree => 
+                    degrees.some(requiredDegree => 
+                        degree.includes(requiredDegree)
+                    )
+                )) {
+                return 1;
+            }
+        }
+        
+        return 0;
+    }
+
+    function calculateSoftSkillsMatch(job, resume) {
+        const requiredSoftSkills = job.requirements.skills.soft;
+        const resumeSoftSkills = resume.skills.soft.flatMap(skill => 
+            skill.skills || [skill]
+        );
+        
+        const softSkillCategories = {
+            communication: ['kommunikation', 'präsentation'],
+            teamwork: ['teamfähigkeit', 'zusammenarbeit'],
+            leadership: ['führung', 'mentoring'],
+            problemSolving: ['analytisch', 'problemlösung'],
+            adaptability: ['flexibilität', 'lernbereitschaft']
+        };
+        
+        let categoryScore = 0;
+        
+        for (const [category, keywords] of Object.entries(softSkillCategories)) {
+            const categoryMatch = keywords.some(keyword => 
+                requiredSoftSkills.some(skill => 
+                    skill.toLowerCase().includes(keyword)
+                )
+            );
+            
+            if (categoryMatch) {
+                const resumeCategoryMatch = keywords.some(keyword => 
+                    resumeSoftSkills.some(skill => 
+                        skill.toLowerCase().includes(keyword)
+                    )
+                );
+                
+                categoryScore += resumeCategoryMatch ? 1 : 0.5;
+            }
+        }
+        
+        return categoryScore / Object.keys(softSkillCategories).length;
     }
 
     function findMostRelevantExperience(job, resume) {
@@ -499,31 +680,33 @@ document.addEventListener('DOMContentLoaded', function() {
     function generatePersonalizedContent(section, analysisData, style, context) {
         try {
             const { job, resume } = analysisData;
+            const { matchScore, relevantExperience, keySkills, cultureFit } = context;
             let content = '';
+            
+            // Dynamische Stilanpassung basierend auf Unternehmenskultur
+            const dynamicStyle = determineDynamicStyle(job, matchScore);
             
             switch (section) {
                 case 'recipient':
-                    content = LETTER_TEMPLATES.recipient[style].unknown;
+                    content = generateRecipientSection(job, resume, dynamicStyle);
                     break;
                     
                 case 'subject':
-                    const position = job.jobTitle.position;
-                    content = LETTER_TEMPLATES.subject.standard(position);
+                    content = generateSubjectSection(job, resume, matchScore);
                     break;
                     
                 case 'introduction':
-                    const company = job.company.name;
-                    content = LETTER_TEMPLATES.introduction.jobPortal(job.jobTitle.position, company);
+                    content = generateIntroductionSection(job, resume, relevantExperience, dynamicStyle);
                     break;
                     
                 case 'main':
-                    content = generateMainContent(job, resume, context);
+                    content = generateMainSection(job, resume, keySkills, relevantExperience, cultureFit);
                     break;
-                    
+                
                 case 'closing':
-                    content = LETTER_TEMPLATES.closing.standard;
+                    content = generateClosingSection(job, resume, matchScore, dynamicStyle);
                     break;
-                    
+                
                 default:
                     content = '';
             }
@@ -535,34 +718,184 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    function generateMainContent(job, resume, context) {
-        try {
-            const { matchScore, relevantExperience, keySkills } = context;
-            let content = '';
-            
-            // Erfahrung und Qualifikation
-            if (relevantExperience) {
-                content += `Mit meiner Erfahrung als ${relevantExperience.title} bringe ich genau die Qualifikationen mit, die Sie suchen. `;
-            }
-            
-            // Matching Skills
-            if (keySkills.matching.length > 0) {
-                content += `Meine Kernkompetenzen in ${keySkills.matching.join(', ')} entsprechen Ihren Anforderungen. `;
-            }
-            
-            // Zusätzliche Skills
-            if (keySkills.additional.length > 0) {
-                content += `Darüber hinaus verfüge ich über Expertise in ${keySkills.additional.slice(0, 3).join(', ')}. `;
-            }
-            
-            // Motivation
-            content += `Die Position als ${job.jobTitle.position} bei ${job.company.name} reizt mich besonders, da sie meinem Wunsch nach ${job.company.culture.innovative ? 'innovativer Arbeit' : 'spannenden Herausforderungen'} entspricht.`;
-            
-            return content;
-        } catch (error) {
-            console.error('Error generating main content:', error);
-            return '';
+    function determineDynamicStyle(job, matchScore) {
+        const { culture } = job.company;
+        
+        if (culture.formal && culture.formal.score > 0.5) {
+            return 'formal';
+        } else if (matchScore > 0.8) {
+            return 'confident';
+        } else {
+            return 'casual';
         }
+    }
+
+    function generateRecipientSection(job, resume, style) {
+        const companyName = job.company.name;
+        const recipientTemplates = {
+            formal: {
+                known: (name) => `Sehr geehrte/r Frau/Herr ${name},`,
+                unknown: 'Sehr geehrte Damen und Herren,'
+            },
+            casual: {
+                known: (name) => `Hallo ${name},`,
+                unknown: 'Hallo zusammen,'
+            }
+        };
+        
+        // Versuche, den Namen des Ansprechpartners zu extrahieren
+        const recipientName = extractRecipientName(job.jobPosting);
+        
+        return recipientName 
+            ? recipientTemplates[style].known(recipientName)
+            : recipientTemplates[style].unknown;
+    }
+
+    function extractRecipientName(jobPosting) {
+        const namePatterns = [
+            /(?:ansprechpartner|kontakt):\s*([A-ZÄÖÜa-zäöüß\s-]+)/i,
+            /(?:herr|frau)\s+([A-ZÄÖÜa-zäöüß\s-]+)/i
+        ];
+        
+        for (const pattern of namePatterns) {
+            const match = jobPosting.match(pattern);
+            if (match) return match[1].trim();
+        }
+        
+        return null;
+    }
+
+    function generateSubjectSection(job, resume, matchScore) {
+        const position = job.jobTitle.position;
+        const refNumber = extractReferenceNumber(job.jobPosting);
+        
+        const subjectTemplates = [
+            () => `Bewerbung als ${position}${refNumber ? ` (Referenz: ${refNumber})` : ''}`,
+            () => `Motivierte Bewerbung für die Position ${position}`,
+            () => `${position} mit ${Math.round(matchScore * 100)}% Übereinstimmung`
+        ];
+        
+        return subjectTemplates[Math.floor(Math.random() * subjectTemplates.length)]();
+    }
+
+    function extractReferenceNumber(jobPosting) {
+        const refPatterns = [
+            /(?:referenz|ref\.?)[\s:]+(\w+)/i,
+            /stellenausschreibung\s+(\w+)/i
+        ];
+        
+        for (const pattern of refPatterns) {
+            const match = jobPosting.match(pattern);
+            if (match) return match[1].trim();
+        }
+        
+        return null;
+    }
+
+    function generateIntroductionSection(job, resume, relevantExperience, style) {
+        const company = job.company.name;
+        const position = job.jobTitle.position;
+        
+        const introTemplates = {
+            formal: [
+                () => `Mit großem Interesse habe ich Ihre Stellenanzeige für die Position ${position} bei ${company} gelesen.`,
+                () => `Die Ausschreibung der Stelle als ${position} bei ${company} hat meine volle Aufmerksamkeit geweckt.`
+            ],
+            casual: [
+                () => `Ihre Stellenausschreibung für ${position} bei ${company} hat mich sofort begeistert.`,
+                () => `Als ich die Stellenanzeige für ${position} bei ${company} sah, war ich elektrisiert.`
+            ]
+        };
+        
+        const sourceTemplates = [
+            () => 'auf Ihrer Unternehmenswebsite',
+            () => 'auf einem Jobportal',
+            () => 'über mein berufliches Netzwerk'
+        ];
+        
+        const source = sourceTemplates[Math.floor(Math.random() * sourceTemplates.length)]();
+        
+        const templateSet = introTemplates[style];
+        return templateSet[Math.floor(Math.random() * templateSet.length)]();
+    }
+
+    function generateMainSection(job, resume, keySkills, relevantExperience, cultureFit) {
+        const mainSectionParts = [];
+        
+        // Relevante Erfahrung hervorheben
+        if (relevantExperience) {
+            mainSectionParts.push(
+                `Mit meiner Erfahrung als ${relevantExperience.title} bei ${relevantExperience.company} bringe ich genau die Qualifikationen mit, die Sie suchen.`
+            );
+        }
+        
+        // Matching Skills betonen
+        if (keySkills.matching.length > 0) {
+            mainSectionParts.push(
+                `Meine Kernkompetenzen in ${keySkills.matching.join(', ')} entsprechen präzise Ihren Anforderungen.`
+            );
+        }
+        
+        // Zusätzliche Skills hervorheben
+        if (keySkills.additional.length > 0) {
+            mainSectionParts.push(
+                `Darüber hinaus verfüge ich über zusätzliche Expertise in ${keySkills.additional.slice(0, 3).join(', ')}, die einen Mehrwert für Ihr Team bieten kann.`
+            );
+        }
+        
+        // Kulturelle Passung betonen
+        const culturalAspects = Object.entries(cultureFit)
+            .filter(([_, score]) => score > 0.5)
+            .map(([aspect, _]) => aspect);
+        
+        if (culturalAspects.length > 0) {
+            mainSectionParts.push(
+                `Meine ${culturalAspects.join(', ')}-Fähigkeiten passen hervorragend zur Unternehmenskultur von ${job.company.name}.`
+            );
+        }
+        
+        // Motivation und Ziel
+        mainSectionParts.push(
+            `Die Position als ${job.jobTitle.position} bei ${job.company.name} reizt mich besonders, da sie meinem Wunsch nach ${job.company.culture.innovative ? 'innovativer Arbeit' : 'spannenden Herausforderungen'} entspricht.`
+        );
+        
+        return mainSectionParts.join(' ');
+    }
+
+    function generateClosingSection(job, resume, matchScore, style) {
+        const closingTemplates = {
+            formal: [
+                () => 'Ich freue mich darauf, in einem persönlichen Gespräch meine Eignung für diese Position zu erläutern.',
+                () => 'Gerne stelle ich Ihnen in einem Vorstellungsgespräch meine Qualifikationen und Motivation detailliert vor.'
+            ],
+            casual: [
+                () => 'Ich würde mich sehr freuen, meine Ideen und Fähigkeiten in einem persönlichen Gespräch zu diskutieren.',
+                () => 'Lassen Sie uns in einem Gespräch herausfinden, wie ich Ihr Team unterstützen kann.'
+            ]
+        };
+        
+        const availabilityTemplates = [
+            () => 'Ich bin ab sofort verfügbar.',
+            () => `Ich könnte bereits zum ${formatStartDate()} bei Ihnen beginnen.`
+        ];
+        
+        const templateSet = closingTemplates[style];
+        const closing = templateSet[Math.floor(Math.random() * templateSet.length)]();
+        const availability = availabilityTemplates[Math.floor(Math.random() * availabilityTemplates.length)]();
+        
+        return `${closing} ${availability}`;
+    }
+
+    function formatStartDate() {
+        const possibleDates = [
+            '01.07.2024',
+            '01.08.2024',
+            '15.07.2024',
+            'nächsten Monat',
+            'nach Absprache'
+        ];
+        
+        return possibleDates[Math.floor(Math.random() * possibleDates.length)];
     }
 
     function generateContextualAlternatives(suggestion, style, context) {
@@ -847,7 +1180,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // ===== Validierung =====
     function validateInputs() {
         const jobPosting = elements.jobPosting.value.trim();
-        const resumeUploaded = window.resumeText && window.resumeText.trim().length > 0;
+        const resumeUploaded = window.resumeText !== undefined && window.resumeText !== null;
         
         // Aktiviere/Deaktiviere den Analyse-Button basierend auf den Eingaben
         elements.analyzeBtn.disabled = !jobPosting || !resumeUploaded;
@@ -1151,28 +1484,252 @@ document.addEventListener('DOMContentLoaded', function() {
 
     async function analyzeResume(resumeText) {
         try {
-            if (!resumeText || typeof resumeText !== 'string') {
-                throw new Error('Ungültiger Lebenslauf');
-            }
-
-            // Basis-Analyse des Lebenslaufs
+            // Erweiterte Lebenslauf-Analyse mit detaillierten Extraktionsmethoden
             return {
                 personalInfo: {
-                    name: 'Bewerber',
-                    position: 'Nicht spezifiziert',
-                    experience: '0 Jahre'
+                    name: extractPersonName(resumeText),
+                    email: extractEmail(resumeText),
+                    phone: extractPhoneNumber(resumeText),
+                    position: extractCurrentPosition(resumeText)
                 },
                 skills: {
-                    technical: [],
-                    soft: []
+                    technical: extractDetailedTechnicalSkills(resumeText),
+                    soft: extractDetailedSoftSkills(resumeText),
+                    languages: extractLanguageSkills(resumeText)
                 },
-                experience: [],
-                education: []
+                experience: extractDetailedExperience(resumeText),
+                education: extractDetailedEducation(resumeText),
+                certifications: extractCertifications(resumeText),
+                achievements: extractKeyAchievements(resumeText)
             };
         } catch (error) {
             console.error('Resume analysis error:', error);
             throw new Error('Lebenslauf-Analyse fehlgeschlagen');
         }
+    }
+
+    function extractPersonName(text) {
+        const namePatterns = [
+            /(?:name|vorname|nachname):\s*([A-ZÄÖÜa-zäöüß\s-]+)/i,
+            /^([A-ZÄÖÜa-zäöüß\s-]+)\n/
+        ];
+        
+        for (const pattern of namePatterns) {
+            const match = text.match(pattern);
+            if (match) return match[1].trim();
+        }
+        return 'Bewerber';
+    }
+
+    function extractEmail(text) {
+        const emailPattern = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/;
+        const match = text.match(emailPattern);
+        return match ? match[0] : '';
+    }
+
+    function extractPhoneNumber(text) {
+        const phonePatterns = [
+            /\+?49\s?\(?\d{3}\)?[-\s]?\d{3,4}[-\s]?\d{4,5}/,
+            /\d{3}[-\s]?\d{3,4}[-\s]?\d{4,5}/
+        ];
+        
+        for (const pattern of phonePatterns) {
+            const match = text.match(pattern);
+            if (match) return match[0];
+        }
+        return '';
+    }
+
+    function extractCurrentPosition(text) {
+        const positionPatterns = [
+            /aktuelle position:\s*([^\n]+)/i,
+            /zuletzt tätig als\s*([^\n]+)/i,
+            /berufliche position:\s*([^\n]+)/i
+        ];
+        
+        for (const pattern of positionPatterns) {
+            const match = text.match(pattern);
+            if (match) return match[1].trim();
+        }
+        return 'Nicht spezifiziert';
+    }
+
+    function extractDetailedTechnicalSkills(text) {
+        const technicalSkillSections = [
+            'technische fähigkeiten',
+            'it-kenntnisse',
+            'programmiersprachen',
+            'technologien'
+        ];
+        
+        const skills = [];
+        const lowercaseText = text.toLowerCase();
+        
+        const skillCategories = {
+            programmingLanguages: ['python', 'java', 'javascript', 'c++', 'typescript', 'ruby', 'php', 'swift'],
+            frameworks: ['react', 'angular', 'vue', 'django', 'spring', 'flask', 'node.js'],
+            databases: ['mysql', 'postgresql', 'mongodb', 'sqlite', 'oracle', 'redis'],
+            cloudPlatforms: ['aws', 'azure', 'google cloud', 'heroku'],
+            tools: ['git', 'docker', 'kubernetes', 'jenkins', 'ansible', 'terraform']
+        };
+        
+        for (const [category, keywords] of Object.entries(skillCategories)) {
+            const matchedSkills = keywords.filter(skill => 
+                lowercaseText.includes(skill.toLowerCase())
+            );
+            
+            if (matchedSkills.length > 0) {
+                skills.push({
+                    category,
+                    skills: matchedSkills
+                });
+            }
+        }
+        
+        return skills;
+    }
+
+    function extractDetailedSoftSkills(text) {
+        const softSkillCategories = {
+            communication: ['kommunikation', 'präsentation', 'verhandlung', 'kundenbeziehung'],
+            teamwork: ['teamfähigkeit', 'zusammenarbeit', 'konfliktlösung', 'kooperation'],
+            leadership: ['führung', 'mentoring', 'coaching', 'projektleitung'],
+            problemSolving: ['analytisch', 'problemlösung', 'strategisch', 'kreativität'],
+            adaptability: ['flexibilität', 'lernbereitschaft', 'anpassungsfähigkeit']
+        };
+        
+        const skills = [];
+        const lowercaseText = text.toLowerCase();
+        
+        for (const [category, keywords] of Object.entries(softSkillCategories)) {
+            const matchedSkills = keywords.filter(skill => 
+                lowercaseText.includes(skill.toLowerCase())
+            );
+            
+            if (matchedSkills.length > 0) {
+                skills.push({
+                    category,
+                    skills: matchedSkills
+                });
+            }
+        }
+        
+        return skills;
+    }
+
+    function extractLanguageSkills(text) {
+        const languageLevels = {
+            native: ['muttersprache', 'native', 'verhandlungssicher'],
+            fluent: ['fließend', 'sehr gut', 'professional working proficiency'],
+            intermediate: ['gut', 'verhandlungsfähig', 'professional working proficiency'],
+            basic: ['grundkenntnisse', 'basic']
+        };
+        
+        const languages = [];
+        const languagePatterns = [
+            /([A-ZÄÖÜa-zäöüß]+)\s*(?:sprache)?:\s*([^\n]+)/gi
+        ];
+        
+        let match;
+        while ((match = languagePatterns[0].exec(text)) !== null) {
+            const language = match[1];
+            const levelText = match[2].toLowerCase();
+            
+            let level = 'basic';
+            for (const [key, indicators] of Object.entries(languageLevels)) {
+                if (indicators.some(indicator => levelText.includes(indicator))) {
+                    level = key;
+                    break;
+                }
+            }
+            
+            languages.push({ language, level });
+        }
+        
+        return languages;
+    }
+
+    function extractDetailedExperience(text) {
+        const experiencePatterns = [
+            /([A-ZÄÖÜa-zäöüß\s-]+)\s*(?:bei|in)\s*([A-ZÄÖÜa-zäöüß\s-]+)\s*(?:von|zwischen)\s*(\d{4})\s*(?:bis|-)?\s*(\d{4}|heute)/gi
+        ];
+        
+        const experiences = [];
+        let match;
+        
+        while ((match = experiencePatterns[0].exec(text)) !== null) {
+            experiences.push({
+                title: match[1].trim(),
+                company: match[2].trim(),
+                startYear: match[3],
+                endYear: match[4] === 'heute' ? 'Aktuell' : match[4],
+                duration: match[4] === 'heute' 
+                    ? (new Date().getFullYear() - parseInt(match[3])) 
+                    : (parseInt(match[4]) - parseInt(match[3]))
+            });
+        }
+        
+        return experiences.sort((a, b) => b.startYear - a.startYear);
+    }
+
+    function extractDetailedEducation(text) {
+        const educationPatterns = [
+            /([A-ZÄÖÜa-zäöüß\s-]+)\s*(?:an|bei)\s*([A-ZÄÖÜa-zäöüß\s-]+)\s*(?:von|zwischen)\s*(\d{4})\s*(?:bis|-)?\s*(\d{4}|heute)/gi
+        ];
+        
+        const education = [];
+        let match;
+        
+        while ((match = educationPatterns[0].exec(text)) !== null) {
+            education.push({
+                degree: match[1].trim(),
+                institution: match[2].trim(),
+                startYear: match[3],
+                endYear: match[4] === 'heute' ? 'Aktuell' : match[4],
+                duration: match[4] === 'heute' 
+                    ? (new Date().getFullYear() - parseInt(match[3])) 
+                    : (parseInt(match[4]) - parseInt(match[3]))
+            });
+        }
+        
+        return education.sort((a, b) => b.startYear - a.startYear);
+    }
+
+    function extractCertifications(text) {
+        const certificationPatterns = [
+            /zertifikat(?:e)?\s*(?:in)?\s*([^\n]+)/gi,
+            /(?:qualifikation|fortbildung)(?:en)?\s*(?:in)?\s*([^\n]+)/gi
+        ];
+        
+        const certifications = [];
+        
+        certificationPatterns.forEach(pattern => {
+            let match;
+            while ((match = pattern.exec(text)) !== null) {
+                certifications.push(match[1].trim());
+            }
+        });
+        
+        return certifications;
+    }
+
+    function extractKeyAchievements(text) {
+        const achievementPatterns = [
+            /erfolg(?:e)?:\s*([^\n]+)/gi,
+            /leistung(?:en)?\s*(?:von)?\s*([^\n]+)/gi,
+            /projekt(?:e)?\s*(?:mit)?\s*([^\n]+)/gi
+        ];
+        
+        const achievements = [];
+        
+        achievementPatterns.forEach(pattern => {
+            let match;
+            while ((match = pattern.exec(text)) !== null) {
+                achievements.push(match[1].trim());
+            }
+        });
+        
+        return achievements;
     }
 
     // ===== Vorschlagsgenerierung =====
