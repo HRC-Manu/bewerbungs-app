@@ -65,19 +65,14 @@ document.addEventListener('DOMContentLoaded', function() {
     // ===== API Key Management =====
     const API_SETTINGS = {
         currentService: 'openai',
-        apiKey: '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' // GitHub API Key
+        apiKey: window.OPENAI_API_KEY || '' // API Key aus GitHub wird beim Build injiziert
     };
 
     function getApiKey() {
         const apiKey = API_SETTINGS.apiKey;
         
         if (!apiKey) {
-            throw new Error('Kein API-Schlüssel gefunden. Bitte überprüfen Sie die Repository-Einstellungen.');
-        }
-        
-        // Validate API key format
-        if (!apiKey.startsWith('sk-') || apiKey.length < 20) {
-            throw new Error('Ungültiger API-Schlüssel Format. Bitte überprüfen Sie den Schlüssel.');
+            throw new Error('API-Schlüssel nicht gefunden. Bitte überprüfen Sie die GitHub Repository-Einstellungen und stellen Sie sicher, dass der API-Key korrekt injiziert wurde.');
         }
         
         return apiKey;
