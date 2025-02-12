@@ -6,10 +6,12 @@ document.addEventListener('DOMContentLoaded', function() {
         jobPosting: document.getElementById('jobPosting'),
         resumeUpload: document.getElementById('resumeUpload'),
         coverLetterUpload: document.getElementById('coverLetterUpload'),
+        apiKey: document.getElementById('apiKey'),
         
         // Buttons
-        generateBtn: document.getElementById('generateBtn'),
+        analyzeBtn: document.getElementById('analyzeBtn'),
         generateSuggestionsBtn: document.getElementById('generateSuggestionsBtn'),
+        saveSettingsBtn: document.getElementById('saveSettingsBtn'),
         
         // Vorschau
         coverLetterPreview: document.getElementById('coverLetterPreview'),
@@ -25,12 +27,25 @@ document.addEventListener('DOMContentLoaded', function() {
         },
         
         // Modals und Toasts
+        settingsModal: new bootstrap.Modal(document.getElementById('settingsModal')),
         suggestionsModal: new bootstrap.Modal(document.getElementById('suggestionsModal')),
         messageToast: new bootstrap.Toast(document.getElementById('messageToast'))
     };
 
     // ===== Event Listener =====
     function initializeEventListeners() {
+        // Analyze Button
+        elements.analyzeBtn.addEventListener('click', handleAnalyze);
+        
+        // Settings Button
+        elements.saveSettingsBtn.addEventListener('click', saveSettings);
+        
+        // API Key aus localStorage laden
+        const savedApiKey = localStorage.getItem('openai_api_key');
+        if (savedApiKey) {
+            elements.apiKey.value = savedApiKey;
+        }
+        
         // Generate Button
         elements.generateBtn.addEventListener('click', handleGenerate);
         
@@ -66,61 +81,107 @@ document.addEventListener('DOMContentLoaded', function() {
         elements.coverLetterUpload.addEventListener('change', handleFileUpload);
     }
 
-    // ===== Hauptfunktionen =====
-    async function handleGenerate() {
-        if (!validateInputs()) return;
+    // ===== API Key Management =====
+    function saveSettings() {
+        const apiKey = elements.apiKey.value.trim();
+        if (!apiKey) {
+            showError('Bitte geben Sie einen API Key ein');
+            return;
+        }
+        
+        localStorage.setItem('openai_api_key', apiKey);
+        elements.settingsModal.hide();
+        showSuccess('Einstellungen gespeichert');
+    }
 
-        showLoading(elements.generateBtn, 'Generiere...');
+    function getApiKey() {
+        const apiKey = localStorage.getItem('openai_api_key');
+        if (!apiKey) {
+            elements.settingsModal.show();
+            throw new Error('Bitte geben Sie zuerst Ihren OpenAI API Key ein');
+        }
+        return apiKey;
+    }
+
+    // ===== Hauptfunktionen =====
+    async function handleAnalyze() {
         try {
+            if (!validateInputs()) return;
+
+            showLoading(elements.analyzeBtn, 'Analysiere...');
+            
+            // API Key prüfen
+            const apiKey = getApiKey();
+            
             const jobPosting = elements.jobPosting.value.trim();
             const resumeText = elements.resumeUpload.files[0] ? 
                 await extractTextFromPDF(elements.resumeUpload.files[0]) : '';
 
-            const analysis = await analyzeJobPosting(jobPosting);
-            const suggestions = await generateSectionSuggestions('all', analysis);
+            // Stellenanzeige analysieren
+            const analysis = await analyzeJobPosting(jobPosting, apiKey);
+            
+            // Analyse-Ergebnisse anzeigen
+            displayAnalysis(analysis);
+            
+            // Vorschläge generieren
+            const suggestions = await generateSectionSuggestions('all', analysis, apiKey);
             
             // Vorschläge in die Formularfelder einfügen
-            suggestions.forEach(suggestion => {
-                if (suggestion.section && elements.coverLetterSections[suggestion.section]) {
-                    elements.coverLetterSections[suggestion.section].value = suggestion.text;
-                }
-            });
+            applySuggestions(suggestions);
             
             // Vorschau aktualisieren
             updatePreview();
-            showSuccess('Anschreiben erfolgreich generiert!');
-        } catch (error) {
-            showError('Fehler bei der Generierung: ' + error.message);
-        } finally {
-            hideLoading(elements.generateBtn, 'Generieren');
-        }
-    }
-
-    async function generateSuggestionsForSection(section) {
-        try {
-            const jobPosting = elements.jobPosting.value.trim();
-            if (!jobPosting) {
-                showError('Bitte fügen Sie eine Stellenanzeige ein');
-                return;
-            }
-
-            const analysis = await analyzeJobPosting(jobPosting);
-            const suggestions = await generateSectionSuggestions(section, analysis);
-            displaySuggestions(suggestions);
+            
+            showSuccess('Analyse und Vorschläge erfolgreich erstellt!');
             
         } catch (error) {
-            showError('Fehler bei der Generierung: ' + error.message);
+            showError(error.message);
+        } finally {
+            hideLoading(elements.analyzeBtn, 'Analysieren und Anschreiben erstellen');
         }
     }
 
-    // ===== KI-Integration =====
-    async function analyzeJobPosting(jobPosting) {
+    function displayAnalysis(analysis) {
+        // Job-Titel
+        document.getElementById('jobTitleAnalysis').textContent = analysis.jobTitle;
+        
+        // Unternehmensinfo
+        document.getElementById('companyAnalysis').innerHTML = `
+            <div><strong>Name:</strong> ${analysis.company.name}</div>
+            <div><strong>Branche:</strong> ${analysis.company.industry}</div>
+            <div><strong>Größe:</strong> ${analysis.company.size}</div>
+            <div><strong>Kultur:</strong> ${analysis.company.culture}</div>
+        `;
+        
+        // Anforderungen
+        const mustHaveList = document.getElementById('mustHaveList');
+        const niceToHaveList = document.getElementById('niceToHaveList');
+        
+        mustHaveList.innerHTML = analysis.requirements.mustHave
+            .map(req => `<li>${req}</li>`).join('');
+        niceToHaveList.innerHTML = analysis.requirements.niceToHave
+            .map(req => `<li>${req}</li>`).join('');
+        
+        // Analyse-Bereich einblenden
+        document.getElementById('jobAnalysis').classList.remove('d-none');
+    }
+
+    function applySuggestions(suggestions) {
+        suggestions.forEach(suggestion => {
+            if (suggestion.section && elements.coverLetterSections[suggestion.section]) {
+                elements.coverLetterSections[suggestion.section].value = suggestion.text;
+            }
+        });
+    }
+
+    // ===== API Funktionen =====
+    async function analyzeJobPosting(jobPosting, apiKey) {
         try {
             const response = await fetch('https://api.openai.com/v1/chat/completions', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
+                    'Authorization': `Bearer ${apiKey}`
                 },
                 body: JSON.stringify({
                     model: "gpt-4",
@@ -168,186 +229,65 @@ document.addEventListener('DOMContentLoaded', function() {
                 })
             });
 
+            if (!response.ok) {
+                throw new Error('API Anfrage fehlgeschlagen');
+            }
+
             const data = await response.json();
+            if (data.error) {
+                throw new Error(data.error.message);
+            }
+
             return JSON.parse(data.choices[0].message.content);
         } catch (error) {
             console.error('Fehler bei der Analyse:', error);
-            throw new Error('Analyse fehlgeschlagen');
+            throw new Error('Analyse fehlgeschlagen: ' + error.message);
         }
     }
 
-    async function generateSectionSuggestions(section, analysis) {
-        try {
-            // Wenn 'all' ausgewählt ist, generiere alle Abschnitte
-            if (section === 'all') {
-                const sections = ['recipient', 'subject', 'introduction', 'main', 'closing'];
-                const allSuggestions = [];
+    async function handleGenerate() {
+        if (!validateInputs()) return;
 
-                for (const sec of sections) {
-                    const suggestion = await generateSingleSection(sec, analysis);
-                    allSuggestions.push({
-                        section: sec,
-                        text: suggestion.text,
-                        style: suggestion.style
-                    });
+        showLoading(elements.generateBtn, 'Generiere...');
+        try {
+            const jobPosting = elements.jobPosting.value.trim();
+            const resumeText = elements.resumeUpload.files[0] ? 
+                await extractTextFromPDF(elements.resumeUpload.files[0]) : '';
+
+            const analysis = await analyzeJobPosting(jobPosting);
+            const suggestions = await generateSectionSuggestions('all', analysis);
+            
+            // Vorschläge in die Formularfelder einfügen
+            suggestions.forEach(suggestion => {
+                if (suggestion.section && elements.coverLetterSections[suggestion.section]) {
+                    elements.coverLetterSections[suggestion.section].value = suggestion.text;
                 }
-
-                return allSuggestions;
-            }
-
-            // Für einzelne Abschnitte
-            const suggestion = await generateSingleSection(section, analysis);
-            return [{
-                section: section,
-                text: suggestion.text,
-                style: suggestion.style
-            }];
-        } catch (error) {
-            console.error('Fehler bei der Generierung:', error);
-            throw new Error('Generierung fehlgeschlagen');
-        }
-    }
-
-    async function generateSingleSection(section, analysis) {
-        const response = await fetch('https://api.openai.com/v1/chat/completions', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
-            },
-            body: JSON.stringify({
-                model: "gpt-4",
-                messages: [{
-                    role: "system",
-                    content: "Du bist ein Experte für das Schreiben überzeugender Bewerbungsanschreiben."
-                }, {
-                    role: "user",
-                    content: generatePromptForSection(section, analysis)
-                }],
-                temperature: 0.8
-            })
-        });
-
-        const data = await response.json();
-        const result = JSON.parse(data.choices[0].message.content);
-        return result.suggestion;
-    }
-
-    function generatePromptForSection(section, analysis) {
-        const basePrompt = `
-        Stellendetails:
-        Position: ${analysis.jobTitle}
-        Firma: ${analysis.company.name}
-        Branche: ${analysis.company.industry}
-        Größe: ${analysis.company.size}
-        Unternehmenskultur: ${analysis.company.culture}
-        Anforderungen: ${analysis.requirements.mustHave.join(', ')} und ${analysis.requirements.niceToHave.join(', ')}
-        Aufgaben: ${analysis.responsibilities.join(', ')}
-        Skills: ${analysis.skills.technical.join(', ')} und ${analysis.skills.soft.join(', ')}
-        Ton: ${analysis.tone}
-        
-        Generiere einen überzeugenden ${section}-Abschnitt für das Anschreiben.
-        
-        Liefere das Ergebnis im JSON-Format:
-        {
-            "suggestion": {
-                "text": "Der generierte Text",
-                "style": "Standard"
-            }
-        }
-        `;
-
-        const sectionPrompts = {
-            recipient: `${basePrompt}
-            Der Text soll eine formelle Anrede sein.
-            - Bei unbekanntem Empfänger: "Sehr geehrte Damen und Herren,"
-            - Sonst personalisiert mit [Name]`,
-
-            subject: `${basePrompt}
-            Der Text soll ein prägnanter Betreff sein.
-            - Erwähne die Position
-            - Optional: Referenznummer oder Datum
-            - Kurz und professionell`,
-
-            introduction: `${basePrompt}
-            Der Text soll eine überzeugende Einleitung sein.
-            - Zeige Interesse an der Position
-            - Erwähne, wie du auf die Stelle aufmerksam geworden bist
-            - Maximal 2-3 Sätze`,
-
-            main: `${basePrompt}
-            Der Text soll ein überzeugender Hauptteil sein.
-            - Stelle Bezug zwischen deinen Fähigkeiten und den Anforderungen her
-            - Erkläre deine Motivation
-            - Hebe 2-3 relevante Erfahrungen hervor
-            - Zeige, dass du zur Unternehmenskultur passt
-            - 2-3 Absätze`,
-
-            closing: `${basePrompt}
-            Der Text soll ein professioneller Abschluss sein.
-            - Drücke Interesse an einem persönlichen Gespräch aus
-            - Erwähne deine Verfügbarkeit
-            - Maximal 2 Sätze`
-        };
-
-        return sectionPrompts[section] || basePrompt;
-    }
-
-    async function generateFullCoverLetter(analysis, resumeText = '') {
-        try {
-            const response = await fetch('https://api.openai.com/v1/chat/completions', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
-                },
-                body: JSON.stringify({
-                    model: "gpt-4",
-                    messages: [{
-                        role: "system",
-                        content: "Du bist ein Experte für das Schreiben überzeugender Bewerbungsanschreiben."
-                    }, {
-                        role: "user",
-                        content: `Erstelle ein vollständiges Anschreiben basierend auf folgenden Informationen:
-                        
-                        Stellendetails:
-                        Position: ${analysis.jobTitle}
-                        Firma: ${analysis.company.name}
-                        Branche: ${analysis.company.industry}
-                        Größe: ${analysis.company.size}
-                        Unternehmenskultur: ${analysis.company.culture}
-                        Anforderungen: ${analysis.requirements.mustHave.join(', ')} und ${analysis.requirements.niceToHave.join(', ')}
-                        Aufgaben: ${analysis.responsibilities.join(', ')}
-                        Skills: ${analysis.skills.technical.join(', ')} und ${analysis.skills.soft.join(', ')}
-                        Ton: ${analysis.tone}
-                        
-                        ${resumeText ? `Lebenslauf:\n${resumeText}` : ''}
-                        
-                        Das Anschreiben soll:
-                        - Die wichtigsten Anforderungen adressieren
-                        - Relevante Erfahrungen hervorheben
-                        - Motivation zeigen
-                        - Den richtigen Ton treffen
-                        - Authentisch und überzeugend sein
-                        
-                        Liefere das Anschreiben in Abschnitten im JSON-Format:
-                        {
-                            "recipient": "Anrede",
-                            "subject": "Betreff",
-                            "introduction": "Einleitung",
-                            "main": "Hauptteil",
-                            "closing": "Abschluss"
-                        }`
-                    }],
-                    temperature: 0.7
-                })
             });
-
-            const data = await response.json();
-            return JSON.parse(data.choices[0].message.content);
+            
+            // Vorschau aktualisieren
+            updatePreview();
+            showSuccess('Anschreiben erfolgreich generiert!');
         } catch (error) {
-            console.error('Fehler bei der Generierung:', error);
-            throw new Error('Generierung fehlgeschlagen');
+            showError('Fehler bei der Generierung: ' + error.message);
+        } finally {
+            hideLoading(elements.generateBtn, 'Generieren');
+        }
+    }
+
+    async function generateSuggestionsForSection(section) {
+        try {
+            const jobPosting = elements.jobPosting.value.trim();
+            if (!jobPosting) {
+                showError('Bitte fügen Sie eine Stellenanzeige ein');
+                return;
+            }
+
+            const analysis = await analyzeJobPosting(jobPosting);
+            const suggestions = await generateSectionSuggestions(section, analysis);
+            displaySuggestions(suggestions);
+            
+        } catch (error) {
+            showError('Fehler bei der Generierung: ' + error.message);
         }
     }
 
