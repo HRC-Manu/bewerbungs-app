@@ -12,6 +12,7 @@ document.addEventListener('DOMContentLoaded', function() {
         analyzeBtn: document.getElementById('analyzeBtn'),
         generateSuggestionsBtn: document.getElementById('generateSuggestionsBtn'),
         saveSettingsBtn: document.getElementById('saveSettingsBtn'),
+        settingsBtn: document.getElementById('settingsBtn'),
         
         // Vorschau
         coverLetterPreview: document.getElementById('coverLetterPreview'),
@@ -29,6 +30,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Modals und Toasts
         settingsModal: new bootstrap.Modal(document.getElementById('settingsModal')),
         suggestionsModal: new bootstrap.Modal(document.getElementById('suggestionsModal')),
+        helpModal: new bootstrap.Modal(document.getElementById('helpModal')),
         messageToast: new bootstrap.Toast(document.getElementById('messageToast'))
     };
 
@@ -38,13 +40,17 @@ document.addEventListener('DOMContentLoaded', function() {
         elements.analyzeBtn.addEventListener('click', handleAnalyze);
         
         // Settings Button
-        elements.saveSettingsBtn.addEventListener('click', saveSettings);
+        elements.settingsBtn.addEventListener('click', () => {
+            elements.settingsModal.show();
+        });
         
-        // API Key aus localStorage laden
-        const savedApiKey = localStorage.getItem('openai_api_key');
-        if (savedApiKey) {
-            elements.apiKey.value = savedApiKey;
-        }
+        // Help Button
+        document.getElementById('helpBtn').addEventListener('click', () => {
+            elements.helpModal.show();
+        });
+        
+        // Save Settings Button
+        elements.saveSettingsBtn.addEventListener('click', saveSettings);
         
         // Suggestions Button
         elements.generateSuggestionsBtn.addEventListener('click', async () => {
@@ -84,17 +90,34 @@ document.addEventListener('DOMContentLoaded', function() {
             btn.addEventListener('click', handleFileRemove);
         });
 
-        // Zahnrad-Icon (Einstellungen)
-        document.getElementById('settingsBtn').addEventListener('click', () => {
-            elements.settingsModal.show();
+        // Unlock Settings Button
+        document.getElementById('unlockSettings').addEventListener('click', unlockSettings);
+
+        // API Key Toggle Buttons
+        document.querySelectorAll('.toggle-password').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const input = e.target.closest('.input-group').querySelector('input');
+                const type = input.type === 'password' ? 'text' : 'password';
+                input.type = type;
+                e.target.querySelector('i').classList.toggle('bi-eye');
+                e.target.querySelector('i').classList.toggle('bi-eye-slash');
+            });
         });
 
-        // API Key Toggle
-        document.getElementById('toggleApiKey').addEventListener('click', () => {
-            const apiKeyInput = elements.apiKey;
-            const type = apiKeyInput.type === 'password' ? 'text' : 'password';
-            apiKeyInput.type = type;
+        // Service Selection
+        document.getElementById('aiServiceSelect').addEventListener('change', (e) => {
+            const service = e.target.value;
+            // Alle API-Settings ausblenden
+            document.querySelectorAll('.api-settings').forEach(el => el.classList.add('d-none'));
+            // Gewählte API-Settings einblenden
+            document.getElementById(`${service}Settings`).classList.remove('d-none');
         });
+
+        // API Key aus localStorage laden
+        const savedApiKey = localStorage.getItem('openai_api_key');
+        if (savedApiKey) {
+            elements.apiKey.value = savedApiKey;
+        }
 
         // Initialisiere Einstellungen
         initializeSettings();
@@ -115,52 +138,67 @@ document.addEventListener('DOMContentLoaded', function() {
             );
         }
 
-        // Event Listener für Service-Auswahl
-        document.getElementById('aiServiceSelect').addEventListener('change', (e) => {
-            const service = e.target.value;
-            API_SETTINGS.currentService = service;
-            
-            // Alle API-Settings ausblenden
-            document.querySelectorAll('.api-settings').forEach(el => el.classList.add('d-none'));
-            
-            // Gewählte API-Settings einblenden
-            document.getElementById(`${service}Settings`).classList.remove('d-none');
+        // Gespeicherte Einstellungen laden
+        const savedService = localStorage.getItem('current_service') || 'openai';
+        document.getElementById('aiServiceSelect').value = savedService;
+        API_SETTINGS.currentService = savedService;
+
+        // Initial nur die Einstellungen des ausgewählten Services anzeigen
+        document.querySelectorAll('.api-settings').forEach(el => el.classList.add('d-none'));
+        document.getElementById(`${savedService}Settings`).classList.remove('d-none');
+
+        // Gespeicherte API Keys laden
+        ['openai', 'anthropic', 'google'].forEach(service => {
+            const encryptedKey = localStorage.getItem(`${service}_api_key`);
+            if (encryptedKey) {
+                try {
+                    const decryptedKey = CryptoJS.AES.decrypt(
+                        encryptedKey, 
+                        API_SETTINGS.encryptionKey
+                    ).toString(CryptoJS.enc.Utf8);
+                    document.getElementById(`${service}ApiKey`).value = decryptedKey;
+                } catch (error) {
+                    console.error(`Error decrypting ${service} API key:`, error);
+                }
+            }
         });
 
-        // Event Listener für Passwort-Entsperrung
-        document.getElementById('unlockSettings').addEventListener('click', unlockSettings);
+        // Andere gespeicherte Einstellungen laden
+        const savedLanguage = localStorage.getItem('language') || 'de';
+        const savedStyle = localStorage.getItem('style') || 'professional';
+        document.getElementById('languageSelect').value = savedLanguage;
+        document.getElementById('styleSelect').value = savedStyle;
 
-        // Event Listener für API Key Toggle Buttons
-        document.querySelectorAll('.toggle-password').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const input = e.target.closest('.input-group').querySelector('input');
-                const type = input.type === 'password' ? 'text' : 'password';
-                input.type = type;
-                e.target.querySelector('i').classList.toggle('bi-eye');
-                e.target.querySelector('i').classList.toggle('bi-eye-slash');
-            });
-        });
+        // Initial Passwort-Bereich anzeigen und API-Settings verstecken
+        document.getElementById('settingsPassword').classList.remove('d-none');
+        document.getElementById('apiSettings').classList.add('d-none');
     }
 
     async function unlockSettings() {
         const input = document.getElementById('settingsPasswordInput');
         const password = input.value;
         
-        // Gespeichertes Passwort entschlüsseln und vergleichen
-        const storedPassword = CryptoJS.AES.decrypt(
-            localStorage.getItem('settings_password'), 
-            API_SETTINGS.encryptionKey
-        ).toString(CryptoJS.enc.Utf8);
-        
-        if (password === storedPassword) {
-            // Passwort-Bereich ausblenden und API-Settings einblenden
-            document.getElementById('settingsPassword').classList.add('d-none');
-            document.getElementById('apiSettings').classList.remove('d-none');
+        try {
+            // Gespeichertes Passwort entschlüsseln und vergleichen
+            const storedPassword = CryptoJS.AES.decrypt(
+                localStorage.getItem('settings_password'), 
+                API_SETTINGS.encryptionKey
+            ).toString(CryptoJS.enc.Utf8);
             
-            // Gespeicherte API Keys laden
-            loadApiKeys();
-        } else {
-            showError('Falsches Passwort');
+            if (password === storedPassword) {
+                // Passwort-Bereich ausblenden und API-Settings einblenden
+                document.getElementById('settingsPassword').classList.add('d-none');
+                document.getElementById('apiSettings').classList.remove('d-none');
+                
+                // Gespeicherte API Keys laden
+                loadApiKeys();
+                showSuccess('Einstellungen entsperrt');
+            } else {
+                showError('Falsches Passwort');
+            }
+        } catch (error) {
+            console.error('Error unlocking settings:', error);
+            showError('Fehler beim Entsperren der Einstellungen');
         }
     }
 
