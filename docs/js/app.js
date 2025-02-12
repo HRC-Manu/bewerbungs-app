@@ -112,114 +112,39 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // ===== API Key Management =====
     const API_SETTINGS = {
-        defaultPassword: 'admin',
-        encryptionKey: 'bewerbungsassistent-2024',
-        currentService: 'openai'
+        currentService: 'openai',
+        apiKey: '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' // GitHub API Key
     };
 
     function initializeSettings() {
         try {
-            // Prüfe ob es der erste Start ist
-            const isFirstStart = !localStorage.getItem('settings_initialized');
-            
-            if (isFirstStart) {
-                // Setze initiales Passwort
-                const encryptedPassword = CryptoJS.AES.encrypt(
-                    API_SETTINGS.defaultPassword,
-                    API_SETTINGS.encryptionKey
-                ).toString();
-                
-                localStorage.setItem('settings_password', encryptedPassword);
-                localStorage.setItem('settings_initialized', 'true');
-                
-                // Zeige Willkommensnachricht mit initialem Passwort
-                showWelcomeMessage();
-            }
-
             // Lade gespeicherte Service-Auswahl
             const savedService = localStorage.getItem('current_service') || 'openai';
             const serviceSelect = document.getElementById('aiServiceSelect');
             if (serviceSelect) {
                 serviceSelect.value = savedService;
                 API_SETTINGS.currentService = savedService;
-
-                // Zeige nur die Einstellungen des ausgewählten Services
-                document.querySelectorAll('.api-settings').forEach(el => el.classList.add('d-none'));
-                const serviceSettings = document.getElementById(`${savedService}Settings`);
-                if (serviceSettings) {
-                    serviceSettings.classList.remove('d-none');
-                }
             }
-
-            // Lade gespeicherte API Keys
-            loadEncryptedApiKeys();
 
             // Lade andere Einstellungen
             loadGeneralSettings();
 
-            // Setze initiale UI-Zustände
-            const settingsPassword = document.getElementById('settingsPassword');
+            // API Settings direkt anzeigen
             const apiSettings = document.getElementById('apiSettings');
-            
-            if (settingsPassword && apiSettings) {
-                settingsPassword.classList.remove('d-none');
-                apiSettings.classList.add('d-none');
+            if (apiSettings) {
+                apiSettings.classList.remove('d-none');
+            }
+
+            // Passwort-Bereich ausblenden
+            const settingsPassword = document.getElementById('settingsPassword');
+            if (settingsPassword) {
+                settingsPassword.classList.add('d-none');
             }
 
         } catch (error) {
             console.error('Error initializing settings:', error);
             showError('Fehler beim Initialisieren der Einstellungen');
         }
-    }
-
-    function showWelcomeMessage() {
-        const welcomeModal = new bootstrap.Modal(document.createElement('div'));
-        welcomeModal.element.innerHTML = `
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">
-                            <i class="bi bi-emoji-smile me-2"></i>
-                            Willkommen beim Bewerbungsassistenten
-                        </h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body">
-                        <p>Vielen Dank, dass Sie den Bewerbungsassistenten verwenden!</p>
-                        <p>Um zu beginnen, benötigen Sie einen API-Schlüssel von einem der unterstützten KI-Dienste.</p>
-                        <p>Ihr initiales Passwort für die Einstellungen lautet: <strong>${API_SETTINGS.defaultPassword}</strong></p>
-                        <p>Bitte ändern Sie dieses Passwort nach dem ersten Login in den Einstellungen.</p>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Verstanden</button>
-                    </div>
-                </div>
-            </div>
-        `;
-        document.body.appendChild(welcomeModal.element);
-        welcomeModal.show();
-    }
-
-    function loadEncryptedApiKeys() {
-        ['openai', 'anthropic', 'google'].forEach(service => {
-            const encryptedKey = localStorage.getItem(`${service}_api_key`);
-            if (encryptedKey) {
-                try {
-                    const decryptedKey = CryptoJS.AES.decrypt(
-                        encryptedKey,
-                        API_SETTINGS.encryptionKey
-                    ).toString(CryptoJS.enc.Utf8);
-                    
-                    const input = document.getElementById(`${service}ApiKey`);
-                    if (input) {
-                        input.value = decryptedKey;
-                    }
-                } catch (error) {
-                    console.error(`Error decrypting ${service} API key:`, error);
-                    localStorage.removeItem(`${service}_api_key`);
-                }
-            }
-        });
     }
 
     function loadGeneralSettings() {
@@ -234,80 +159,8 @@ document.addEventListener('DOMContentLoaded', function() {
         if (styleSelect) styleSelect.value = savedStyle;
     }
 
-    async function unlockSettings() {
-        const input = document.getElementById('settingsPasswordInput');
-        const password = input.value;
-        
-        if (!password) {
-            showError('Bitte geben Sie das Passwort ein');
-            return;
-        }
-        
-        try {
-            const encryptedStoredPassword = localStorage.getItem('settings_password');
-            if (!encryptedStoredPassword) {
-                throw new Error('Kein Passwort gespeichert');
-            }
-            
-            const storedPassword = CryptoJS.AES.decrypt(
-                encryptedStoredPassword,
-                API_SETTINGS.encryptionKey
-            ).toString(CryptoJS.enc.Utf8);
-            
-            if (password === storedPassword) {
-                // Passwort-Bereich ausblenden und API-Settings einblenden
-                const settingsPassword = document.getElementById('settingsPassword');
-                const apiSettings = document.getElementById('apiSettings');
-                
-                if (settingsPassword && apiSettings) {
-                    settingsPassword.classList.add('d-none');
-                    apiSettings.classList.remove('d-none');
-                }
-                
-                // Lade aktuelle Einstellungen
-                loadEncryptedApiKeys();
-                showSuccess('Einstellungen entsperrt');
-                
-                // Input zurücksetzen
-                input.value = '';
-            } else {
-                showError('Falsches Passwort');
-            }
-        } catch (error) {
-            console.error('Error unlocking settings:', error);
-            showError('Fehler beim Entsperren der Einstellungen');
-        }
-    }
-
     function saveSettings() {
         try {
-            // Neues Passwort speichern (wenn eingegeben)
-            const newPassword = document.getElementById('newPassword').value;
-            if (newPassword) {
-                const encryptedPassword = CryptoJS.AES.encrypt(
-                    newPassword,
-                    API_SETTINGS.encryptionKey
-                ).toString();
-                localStorage.setItem('settings_password', encryptedPassword);
-            }
-            
-            // API Keys verschlüsselt speichern
-            ['openai', 'anthropic', 'google'].forEach(service => {
-                const input = document.getElementById(`${service}ApiKey`);
-                if (input) {
-                    const key = input.value.trim();
-                    if (key) {
-                        const encryptedKey = CryptoJS.AES.encrypt(
-                            key,
-                            API_SETTINGS.encryptionKey
-                        ).toString();
-                        localStorage.setItem(`${service}_api_key`, encryptedKey);
-                    } else {
-                        localStorage.removeItem(`${service}_api_key`);
-                    }
-                }
-            });
-            
             // Service-Auswahl speichern
             const serviceSelect = document.getElementById('aiServiceSelect');
             if (serviceSelect) {
@@ -323,17 +176,6 @@ document.addEventListener('DOMContentLoaded', function() {
             if (languageSelect) localStorage.setItem('language', languageSelect.value);
             if (styleSelect) localStorage.setItem('style', styleSelect.value);
             
-            // Modal zurücksetzen und schließen
-            const settingsPassword = document.getElementById('settingsPassword');
-            const apiSettings = document.getElementById('apiSettings');
-            const settingsPasswordInput = document.getElementById('settingsPasswordInput');
-            const newPasswordInput = document.getElementById('newPassword');
-            
-            if (settingsPassword) settingsPassword.classList.remove('d-none');
-            if (apiSettings) apiSettings.classList.add('d-none');
-            if (settingsPasswordInput) settingsPasswordInput.value = '';
-            if (newPasswordInput) newPasswordInput.value = '';
-            
             elements.settingsModal.hide();
             showSuccess('Einstellungen erfolgreich gespeichert');
             
@@ -341,6 +183,10 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error('Error saving settings:', error);
             showError('Fehler beim Speichern der Einstellungen');
         }
+    }
+
+    function getApiKey() {
+        return API_SETTINGS.apiKey;
     }
 
     // ===== Analyse-Funktionen =====
@@ -908,6 +754,10 @@ document.addEventListener('DOMContentLoaded', function() {
     // ===== Validierung =====
     function validateInputs() {
         const jobPosting = elements.jobPosting.value.trim();
+        const resumeUploaded = window.resumeText !== undefined && window.resumeText !== null;
+        
+        // Aktiviere/Deaktiviere den Analyse-Button basierend auf den Eingaben
+        elements.analyzeBtn.disabled = !jobPosting || !resumeUploaded;
         
         // Validiere Stellenanzeige
         if (!jobPosting) {
@@ -915,34 +765,15 @@ document.addEventListener('DOMContentLoaded', function() {
             return false;
         }
         
-        if (jobPosting.length < 100) {
+        if (jobPosting.length < 50) { // Reduzierte Mindestlänge
             showError('Die Stellenanzeige scheint zu kurz zu sein. Bitte fügen Sie den vollständigen Text ein.');
             return false;
         }
         
-        // Validiere PDF-Dateien
-        if (elements.resumeUpload.files[0]) {
-            const resumeFile = elements.resumeUpload.files[0];
-            if (resumeFile.size === 0) {
-                showError('Die hochgeladene Lebenslauf-Datei scheint leer zu sein');
-                return false;
-            }
-            if (resumeFile.size > 10 * 1024 * 1024) {
-                showError('Die Lebenslauf-Datei ist zu groß (max. 10 MB)');
-                return false;
-            }
-        }
-        
-        if (elements.coverLetterUpload.files[0]) {
-            const coverLetterFile = elements.coverLetterUpload.files[0];
-            if (coverLetterFile.size === 0) {
-                showError('Die hochgeladene Anschreiben-Datei scheint leer zu sein');
-                return false;
-            }
-            if (coverLetterFile.size > 10 * 1024 * 1024) {
-                showError('Die Anschreiben-Datei ist zu groß (max. 10 MB)');
-                return false;
-            }
+        // Validiere Lebenslauf
+        if (!resumeUploaded) {
+            showError('Bitte laden Sie Ihren Lebenslauf hoch');
+            return false;
         }
         
         return true;
@@ -989,6 +820,24 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // ===== Event Listener für Textänderungen =====
     function initializeTextareaListeners() {
+        // Füge Event Listener für jobPosting textarea hinzu
+        elements.jobPosting.addEventListener('input', function() {
+            const jobPosting = this.value.trim();
+            const resumeUploaded = window.resumeText !== undefined && window.resumeText !== null;
+            
+            // Aktiviere/Deaktiviere den Analyse-Button
+            elements.analyzeBtn.disabled = !jobPosting || !resumeUploaded;
+            
+            if (elements.analyzeBtn.disabled) {
+                elements.analyzeBtn.classList.add('btn-secondary');
+                elements.analyzeBtn.classList.remove('btn-primary');
+            } else {
+                elements.analyzeBtn.classList.add('btn-primary');
+                elements.analyzeBtn.classList.remove('btn-secondary');
+            }
+        });
+
+        // Event Listener für Anschreiben-Abschnitte
         Object.values(elements.coverLetterSections).forEach(textarea => {
             textarea.addEventListener('input', updatePreview);
         });
