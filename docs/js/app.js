@@ -113,73 +113,163 @@ document.addEventListener('DOMContentLoaded', function() {
     // ===== API Key Management =====
     const API_SETTINGS = {
         defaultPassword: 'admin',
-        encryptionKey: 'bewerbungsassistent-2024', // Schlüssel für die Verschlüsselung
+        encryptionKey: 'bewerbungsassistent-2024',
         currentService: 'openai'
     };
 
     function initializeSettings() {
-        // Password aus localStorage laden oder Standardpasswort setzen
-        if (!localStorage.getItem('settings_password')) {
-            localStorage.setItem('settings_password', 
-                CryptoJS.AES.encrypt(API_SETTINGS.defaultPassword, API_SETTINGS.encryptionKey).toString()
-            );
+        try {
+            // Prüfe ob es der erste Start ist
+            const isFirstStart = !localStorage.getItem('settings_initialized');
+            
+            if (isFirstStart) {
+                // Setze initiales Passwort
+                const encryptedPassword = CryptoJS.AES.encrypt(
+                    API_SETTINGS.defaultPassword,
+                    API_SETTINGS.encryptionKey
+                ).toString();
+                
+                localStorage.setItem('settings_password', encryptedPassword);
+                localStorage.setItem('settings_initialized', 'true');
+                
+                // Zeige Willkommensnachricht mit initialem Passwort
+                showWelcomeMessage();
+            }
+
+            // Lade gespeicherte Service-Auswahl
+            const savedService = localStorage.getItem('current_service') || 'openai';
+            const serviceSelect = document.getElementById('aiServiceSelect');
+            if (serviceSelect) {
+                serviceSelect.value = savedService;
+                API_SETTINGS.currentService = savedService;
+
+                // Zeige nur die Einstellungen des ausgewählten Services
+                document.querySelectorAll('.api-settings').forEach(el => el.classList.add('d-none'));
+                const serviceSettings = document.getElementById(`${savedService}Settings`);
+                if (serviceSettings) {
+                    serviceSettings.classList.remove('d-none');
+                }
+            }
+
+            // Lade gespeicherte API Keys
+            loadEncryptedApiKeys();
+
+            // Lade andere Einstellungen
+            loadGeneralSettings();
+
+            // Setze initiale UI-Zustände
+            const settingsPassword = document.getElementById('settingsPassword');
+            const apiSettings = document.getElementById('apiSettings');
+            
+            if (settingsPassword && apiSettings) {
+                settingsPassword.classList.remove('d-none');
+                apiSettings.classList.add('d-none');
+            }
+
+        } catch (error) {
+            console.error('Error initializing settings:', error);
+            showError('Fehler beim Initialisieren der Einstellungen');
         }
+    }
 
-        // Gespeicherte Einstellungen laden
-        const savedService = localStorage.getItem('current_service') || 'openai';
-        document.getElementById('aiServiceSelect').value = savedService;
-        API_SETTINGS.currentService = savedService;
+    function showWelcomeMessage() {
+        const welcomeModal = new bootstrap.Modal(document.createElement('div'));
+        welcomeModal.element.innerHTML = `
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="bi bi-emoji-smile me-2"></i>
+                            Willkommen beim Bewerbungsassistenten
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p>Vielen Dank, dass Sie den Bewerbungsassistenten verwenden!</p>
+                        <p>Um zu beginnen, benötigen Sie einen API-Schlüssel von einem der unterstützten KI-Dienste.</p>
+                        <p>Ihr initiales Passwort für die Einstellungen lautet: <strong>${API_SETTINGS.defaultPassword}</strong></p>
+                        <p>Bitte ändern Sie dieses Passwort nach dem ersten Login in den Einstellungen.</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Verstanden</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(welcomeModal.element);
+        welcomeModal.show();
+    }
 
-        // Initial nur die Einstellungen des ausgewählten Services anzeigen
-        document.querySelectorAll('.api-settings').forEach(el => el.classList.add('d-none'));
-        document.getElementById(`${savedService}Settings`).classList.remove('d-none');
-
-        // Gespeicherte API Keys laden
+    function loadEncryptedApiKeys() {
         ['openai', 'anthropic', 'google'].forEach(service => {
             const encryptedKey = localStorage.getItem(`${service}_api_key`);
             if (encryptedKey) {
                 try {
                     const decryptedKey = CryptoJS.AES.decrypt(
-                        encryptedKey, 
+                        encryptedKey,
                         API_SETTINGS.encryptionKey
                     ).toString(CryptoJS.enc.Utf8);
-                    document.getElementById(`${service}ApiKey`).value = decryptedKey;
+                    
+                    const input = document.getElementById(`${service}ApiKey`);
+                    if (input) {
+                        input.value = decryptedKey;
+                    }
                 } catch (error) {
                     console.error(`Error decrypting ${service} API key:`, error);
+                    localStorage.removeItem(`${service}_api_key`);
                 }
             }
         });
+    }
 
-        // Andere gespeicherte Einstellungen laden
+    function loadGeneralSettings() {
+        // Lade Sprache und Stil
         const savedLanguage = localStorage.getItem('language') || 'de';
         const savedStyle = localStorage.getItem('style') || 'professional';
-        document.getElementById('languageSelect').value = savedLanguage;
-        document.getElementById('styleSelect').value = savedStyle;
-
-        // Initial Passwort-Bereich anzeigen und API-Settings verstecken
-        document.getElementById('settingsPassword').classList.remove('d-none');
-        document.getElementById('apiSettings').classList.add('d-none');
+        
+        const languageSelect = document.getElementById('languageSelect');
+        const styleSelect = document.getElementById('styleSelect');
+        
+        if (languageSelect) languageSelect.value = savedLanguage;
+        if (styleSelect) styleSelect.value = savedStyle;
     }
 
     async function unlockSettings() {
         const input = document.getElementById('settingsPasswordInput');
         const password = input.value;
         
+        if (!password) {
+            showError('Bitte geben Sie das Passwort ein');
+            return;
+        }
+        
         try {
-            // Gespeichertes Passwort entschlüsseln und vergleichen
+            const encryptedStoredPassword = localStorage.getItem('settings_password');
+            if (!encryptedStoredPassword) {
+                throw new Error('Kein Passwort gespeichert');
+            }
+            
             const storedPassword = CryptoJS.AES.decrypt(
-                localStorage.getItem('settings_password'), 
+                encryptedStoredPassword,
                 API_SETTINGS.encryptionKey
             ).toString(CryptoJS.enc.Utf8);
             
             if (password === storedPassword) {
                 // Passwort-Bereich ausblenden und API-Settings einblenden
-                document.getElementById('settingsPassword').classList.add('d-none');
-                document.getElementById('apiSettings').classList.remove('d-none');
+                const settingsPassword = document.getElementById('settingsPassword');
+                const apiSettings = document.getElementById('apiSettings');
                 
-                // Gespeicherte API Keys laden
-                loadApiKeys();
+                if (settingsPassword && apiSettings) {
+                    settingsPassword.classList.add('d-none');
+                    apiSettings.classList.remove('d-none');
+                }
+                
+                // Lade aktuelle Einstellungen
+                loadEncryptedApiKeys();
                 showSuccess('Einstellungen entsperrt');
+                
+                // Input zurücksetzen
+                input.value = '';
             } else {
                 showError('Falsches Passwort');
             }
@@ -189,88 +279,67 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    function loadApiKeys() {
-        // Verschlüsselte API Keys aus localStorage laden und entschlüsseln
-        ['openai', 'anthropic', 'google'].forEach(service => {
-            const encryptedKey = localStorage.getItem(`${service}_api_key`);
-            if (encryptedKey) {
-                const decryptedKey = CryptoJS.AES.decrypt(
-                    encryptedKey, 
-                    API_SETTINGS.encryptionKey
-                ).toString(CryptoJS.enc.Utf8);
-                document.getElementById(`${service}ApiKey`).value = decryptedKey;
-            }
-        });
-        
-        // Gespeicherte Einstellungen laden
-        const savedService = localStorage.getItem('current_service') || 'openai';
-        document.getElementById('aiServiceSelect').value = savedService;
-        document.getElementById(`${savedService}Settings`).classList.remove('d-none');
-    }
-
     function saveSettings() {
-        const newPassword = document.getElementById('newPassword').value;
-        if (newPassword) {
-            // Neues Passwort verschlüsselt speichern
-            localStorage.setItem('settings_password', 
-                CryptoJS.AES.encrypt(newPassword, API_SETTINGS.encryptionKey).toString()
-            );
-        }
-        
-        // API Keys verschlüsselt speichern
-        ['openai', 'anthropic', 'google'].forEach(service => {
-            const key = document.getElementById(`${service}ApiKey`).value.trim();
-            if (key) {
-                localStorage.setItem(`${service}_api_key`,
-                    CryptoJS.AES.encrypt(key, API_SETTINGS.encryptionKey).toString()
-                );
-            }
-        });
-        
-        // Aktuelle Service-Auswahl speichern
-        const currentService = document.getElementById('aiServiceSelect').value;
-        localStorage.setItem('current_service', currentService);
-        API_SETTINGS.currentService = currentService;
-        
-        // Andere Einstellungen speichern
-        localStorage.setItem('language', document.getElementById('languageSelect').value);
-        localStorage.setItem('style', document.getElementById('styleSelect').value);
-        
-        elements.settingsModal.hide();
-        showSuccess('Einstellungen erfolgreich gespeichert');
-        
-        // Modal zurücksetzen
-        document.getElementById('settingsPassword').classList.remove('d-none');
-        document.getElementById('apiSettings').classList.add('d-none');
-        document.getElementById('settingsPasswordInput').value = '';
-        document.getElementById('newPassword').value = '';
-    }
-
-    function getApiKey() {
-        const service = API_SETTINGS.currentService;
-        const encryptedKey = localStorage.getItem(`${service}_api_key`);
-        
-        if (!encryptedKey) {
-            console.log('No API key found, showing settings modal');
-            elements.settingsModal.show();
-            throw new Error(`Bitte geben Sie zuerst Ihren ${service.toUpperCase()} API Key ein`);
-        }
-        
         try {
-            const decryptedKey = CryptoJS.AES.decrypt(
-                encryptedKey, 
-                API_SETTINGS.encryptionKey
-            ).toString(CryptoJS.enc.Utf8);
-
-            if (!decryptedKey) {
-                throw new Error('Ungültiger API Key');
+            // Neues Passwort speichern (wenn eingegeben)
+            const newPassword = document.getElementById('newPassword').value;
+            if (newPassword) {
+                const encryptedPassword = CryptoJS.AES.encrypt(
+                    newPassword,
+                    API_SETTINGS.encryptionKey
+                ).toString();
+                localStorage.setItem('settings_password', encryptedPassword);
             }
-
-            return decryptedKey;
+            
+            // API Keys verschlüsselt speichern
+            ['openai', 'anthropic', 'google'].forEach(service => {
+                const input = document.getElementById(`${service}ApiKey`);
+                if (input) {
+                    const key = input.value.trim();
+                    if (key) {
+                        const encryptedKey = CryptoJS.AES.encrypt(
+                            key,
+                            API_SETTINGS.encryptionKey
+                        ).toString();
+                        localStorage.setItem(`${service}_api_key`, encryptedKey);
+                    } else {
+                        localStorage.removeItem(`${service}_api_key`);
+                    }
+                }
+            });
+            
+            // Service-Auswahl speichern
+            const serviceSelect = document.getElementById('aiServiceSelect');
+            if (serviceSelect) {
+                const currentService = serviceSelect.value;
+                localStorage.setItem('current_service', currentService);
+                API_SETTINGS.currentService = currentService;
+            }
+            
+            // Andere Einstellungen speichern
+            const languageSelect = document.getElementById('languageSelect');
+            const styleSelect = document.getElementById('styleSelect');
+            
+            if (languageSelect) localStorage.setItem('language', languageSelect.value);
+            if (styleSelect) localStorage.setItem('style', styleSelect.value);
+            
+            // Modal zurücksetzen und schließen
+            const settingsPassword = document.getElementById('settingsPassword');
+            const apiSettings = document.getElementById('apiSettings');
+            const settingsPasswordInput = document.getElementById('settingsPasswordInput');
+            const newPasswordInput = document.getElementById('newPassword');
+            
+            if (settingsPassword) settingsPassword.classList.remove('d-none');
+            if (apiSettings) apiSettings.classList.add('d-none');
+            if (settingsPasswordInput) settingsPasswordInput.value = '';
+            if (newPasswordInput) newPasswordInput.value = '';
+            
+            elements.settingsModal.hide();
+            showSuccess('Einstellungen erfolgreich gespeichert');
+            
         } catch (error) {
-            console.error('Error decrypting API key:', error);
-            elements.settingsModal.show();
-            throw new Error('Fehler beim Laden des API Keys. Bitte geben Sie den Key erneut ein.');
+            console.error('Error saving settings:', error);
+            showError('Fehler beim Speichern der Einstellungen');
         }
     }
 
