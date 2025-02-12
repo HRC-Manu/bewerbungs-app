@@ -81,17 +81,7 @@ document.addEventListener('DOMContentLoaded', function() {
         elements.analyzeBtn.addEventListener('click', handleAnalyze);
 
         // Datei-Uploads
-        if (elements.resumeUpload) {
-            elements.resumeUpload.addEventListener('change', handleFileUpload);
-        }
-        if (elements.coverLetterUpload) {
-            elements.coverLetterUpload.addEventListener('change', handleFileUpload);
-        }
-
-        // Entfernen-Buttons für Datei-Vorschau
-        document.querySelectorAll('.file-preview .btn-close').forEach(btn => {
-            btn.addEventListener('click', handleFileRemove);
-        });
+        initializeFileUpload();
 
         // Initialisiere Textbereich-Listener
         initializeTextareaListeners();
@@ -844,28 +834,16 @@ document.addEventListener('DOMContentLoaded', function() {
             const preview = container.querySelector('.file-preview');
             const removeBtn = preview.querySelector('.btn-close');
             
-            // Entferne bestehende Event-Listener
-            input.removeEventListener('change', handleFileUpload);
-            area.removeEventListener('dragenter', handleDragEnter);
-            area.removeEventListener('dragover', handleDragOver);
-            area.removeEventListener('dragleave', handleDragLeave);
-            area.removeEventListener('drop', handleDrop);
-            if (removeBtn) {
-                removeBtn.removeEventListener('click', handleFileRemove);
-            }
-            
-            // Füge neue Event-Listener hinzu
-            input.addEventListener('change', handleFileUpload, { once: true });
-            area.addEventListener('dragenter', handleDragEnter);
-            area.addEventListener('dragover', handleDragOver);
-            area.addEventListener('dragleave', handleDragLeave);
-            area.addEventListener('drop', handleDrop);
-            
             // Click Event für Upload-Bereich
             area.addEventListener('click', (e) => {
                 e.preventDefault();
-                input.click();
+                if (e.target === area || e.target.closest('.upload-label')) {
+                    input.click();
+                }
             });
+            
+            // File Input Change Event
+            input.addEventListener('change', handleFileUpload);
             
             // Remove Button Event
             if (removeBtn) {
@@ -889,14 +867,17 @@ document.addEventListener('DOMContentLoaded', function() {
                         preview.classList.add('d-none');
                         area.style.display = 'block';
                         
-                        // Event-Listener für Upload wieder hinzufügen
-                        input.addEventListener('change', handleFileUpload, { once: true });
-                        
                         // Button-Status aktualisieren
                         checkRequiredUploads();
                     }, 300);
                 });
             }
+            
+            // Drag & Drop Events
+            area.addEventListener('dragenter', handleDragEnter);
+            area.addEventListener('dragover', handleDragOver);
+            area.addEventListener('dragleave', handleDragLeave);
+            area.addEventListener('drop', handleDrop);
         });
     }
 
@@ -1056,6 +1037,32 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         return rephrased;
+    }
+
+    async function analyzeResume(resumeText) {
+        try {
+            if (!resumeText || typeof resumeText !== 'string') {
+                throw new Error('Ungültiger Lebenslauf');
+            }
+
+            // Basis-Analyse des Lebenslaufs
+            return {
+                personalInfo: {
+                    name: 'Bewerber',
+                    position: 'Nicht spezifiziert',
+                    experience: '0 Jahre'
+                },
+                skills: {
+                    technical: [],
+                    soft: []
+                },
+                experience: [],
+                education: []
+            };
+        } catch (error) {
+            console.error('Resume analysis error:', error);
+            throw new Error('Lebenslauf-Analyse fehlgeschlagen');
+        }
     }
 
     // ===== Initialisierung =====
