@@ -279,54 +279,55 @@ Qualifications:
 
     // Generate suggestions using ChatGPT with analysis
     async function generateCoverLetterSuggestions(section, jobPosting, analysis) {
-        const suggestions = [];
-        
-        // Customize prompts based on analysis
-        const prompts = {
-            recipient: [
-                "Sehr geehrte Damen und Herren,",
-                `Sehr geehrte Frau ${analysis?.companyInfo?.name || '[Name]'},`,
-                `Sehr geehrter Herr ${analysis?.companyInfo?.name || '[Name]'},`,
-            ],
-            subject: [
-                `Bewerbung als ${analysis?.jobTitle || '[Position]'} - Referenz: [Jobcode]`,
-                `Ihre Stellenanzeige: ${analysis?.jobTitle || '[Position]'} vom [Datum]`,
-                `Bewerbung für die Position als ${analysis?.jobTitle || '[Position]'}`,
-            ],
-            introduction: [
-                `mit großem Interesse habe ich Ihre Stellenanzeige für die Position als ${analysis?.jobTitle} gelesen und bewerbe mich um diese spannende Aufgabe.`,
-                `Ihre ausgeschriebene Stelle als ${analysis?.jobTitle} hat sofort mein Interesse geweckt, da sie perfekt zu meinem Profil passt.`,
-                `auf der Suche nach einer neuen beruflichen Herausforderung bin ich auf Ihre Stellenanzeige als ${analysis?.jobTitle} gestoßen und möchte mich hiermit bewerben.`,
-            ],
-            main: [
-                `Durch meine Erfahrung in ${analysis?.matchingSkills?.join(', ') || '[Bereiche]'} bringe ich ideale Voraussetzungen mit. ${analysis?.companyInfo?.culture || ''}`,
-                `Meine Stärken liegen besonders in ${analysis?.matchingSkills?.slice(0, 2).join(' und ') || '[Kompetenzen]'}. Diese konnte ich in meinen bisherigen Positionen erfolgreich einsetzen und weiterentwickeln.`,
-                `Was mich besonders an der Position reizt, ist die Möglichkeit, meine Erfahrungen in ${analysis?.matchingSkills?.[0] || '[Bereich]'} einzubringen und dabei in einem innovativen Umfeld zu arbeiten.`,
-            ],
-            closing: [
-                "Über die Möglichkeit eines persönlichen Gesprächs freue ich mich sehr.",
-                "Gerne stelle ich Ihnen meine Qualifikationen in einem persönlichen Gespräch vor.",
-                "Ich freue mich darauf, Sie in einem persönlichen Gespräch von meiner Eignung zu überzeugen.",
-            ],
-        };
+        try {
+            // Customize prompts based on analysis
+            const prompts = {
+                recipient: [
+                    { section: 'recipient', text: "Sehr geehrte Damen und Herren," },
+                    { section: 'recipient', text: `Sehr geehrte Frau ${analysis?.companyInfo?.name || '[Name]'},` },
+                    { section: 'recipient', text: `Sehr geehrter Herr ${analysis?.companyInfo?.name || '[Name]'},` }
+                ],
+                subject: [
+                    { section: 'subject', text: `Bewerbung als ${analysis?.jobTitle || '[Position]'} - Referenz: [Jobcode]` },
+                    { section: 'subject', text: `Ihre Stellenanzeige: ${analysis?.jobTitle || '[Position]'} vom [Datum]` },
+                    { section: 'subject', text: `Bewerbung für die Position als ${analysis?.jobTitle || '[Position]'}` }
+                ],
+                introduction: [
+                    { section: 'introduction', text: `mit großem Interesse habe ich Ihre Stellenanzeige für die Position als ${analysis?.jobTitle} gelesen und bewerbe mich um diese spannende Aufgabe.` },
+                    { section: 'introduction', text: `Ihre ausgeschriebene Stelle als ${analysis?.jobTitle} hat sofort mein Interesse geweckt, da sie perfekt zu meinem Profil passt.` },
+                    { section: 'introduction', text: `auf der Suche nach einer neuen beruflichen Herausforderung bin ich auf Ihre Stellenanzeige als ${analysis?.jobTitle} gestoßen und möchte mich hiermit bewerben.` }
+                ],
+                main: [
+                    { section: 'main', text: `Durch meine Erfahrung in ${analysis?.matchingSkills?.join(', ') || '[Bereiche]'} bringe ich ideale Voraussetzungen mit. ${analysis?.companyInfo?.culture || ''}` },
+                    { section: 'main', text: `Meine Stärken liegen besonders in ${analysis?.matchingSkills?.slice(0, 2).join(' und ') || '[Kompetenzen]'}. Diese konnte ich in meinen bisherigen Positionen erfolgreich einsetzen und weiterentwickeln.` },
+                    { section: 'main', text: `Was mich besonders an der Position reizt, ist die Möglichkeit, meine Erfahrungen in ${analysis?.matchingSkills?.[0] || '[Bereich]'} einzubringen und dabei in einem innovativen Umfeld zu arbeiten.` }
+                ],
+                closing: [
+                    { section: 'closing', text: "Über die Möglichkeit eines persönlichen Gesprächs freue ich mich sehr." },
+                    { section: 'closing', text: "Gerne stelle ich Ihnen meine Qualifikationen in einem persönlichen Gespräch vor." },
+                    { section: 'closing', text: "Ich freue mich darauf, Sie in einem persönlichen Gespräch von meiner Eignung zu überzeugen." }
+                ]
+            };
 
-        if (section === 'all') {
-            const allSuggestions = [];
-            for (const sec of ['recipient', 'subject', 'introduction', 'main', 'closing']) {
-                const secSuggestions = await generateSuggestionsForSection(sec);
-                allSuggestions.push(secSuggestions[0]); // Take first suggestion of each section
-            }
-            return allSuggestions;
-        } else {
-            for (let i = 0; i < 3; i++) {
-                suggestions.push({
-                    section: section,
-                    text: prompts[section][i % prompts[section].length]
+            if (section === 'all') {
+                const allSuggestions = [];
+                const sections = ['recipient', 'subject', 'introduction', 'main', 'closing'];
+                
+                // Take the first suggestion from each section
+                sections.forEach(sec => {
+                    if (prompts[sec] && prompts[sec].length > 0) {
+                        allSuggestions.push(prompts[sec][0]);
+                    }
                 });
+                
+                return allSuggestions;
+            } else {
+                return prompts[section] || [];
             }
+        } catch (error) {
+            console.error('Error generating suggestions:', error);
+            return [];
         }
-
-        return suggestions;
     }
 
     // Handle generate click
