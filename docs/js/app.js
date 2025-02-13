@@ -1532,10 +1532,11 @@ document.addEventListener('DOMContentLoaded', function() {
      * Analysiert den Text eines Lebenslaufes.
      * @async
      * @function analyzeResume
-     * @param {string} resumeText - Vollständiger Text aus dem hochgeladenen PDF
-     * @returns {Promise<Object>} - Enthält extrahierte Fähigkeiten, Erfahrungen etc.
+     * @param {string} resumeText - Aus dem PDF gewonnener Text
+     * @param {Object} [options] - z.B. { useServerApi: true }
+     * @returns {Promise<Object>}
      */
-    async function analyzeResume(resumeText) {
+    async function analyzeResume(resumeText, options = {}) {
         try {
             // Erweiterte Lebenslauf-Analyse mit detaillierten Extraktionsmethoden
             return {
@@ -2427,6 +2428,35 @@ document.addEventListener('DOMContentLoaded', function() {
             showError(error.message || 'Fehler bei der Analyse');
         } finally {
             hideLoading(elements.analyzeBtn, 'Analysieren und Anschreiben erstellen');
+        }
+    }
+
+    /**
+     * Verarbeitet den Upload, erlaubt nun auch mehrere Files
+     * und ruft optional eine Server-API auf, um die Datei zu analysieren.
+     * @function handleFileUploads
+     * @param {Event} event
+     */
+    async function handleFileUploads(event) {
+        const files = event.target.files;
+        if (!files || files.length === 0) return;
+
+        // Neu: Schleife für mehrere Dateien
+        for (const file of files) {
+            if (file.type !== 'application/pdf') {
+                console.warn(`Ungültiger Dateityp: ${file.name}`);
+                continue;
+            }
+            try {
+                const text = await extractTextFromPDF(file);
+                // Hier könnte man (optional) die extrahierten Inhalte
+                // an eine KI-API oder an 'analyzeResume' schicken:
+                const analysisResult = await analyzeResume(text); 
+                console.log('Analysis result for', file.name, analysisResult);
+                // Optional: UI-Update (Preview, Meldungen)
+            } catch (err) {
+                console.error(`Fehler bei ${file.name}:`, err);
+            }
         }
     }
 });
