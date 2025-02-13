@@ -16,18 +16,34 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 class PDFExtractor:
-    """Handles the extraction of text from PDF files."""
+    """
+    Handles the extraction of text from PDF files.
+    This class parses the PDF and stores both raw text and metadata.
+
+    Attributes:
+        input_file (str): Path to the PDF file to be processed.
+        text_content (str): Extracted textual content from the PDF.
+        metadata (dict): Basic metadata about the PDF (e.g. title, author, pages).
+    """
     
     def __init__(self, input_file: str):
-        """Initialize the PDF extractor with input file path."""
+        """
+        Initialize the PDF extractor with input file path.
+
+        Args:
+            input_file (str): Absolute or relative path to the PDF file.
+        """
         self.input_file = input_file
-        self.text_content = ""
-        self.metadata = {}
+        self.text_content: str = ""
+        self.metadata: dict = {}
         
     def extract(self) -> Dict[str, Any]:
         """
         Extract text and metadata from the PDF file.
-        Returns a dictionary containing the extracted content.
+
+        Returns:
+            Dict[str, Any]: A dict with keys 'text', 'metadata', 'success' (bool), 
+                            and optionally 'error' on failure.
         """
         try:
             with open(self.input_file, 'rb') as file:
@@ -51,6 +67,15 @@ class PDFExtractor:
                 
                 self.text_content = '\n'.join(text_content)
                 
+                if not reader.pages:
+                    logger.warning("No pages found in the PDF. The file might be corrupted.")
+                    return {
+                        'text': '',
+                        'metadata': self.metadata,
+                        'success': False,
+                        'error': 'No pages in PDF'
+                    }
+                
                 return {
                     'text': self.text_content,
                     'metadata': self.metadata,
@@ -66,8 +91,16 @@ class PDFExtractor:
                 'error': str(e)
             }
     
-    def save_extracted_content(self, output_file: str):
-        """Save the extracted content to a JSON file."""
+    def save_extracted_content(self, output_file: str) -> bool:
+        """
+        Save the extracted content (text + metadata) to a JSON file.
+
+        Args:
+            output_file (str): Path (including filename) of the JSON file to create.
+
+        Returns:
+            bool: True if saving was successful, else False.
+        """
         try:
             content = {
                 'text': self.text_content,
@@ -77,6 +110,7 @@ class PDFExtractor:
             with open(output_file, 'w', encoding='utf-8') as f:
                 json.dump(content, f, ensure_ascii=False, indent=2)
                 
+            # TODO: Optional: Push the extracted content to a central DB or cloud storage for analysis.
             logger.info(f"Extracted content saved to {output_file}")
             return True
             
