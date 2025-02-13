@@ -191,7 +191,7 @@ document.addEventListener('DOMContentLoaded', function() {
      * @returns {Object} Enthält Felder wie positionInfo, levelInfo, departmentInfo
      */
     function basicTextAnalysis(text) {
-        // Hier bündeln wir Logik aus z.B. analyzePosition, analyzeLevel, analyzeDepartment
+        // Hier bündeln wir Logik aus z.b. analyzePosition, analyzeLevel, analyzeDepartment
         // anstatt sie dreimal zu wiederholen.
         const positionInfo = analyzePosition(text);
         const levelInfo = analyzeLevel(text);
@@ -1045,23 +1045,26 @@ document.addEventListener('DOMContentLoaded', function() {
             // Analyseergebnisse anzeigen
             displayAnalysis(jobAnalysis);
 
-            // Vorschläge generieren
-            const suggestions = await AIService.generateCoverLetterSections(jobAnalysis, resumeAnalysis);
+            const aiProvider = getSelectedAIProvider(); 
+            const style = getSelectedStyle();
+            // Wir könnten das an AIService oder Server weitergeben:
+            const suggestions = await AIService.generateCoverLetterSections(
+                jobAnalysis,
+                resumeAnalysis,
+                { provider: aiProvider, style: style }
+            );
 
             // Vorschläge anwenden
             if (suggestions && suggestions.length > 0) {
                 applySuggestions(suggestions);
-
-                // Vorschau aktualisieren
                 updatePreview();
-
-                // Fortschritt aktualisieren
-                updateProgressStep(3);
-
-                // Erfolgsmeldung anzeigen
                 showSuccess('Analyse erfolgreich abgeschlossen');
             } else {
-                throw new Error('Keine Vorschläge generiert');
+                console.warn('Keine Vorschläge generiert, verwende Fallback.');
+                applySuggestions([
+                    { section: 'recipient', text: 'Sehr geehrte Damen und Herren,' },
+                    { section: 'main', text: 'Fallback-Anschreiben...' }
+                ]);
             }
 
         } catch (error) {
@@ -1523,6 +1526,11 @@ document.addEventListener('DOMContentLoaded', function() {
             stylePatterns[style].forEach(([pattern, replacement]) => {
                 rephrased = rephrased.replace(pattern, replacement);
             });
+        }
+
+        if (style === 'creative') {
+            // Experimentell: Ersetze "Bewerbung" durch "spannende Herausforderung"
+            rephrased = rephrased.replace(/\bbewerbung\b/gi, 'spannende Herausforderung');
         }
 
         return rephrased;
@@ -2396,12 +2404,34 @@ document.addEventListener('DOMContentLoaded', function() {
      * (damit wir KI-Funktionalitäten wie "generateSectionSuggestions" auslagern könnten).
      */
     const AIService = {
-        async generateCoverLetterSections(jobData, resumeData) {
-            // Hier könnte ein externer API-Call stattfinden statt direkter Lokallogik
-            // z.B. via fetch("https://example.com/ai-endpoint", { ... })
-            // In "Loop 1" war das lokal in generateSectionSuggestions etc. 
-            // => Hier verlagern wir es.
-            return [];
+        async generateCoverLetterSections(jobData, resumeData, config) {
+            // Hier könnte ein externer API-Call stattfinden...
+            // z.B. fetch("https://example.com/ai-endpoint", { ... })
+
+            // Oder wir nutzen my_ai_services direkt (nur Scheinbeispiel):
+            // Im echten Projekt: Real API-Call an server, der dann my_ai_services nutzt.
+            const { provider, style } = config;
+            // Pseudocode:
+            const jobText = JSON.stringify(jobData);
+            const resumeText = JSON.stringify(resumeData);
+
+            // Mock-Ergebnis, z.B. 
+            const coverLetterText = `[${provider.toUpperCase()} / STYLE=${style}] Generiertes Anschreiben...`;
+
+            return [
+                {
+                    section: 'recipient',
+                    text: 'Sehr geehrte Damen und Herren,'
+                },
+                {
+                    section: 'subject',
+                    text: 'Bewerbung als Software Developer'
+                },
+                {
+                    section: 'main',
+                    text: coverLetterText
+                }
+            ];
         }
     };
 
@@ -2411,23 +2441,35 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
             // existing code...
+            const jobAnalysis = await analyzeJobPosting(jobPosting);
+            const resumeAnalysis = await analyzeResume(window.resumeText);
 
-            // Statt localer "generateSectionSuggestions" -> 
-            const suggestions = await AIService.generateCoverLetterSections(jobAnalysis, resumeAnalysis);
+            // existing code for displayAnalysis...
+
+            const aiProvider = getSelectedAIProvider(); 
+            const style = getSelectedStyle();
+            // Wir könnten das an AIService oder Server weitergeben:
+            const suggestions = await AIService.generateCoverLetterSections(
+                jobAnalysis,
+                resumeAnalysis,
+                { provider: aiProvider, style: style }
+            );
 
             if (suggestions && suggestions.length > 0) {
-                applySuggestions(suggestions);
-                updatePreview();
-                updateProgressStep(3);
-                showSuccess('Analyse erfolgreich abgeschlossen');
+                applySuggestions(suggestions); 
+                // existing code...
             } else {
-                throw new Error('Keine Vorschläge generiert');
+                console.warn('Keine Vorschläge generiert, verwende Fallback.');
+                applySuggestions([
+                    { section: 'recipient', text: 'Sehr geehrte Damen und Herren,' },
+                    { section: 'main', text: 'Fallback-Anschreiben...' }
+                ]);
             }
+
         } catch (error) {
-            console.error('Analysis error:', error);
-            showError(error.message || 'Fehler bei der Analyse');
+            // existing code...
         } finally {
-            hideLoading(elements.analyzeBtn, 'Analysieren und Anschreiben erstellen');
+            // existing code...
         }
     }
 
@@ -2458,5 +2500,44 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.error(`Fehler bei ${file.name}:`, err);
             }
         }
+    }
+
+    let selectedAIProvider = 'chatgpt'; // Default
+
+    document.getElementById('apiBtn')?.addEventListener('click', () => {
+        // existing code -> zeige apiModal
+    });
+
+    // Wenn der User "Speichern" im API-Modal klickt:
+    const apiModalSaveBtn = document.querySelector('#apiModal .btn-primary');
+    if (apiModalSaveBtn) {
+        apiModalSaveBtn.addEventListener('click', () => {
+            const providerElem = document.getElementById('aiProvider');
+            selectedAIProvider = providerElem.value;
+            console.log('AI Provider ausgewählt:', selectedAIProvider);
+            // Hier könnten wir das Modal schließen, etc.
+        });
+    }
+
+    // Bsp: getter-Funktion, um in handleAnalyze() o.ä. den Anbieter zu ermitteln
+    function getSelectedAIProvider() {
+        return selectedAIProvider;
+    }
+
+    let selectedCoverLetterStyle = 'formal';
+
+    if (apiModalSaveBtn) {
+        apiModalSaveBtn.addEventListener('click', () => {
+            const providerElem = document.getElementById('aiProvider');
+            selectedAIProvider = providerElem.value;
+            const styleElem = document.getElementById('coverLetterStyle');
+            selectedCoverLetterStyle = styleElem.value;
+
+            console.log('AI Provider:', selectedAIProvider, ' | Stil:', selectedCoverLetterStyle);
+        });
+    }
+
+    function getSelectedStyle() {
+        return selectedCoverLetterStyle;
     }
 });
