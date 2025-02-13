@@ -2416,7 +2416,9 @@ document.addEventListener('DOMContentLoaded', function() {
             const resumeText = JSON.stringify(resumeData);
 
             // Mock-Ergebnis, z.B. 
-            const coverLetterText = `[${provider.toUpperCase()} / STYLE=${style}] Generiertes Anschreiben...`;
+            const coverLetterText = `• ${provider.toUpperCase()} / STYLE=${style}\n`
+                + `• Skill-Fokus: ${someSkill}\n`
+                + "Hauptabsatz: ...";
 
             return [
                 {
@@ -2432,6 +2434,21 @@ document.addEventListener('DOMContentLoaded', function() {
                     text: coverLetterText
                 }
             ];
+        },
+        refineCoverLetter(coverLetter, feedback) {
+            // feedback = { length: "too_long", tone: "too_passive" }
+            return new Promise((resolve, reject) => {
+                // Hier würde eine API-Anfrage an den Server gesendet werden
+                // Um die Refinement zu simulieren, verwenden wir ein Timeout
+                setTimeout(() => {
+                    // Simuliertes Ergebnis
+                    const updatedLetter = {
+                        ...coverLetter,
+                        text: coverLetter.text.replace(/too_long/gi, '').replace(/too_passive/gi, '')
+                    };
+                    resolve(updatedLetter);
+                }, 1000);
+            });
         }
     };
 
@@ -2539,5 +2556,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function getSelectedStyle() {
         return selectedCoverLetterStyle;
+    }
+
+    function handleCoverLetterFeedback(feedback) {
+        // feedback = { length: "too_long", tone: "too_passive" }
+        AIService.refineCoverLetter(currentCoverLetter, feedback)
+          .then(updatedLetter => { applyUpdatedLetter(updatedLetter); });
     }
 });
