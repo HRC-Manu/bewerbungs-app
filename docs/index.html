@@ -405,7 +405,21 @@
                 </div>
                 <div class="modal-body">
                     <p>Hier können Sie zusätzliche Schreibassistenten konfigurieren (z. B. DeePL usw.).</p>
-                    <!-- API-Konfigurationselemente können hier eingefügt werden -->
+                    <div class="mb-3">
+                        <label for="aiProvider" class="form-label fw-bold">KI-Anbieter</label>
+                        <select id="aiProvider" class="form-select">
+                            <option value="chatgpt" selected>OpenAI (ChatGPT)</option>
+                            <option value="huggingface">Hugging Face</option>
+                            <option value="anthropic">Anthropic</option>
+                        </select>
+                        <label for="coverLetterStyle" class="form-label fw-bold mt-3">Stil des Anschreibens</label>
+                        <select id="coverLetterStyle" class="form-select">
+                            <option value="formal" selected>Formell</option>
+                            <option value="casual">Locker</option>
+                            <option value="creative">Kreativ</option>
+                        </select>
+                        <small class="text-muted">Wählen Sie einen Anbieter für die Anschreiben-Generierung</small>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Schließen</button>
