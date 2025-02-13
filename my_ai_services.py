@@ -70,3 +70,36 @@ def get_global_api_config() -> dict:
     if _GLOBAL_CONFIG is None:
         _GLOBAL_CONFIG = configure_api()  # Hier könnte man Parameter anpassen
     return _GLOBAL_CONFIG 
+
+def generate_cover_letter_chatgpt(job_posting: str, resume_text: str, style_config: dict) -> str:
+    """
+    Erzeugt ein Anschreiben via OpenAI (ChatGPT).
+    style_config kann z.B. 'formell', 'locker' etc. sein.
+    """
+    style = style_config.get("style", "formal")
+    return f"[CHATGPT] Anschreiben (Stil={style}) für: {job_posting[:50]}..."
+
+def generate_cover_letter_huggingface(job_posting: str, resume_text: str, style_config: dict) -> str:
+    """
+    Erzeugt ein Anschreiben via Hugging Face.
+    """
+    style = style_config.get("style", "formal")
+    return f"[HUGGINGFACE] Anschreiben (Stil={style})"
+
+def generate_cover_letter_anthropic(job_posting: str, resume_text: str, style_config: dict) -> str:
+    """
+    Erzeugt ein Anschreiben via Anthropic (Claude).
+    """
+    style = style_config.get("style", "formal")
+    return f"[ANTHROPIC] Anschreiben (Stil={style})"
+
+def generate_cover_letter_universal(job_posting: str, resume_text: str, style_config: dict, provider: str) -> str:
+    """
+    Universelle Methode, die abhängig vom Provider die richtige Funktion aufruft.
+    """
+    if provider == "huggingface":
+        return generate_cover_letter_huggingface(job_posting, resume_text, style_config)
+    elif provider == "anthropic":
+        return generate_cover_letter_anthropic(job_posting, resume_text, style_config)
+    else:
+        return generate_cover_letter_chatgpt(job_posting, resume_text, style_config)
