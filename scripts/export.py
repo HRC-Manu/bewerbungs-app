@@ -21,21 +21,45 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 class DocumentExporter:
-    """Handles the export of documents to various formats."""
+    """
+    Handles the export of documents to Word and PDF formats.
+
+    Attributes:
+        input_dir (str): Directory from which to read input HTML files (cover_letter.html, resume.html).
+        output_dir (str): Directory to which we save the exported Word/PDF files.
+    """
     
     def __init__(self, input_dir: str = 'input', output_dir: str = 'output'):
-        """Initialize the exporter with input and output directories."""
+        """
+        Initialize the DocumentExporter with input and output directories.
+
+        Args:
+            input_dir (str): Relative or absolute path to the folder containing HTML input files.
+            output_dir (str): Path in which exported Word/PDF files should be created.
+        """
         self.input_dir = input_dir
         self.output_dir = output_dir
         os.makedirs(output_dir, exist_ok=True)
         
     def html_to_text(self, html_content: str) -> str:
-        """Convert HTML content to plain text while preserving structure."""
+        """
+        Convert HTML content to plain text (roughly) while preserving structure.
+
+        Args:
+            html_content (str): The entire HTML document as a string.
+        Returns:
+            str: Plain text version of HTML content.
+        """
         soup = BeautifulSoup(html_content, 'html.parser')
         return soup.get_text()
     
     def create_word_document(self) -> Document:
-        """Create and format a new Word document."""
+        """
+        Create and return a new Word Document object with basic margins set.
+
+        Returns:
+            Document: python-docx Document object.
+        """
         doc = Document()
         
         # Set page margins
@@ -49,8 +73,16 @@ class DocumentExporter:
         return doc
         
     def export_to_word(self) -> Dict[str, Any]:
-        """Export the documents to Word format."""
+        """
+        Export the documents to Word format.
+
+        Returns:
+            Dict[str, Any]: Contains 'path', 'success' and optionally 'error'.
+        """
         try:
+            if not os.path.exists(self.input_dir):
+                raise FileNotFoundError(f"Input directory '{self.input_dir}' does not exist.")
+
             # Create a new Word document
             doc = self.create_word_document()
             
@@ -110,7 +142,12 @@ class DocumentExporter:
             }
     
     def export_to_pdf(self) -> Dict[str, Any]:
-        """Export the documents to PDF format."""
+        """
+        Export the documents to PDF format.
+        
+        Returns:
+            Dict[str, Any]: Contains 'path', 'success' and optionally 'error'.
+        """
         try:
             # First export to Word
             word_result = self.export_to_word()
@@ -123,6 +160,7 @@ class DocumentExporter:
             
             convert(word_path, pdf_path)
             
+            # TODO: Optional: Upload the final PDF to secure storage or notify external systems.
             logger.info(f"Documents exported to PDF: {pdf_path}")
             return {
                 'path': pdf_path,
