@@ -10,6 +10,7 @@ from typing import Dict, Any
 import json
 import pypdf
 import logging
+from concurrent.futures import ThreadPoolExecutor
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -37,6 +38,17 @@ class PDFExtractor:
         self.text_content: str = ""
         self.metadata: dict = {}
         
+    def validate_file(self) -> bool:
+        """
+        Eine kleine Zusatzmethode, die z.B. prüft, ob die Endung .pdf hat usw.
+        """
+        if not os.path.exists(self.input_file):
+            logger.error(f"Datei {self.input_file} nicht gefunden.")
+            return False
+        if not self.input_file.lower().endswith('.pdf'):
+            logger.warning("Die Datei hat keine .pdf Endung.")
+        return True
+        
     def extract(self) -> Dict[str, Any]:
         """
         Extract text and metadata from the PDF file.
@@ -46,42 +58,22 @@ class PDFExtractor:
                             and optionally 'error' on failure.
         """
         try:
-            with open(self.input_file, 'rb') as file:
-                # Create PDF reader object
-                reader = pypdf.PdfReader(file)
-                
-                # Extract metadata
-                self.metadata = {
-                    'title': reader.metadata.get('/Title', ''),
-                    'author': reader.metadata.get('/Author', ''),
-                    'creator': reader.metadata.get('/Creator', ''),
-                    'pages': len(reader.pages)
-                }
-                
-                # Extract text from all pages
-                text_content = []
-                for page in reader.pages:
-                    text = page.extract_text()
-                    if text:
-                        text_content.append(text)
-                
-                self.text_content = '\n'.join(text_content)
-                
-                if not reader.pages:
-                    logger.warning("No pages found in the PDF. The file might be corrupted.")
-                    return {
-                        'text': '',
-                        'metadata': self.metadata,
-                        'success': False,
-                        'error': 'No pages in PDF'
-                    }
-                
+            if not self.validate_file():
                 return {
-                    'text': self.text_content,
-                    'metadata': self.metadata,
-                    'success': True
+                    'text': '',
+                    'metadata': {},
+                    'success': False,
+                    'error': f"File not valid: {self.input_file}"
                 }
-                
+
+            # TODO: Optional: Entweder synchron auslesen oder parallel
+            # => Hier nur als Skizze:
+            # with ThreadPoolExecutor(max_workers=2) as executor:
+            #     future = executor.submit(self._extract_pdf_content)
+            #     return future.result()
+
+            return self._extract_pdf_content()
+
         except Exception as e:
             logger.error(f"Error extracting PDF content: {str(e)}")
             return {
@@ -89,6 +81,47 @@ class PDFExtractor:
                 'metadata': {},
                 'success': False,
                 'error': str(e)
+            }
+    
+    def _extract_pdf_content(self) -> Dict[str, Any]:
+        """
+        Ausgelagerte Funktion zur eigentlichen PDF-Verarbeitung
+        (kann man z.B. parallel aufrufen).
+        """
+        with open(self.input_file, 'rb') as file:
+            # Create PDF reader object
+            reader = pypdf.PdfReader(file)
+            
+            # Extract metadata
+            self.metadata = {
+                'title': reader.metadata.get('/Title', ''),
+                'author': reader.metadata.get('/Author', ''),
+                'creator': reader.metadata.get('/Creator', ''),
+                'pages': len(reader.pages)
+            }
+            
+            # Extract text from all pages
+            text_content = []
+            for page in reader.pages:
+                text = page.extract_text()
+                if text:
+                    text_content.append(text)
+            
+            self.text_content = '\n'.join(text_content)
+            
+            if not reader.pages:
+                logger.warning("No pages found in the PDF. The file might be corrupted.")
+                return {
+                    'text': '',
+                    'metadata': self.metadata,
+                    'success': False,
+                    'error': 'No pages in PDF'
+                }
+            
+            return {
+                'text': self.text_content,
+                'metadata': self.metadata,
+                'success': True
             }
     
     def save_extracted_content(self, output_file: str) -> bool:
