@@ -184,25 +184,47 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
 
+    /**
+     * Führt grundlegende Textanalysen (z.B. Position, Level, Abteilung) durch.
+     * @function basicTextAnalysis
+     * @param {string} text - Der zu analysierende Text 
+     * @returns {Object} Enthält Felder wie positionInfo, levelInfo, departmentInfo
+     */
+    function basicTextAnalysis(text) {
+        // Hier bündeln wir Logik aus z.B. analyzePosition, analyzeLevel, analyzeDepartment
+        // anstatt sie dreimal zu wiederholen.
+        const positionInfo = analyzePosition(text);
+        const levelInfo = analyzeLevel(text);
+        const departmentInfo = analyzeDepartment(text);
+
+        return {
+            positionInfo,
+            levelInfo,
+            departmentInfo
+        };
+    }
+
+    /**
+     * Analysiert den Text einer Stellenanzeige.
+     * @async
+     * @function analyzeJobPosting
+     * @param {string} jobPosting - Der Text der Stellenanzeige
+     * @returns {Promise<Object>} - Liefert ein Objekt mit Analyseinformationen (z.B. Position, Anforderungen)
+     */
     async function analyzeJobPosting(jobPosting) {
         try {
             if (!jobPosting || typeof jobPosting !== 'string') {
                 throw new Error('Ungültige Stellenanzeige');
             }
-
             const text = jobPosting.toLowerCase();
-            
-            // Erweiterte Positionsanalyse
-            const positionInfo = analyzePosition(text);
-            const levelInfo = analyzeLevel(text);
-            const departmentInfo = analyzeDepartment(text);
-            
-            // Detaillierte Unternehmensanalyse
+
+            // Gemeinsame Basisanalyse
+            const { positionInfo, levelInfo, departmentInfo } = basicTextAnalysis(text);
+
+            // Dann kann man hier Details wie companyInfo, requirements usw. ergänzen
             const companyInfo = analyzeCompany(text);
-            
-            // Strukturierte Anforderungsanalyse
             const requirements = analyzeRequirements(text);
-            
+
             return {
                 jobTitle: {
                     position: positionInfo.title,
@@ -991,16 +1013,21 @@ document.addEventListener('DOMContentLoaded', function() {
         return 'other';
     }
 
+    /**
+     * Lädt die Job-Posting- und Resume-Inhalte, validiert die Eingaben und leitet die Analyse ein.
+     * @async
+     * @function handleAnalyze
+     * @returns {Promise<void>}
+     */
     async function handleAnalyze() {
         try {
-            // Eingaben validieren
             if (!validateInputs()) {
                 return;
             }
 
             // Prüfen ob der Lebenslauf bereits hochgeladen wurde
-            if (!window.resumeText) {
-                showError('Bitte laden Sie zuerst Ihren Lebenslauf hoch');
+            if (!window.resumeText || window.resumeText.trim().length < 10) {
+                showError('Ihr Lebenslauf scheint leer oder unzureichend zu sein.');
                 return;
             }
 
@@ -1019,10 +1046,7 @@ document.addEventListener('DOMContentLoaded', function() {
             displayAnalysis(jobAnalysis);
 
             // Vorschläge generieren
-            const suggestions = await generateSectionSuggestions('all', {
-                job: jobAnalysis,
-                resume: resumeAnalysis
-            });
+            const suggestions = await AIService.generateCoverLetterSections(jobAnalysis, resumeAnalysis);
 
             // Vorschläge anwenden
             if (suggestions && suggestions.length > 0) {
@@ -1504,6 +1528,13 @@ document.addEventListener('DOMContentLoaded', function() {
         return rephrased;
     }
 
+    /**
+     * Analysiert den Text eines Lebenslaufes.
+     * @async
+     * @function analyzeResume
+     * @param {string} resumeText - Vollständiger Text aus dem hochgeladenen PDF
+     * @returns {Promise<Object>} - Enthält extrahierte Fähigkeiten, Erfahrungen etc.
+     */
     async function analyzeResume(resumeText) {
         try {
             // Erweiterte Lebenslauf-Analyse mit detaillierten Extraktionsmethoden
@@ -2332,5 +2363,70 @@ document.addEventListener('DOMContentLoaded', function() {
         );
 
         return mainSectionParts.join(' ');
+    }
+
+    /** 
+     * Namespace mit sämtlichen Analysefunktionen 
+     */
+    const AnalysisModule = {
+        analyzeJobPosting,
+        analyzeResume,
+        analyzeRequirements,
+        // ... weitere Analysefunktionen
+    };
+
+    /** 
+     * Namespace für UI-bezogene Funktionen 
+     */
+    const UIModule = {
+        showLoading,
+        hideLoading,
+        showSuccess,
+        showError,
+        updatePreview,
+        // ... weitere UI-Funktionen
+    };
+
+    // Beispiel für Verwendung: 
+    // statt analyzeJobPosting(...) -> AnalysisModule.analyzeJobPosting(...)
+
+    /**
+     * Exemplarische globale AIService-Injektion 
+     * (damit wir KI-Funktionalitäten wie "generateSectionSuggestions" auslagern könnten).
+     */
+    const AIService = {
+        async generateCoverLetterSections(jobData, resumeData) {
+            // Hier könnte ein externer API-Call stattfinden statt direkter Lokallogik
+            // z.B. via fetch("https://example.com/ai-endpoint", { ... })
+            // In "Loop 1" war das lokal in generateSectionSuggestions etc. 
+            // => Hier verlagern wir es.
+            return [];
+        }
+    };
+
+    async function handleAnalyze() {
+        try {
+            if (!validateInputs()) {
+                return;
+            }
+            // existing code...
+
+            // Statt localer "generateSectionSuggestions" -> 
+            const suggestions = await AIService.generateCoverLetterSections(jobAnalysis, resumeAnalysis);
+
+            if (suggestions && suggestions.length > 0) {
+                applySuggestions(suggestions);
+                updatePreview();
+                updateProgressStep(3);
+                showSuccess('Analyse erfolgreich abgeschlossen');
+            } else {
+                throw new Error('Keine Vorschläge generiert');
+            }
+        } catch (error) {
+            console.error('Analysis error:', error);
+            showError(error.message || 'Fehler bei der Analyse');
+        } finally {
+            hideLoading(elements.analyzeBtn, 'Analysieren und Anschreiben erstellen');
+        }
     }
 });
