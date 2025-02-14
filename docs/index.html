@@ -5,43 +5,125 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-Content-Type-Options" content="nosniff">
     <meta http-equiv="Cache-Control" content="public, max-age=31536000, immutable">
-    <title>Bewerbungsassistent - Login</title>
+    <meta name="description" content="Bewerbungsassistent - Erstellen Sie professionelle Bewerbungen mit KI-Unterstützung">
+    <title>Bewerbungsassistent</title>
     
     <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet" crossorigin="anonymous">
     <link href="css/style.css" rel="stylesheet">
 </head>
 <body class="bg-light">
-    <!-- Minimale Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <!-- Navbar mit Auth -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary" role="navigation">
         <div class="container">
-            <a class="navbar-brand" href="#">
-                <i class="bi bi-file-text me-2"></i>
+            <a class="navbar-brand" href="#" aria-label="Zur Startseite">
+                <i class="bi bi-file-text me-2" aria-hidden="true"></i>
                 Bewerbungsassistent
             </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarContent">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <button class="btn btn-outline-light" id="loginNavBtn">
+                            <i class="bi bi-person-circle me-2"></i>Anmelden
+                        </button>
+                    </li>
+                </ul>
+            </div>
         </div>
     </nav>
 
     <!-- Hauptcontainer -->
-    <div class="container mt-5">
-        <div class="row justify-content-center">
-            <div class="col-md-6 col-lg-4">
-                <!-- Login Card -->
-                <div class="card shadow-sm">
-                    <div class="card-body p-4">
-                        <h4 class="card-title text-center mb-4">Anmeldung</h4>
-                        
-                        <!-- Login Form -->
-                        <form id="loginForm">
+    <main class="container mt-5" role="main">
+        <!-- Hero Section -->
+        <div class="text-center mb-5">
+            <h1 class="display-4 mb-3">KI-gestützter Bewerbungsassistent</h1>
+            <p class="lead mb-4">Erstellen Sie professionelle Bewerbungen mit Unterstützung künstlicher Intelligenz</p>
+        </div>
+
+        <!-- Feature Cards -->
+        <div class="row g-4 mb-5">
+            <div class="col-md-6">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body text-center p-4">
+                        <i class="bi bi-file-person display-4 text-primary mb-3"></i>
+                        <h2 class="h4 card-title">Lebenslauf hochladen</h2>
+                        <p class="card-text mb-4">Laden Sie Ihren bestehenden Lebenslauf hoch und lassen Sie ihn von unserer KI analysieren und optimieren.</p>
+                        <button class="btn btn-primary" onclick="checkAuth('resume')">
+                            <i class="bi bi-upload me-2"></i>Lebenslauf hochladen
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body text-center p-4">
+                        <i class="bi bi-file-text display-4 text-primary mb-3"></i>
+                        <h2 class="h4 card-title">Anschreiben erstellen</h2>
+                        <p class="card-text mb-4">Generieren Sie ein maßgeschneidertes Anschreiben basierend auf Ihrem Lebenslauf und der Stellenanzeige.</p>
+                        <button class="btn btn-primary" onclick="checkAuth('cover')">
+                            <i class="bi bi-pencil me-2"></i>Anschreiben erstellen
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Benefits Section -->
+        <div class="row mt-5">
+            <div class="col-lg-4 mb-4">
+                <div class="d-flex align-items-start">
+                    <i class="bi bi-lightning-charge text-primary h2 me-3"></i>
+                    <div>
+                        <h3 class="h5">Schnell & Effizient</h3>
+                        <p>Erstellen Sie Ihre Bewerbung in wenigen Minuten statt Stunden.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4 mb-4">
+                <div class="d-flex align-items-start">
+                    <i class="bi bi-stars text-primary h2 me-3"></i>
+                    <div>
+                        <h3 class="h5">KI-Optimiert</h3>
+                        <p>Nutzen Sie modernste KI-Technologie für überzeugende Bewerbungen.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4 mb-4">
+                <div class="d-flex align-items-start">
+                    <i class="bi bi-shield-check text-primary h2 me-3"></i>
+                    <div>
+                        <h3 class="h5">Sicher & Vertraulich</h3>
+                        <p>Ihre Daten werden verschlüsselt und DSGVO-konform verarbeitet.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Auth Modals -->
+    <div class="modal fade" id="authModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <!-- Login View -->
+                <div id="loginView">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Anmeldung</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="loginForm" autocomplete="on">
                             <div class="mb-3">
                                 <label for="email" class="form-label">E-Mail</label>
-                                <input type="email" class="form-control" id="email" required>
+                                <input type="email" class="form-control" id="email" required autocomplete="email">
                             </div>
                             <div class="mb-3">
                                 <label for="password" class="form-label">Passwort</label>
                                 <div class="input-group">
-                                    <input type="password" class="form-control" id="password" required>
+                                    <input type="password" class="form-control" id="password" required autocomplete="current-password">
                                     <button class="btn btn-outline-secondary" type="button" id="togglePassword">
                                         <i class="bi bi-eye"></i>
                                     </button>
@@ -55,34 +137,37 @@
                                 <button type="submit" class="btn btn-primary">Anmelden</button>
                             </div>
                         </form>
-
                         <div class="text-center mt-3">
                             <button type="button" class="btn btn-link" id="showRegisterBtn">
                                 Noch kein Konto? Registrieren
                             </button>
+                            <button type="button" class="btn btn-link text-muted" id="forgotPasswordBtn">
+                                Passwort vergessen?
+                            </button>
                         </div>
                     </div>
                 </div>
-
-                <!-- Register Card (initially hidden) -->
-                <div class="card shadow-sm d-none" id="registerCard">
-                    <div class="card-body p-4">
-                        <h4 class="card-title text-center mb-4">Registrierung</h4>
-                        
-                        <!-- Register Form -->
-                        <form id="registerForm">
+                
+                <!-- Register View -->
+                <div id="registerView" class="d-none">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Registrierung</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="registerForm" autocomplete="on">
                             <div class="mb-3">
                                 <label for="registerName" class="form-label">Name</label>
-                                <input type="text" class="form-control" id="registerName" required>
+                                <input type="text" class="form-control" id="registerName" required autocomplete="name">
                             </div>
                             <div class="mb-3">
                                 <label for="registerEmail" class="form-label">E-Mail</label>
-                                <input type="email" class="form-control" id="registerEmail" required>
+                                <input type="email" class="form-control" id="registerEmail" required autocomplete="email">
                             </div>
                             <div class="mb-3">
                                 <label for="registerPassword" class="form-label">Passwort</label>
                                 <div class="input-group">
-                                    <input type="password" class="form-control" id="registerPassword" required>
+                                    <input type="password" class="form-control" id="registerPassword" required autocomplete="new-password">
                                     <button class="btn btn-outline-secondary" type="button" id="toggleRegisterPassword">
                                         <i class="bi bi-eye"></i>
                                     </button>
@@ -92,14 +177,13 @@
                             <div class="mb-3 form-check">
                                 <input type="checkbox" class="form-check-input" id="terms" required>
                                 <label class="form-check-label" for="terms">
-                                    Ich akzeptiere die Nutzungsbedingungen
+                                    Ich akzeptiere die <a href="#" class="text-decoration-none">Nutzungsbedingungen</a>
                                 </label>
                             </div>
                             <div class="d-grid">
                                 <button type="submit" class="btn btn-primary">Registrieren</button>
                             </div>
                         </form>
-
                         <div class="text-center mt-3">
                             <button type="button" class="btn btn-link" id="showLoginBtn">
                                 Zurück zur Anmeldung
@@ -111,87 +195,179 @@
         </div>
     </div>
 
-    <!-- Toast Container für Benachrichtigungen -->
+    <!-- Password Reset Modal -->
+    <div class="modal fade" id="passwordResetModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Passwort zurücksetzen</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="passwordResetForm">
+                        <div class="mb-3">
+                            <label for="resetEmail" class="form-label">E-Mail-Adresse</label>
+                            <input type="email" class="form-control" id="resetEmail" required>
+                            <div class="form-text">
+                                Sie erhalten einen Link zum Zurücksetzen Ihres Passworts.
+                            </div>
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">Link senden</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
     <div class="toast-container position-fixed bottom-0 end-0 p-3">
         <div id="messageToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
             <div class="toast-header">
                 <i class="bi bi-info-circle me-2"></i>
                 <strong class="me-auto" id="toastTitle">Nachricht</strong>
-                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Schließen"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
             </div>
             <div class="toast-body" id="toastMessage"></div>
         </div>
     </div>
 
-    <!-- Bootstrap Bundle mit Popper -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
     
-    <!-- Firebase SDK -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { 
             getAuth,
             signInWithEmailAndPassword,
-            createUserWithEmailAndPassword
+            createUserWithEmailAndPassword,
+            sendPasswordResetEmail,
+            onAuthStateChanged
         } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
         
-        // Firebase Konfiguration und Initialisierung
         import { firebaseConfig } from './js/firebase-config.js';
+        
+        // Firebase Init
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
 
-        // UI-Elemente
-        const loginForm = document.getElementById('loginForm');
-        const registerForm = document.getElementById('registerForm');
-        const showRegisterBtn = document.getElementById('showRegisterBtn');
-        const showLoginBtn = document.getElementById('showLoginBtn');
-        const loginCard = document.querySelector('.card');
-        const registerCard = document.getElementById('registerCard');
+        // UI Elements
+        const authModal = new bootstrap.Modal(document.getElementById('authModal'));
+        const loginView = document.getElementById('loginView');
+        const registerView = document.getElementById('registerView');
+        const loginNavBtn = document.getElementById('loginNavBtn');
 
-        // Toggle zwischen Login und Register
-        showRegisterBtn.addEventListener('click', () => {
-            loginCard.classList.add('d-none');
-            registerCard.classList.remove('d-none');
+        // Auth State Observer
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                loginNavBtn.innerHTML = `<i class="bi bi-person-circle me-2"></i>${user.email}`;
+                loginNavBtn.classList.remove('btn-outline-light');
+                loginNavBtn.classList.add('btn-light');
+            } else {
+                loginNavBtn.innerHTML = `<i class="bi bi-person-circle me-2"></i>Anmelden`;
+                loginNavBtn.classList.add('btn-outline-light');
+                loginNavBtn.classList.remove('btn-light');
+            }
         });
 
-        showLoginBtn.addEventListener('click', () => {
-            registerCard.classList.add('d-none');
-            loginCard.classList.remove('d-none');
+        // Show Auth Modal
+        loginNavBtn.addEventListener('click', () => {
+            authModal.show();
         });
 
-        // Login Handler
-        loginForm.addEventListener('submit', async (e) => {
+        // Toggle Views
+        document.getElementById('showRegisterBtn').addEventListener('click', () => {
+            loginView.classList.add('d-none');
+            registerView.classList.remove('d-none');
+        });
+
+        document.getElementById('showLoginBtn').addEventListener('click', () => {
+            registerView.classList.add('d-none');
+            loginView.classList.remove('d-none');
+        });
+
+        // Auth Forms
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Anmeldung...';
 
             try {
-                const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                const email = document.getElementById('email').value;
+                const password = document.getElementById('password').value;
+                await signInWithEmailAndPassword(auth, email, password);
                 showToast('Erfolgreich angemeldet', 'success');
-                // Weiterleitung zum Dashboard
-                window.location.href = 'dashboard.html';
+                authModal.hide();
             } catch (error) {
                 showToast(getErrorMessage(error.code), 'error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = 'Anmelden';
             }
         });
 
-        // Register Handler
-        registerForm.addEventListener('submit', async (e) => {
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const email = document.getElementById('registerEmail').value;
-            const password = document.getElementById('registerPassword').value;
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Registrierung...';
 
             try {
-                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                const email = document.getElementById('registerEmail').value;
+                const password = document.getElementById('registerPassword').value;
+                await createUserWithEmailAndPassword(auth, email, password);
                 showToast('Registrierung erfolgreich', 'success');
-                // Weiterleitung zum Dashboard
-                window.location.href = 'dashboard.html';
+                authModal.hide();
             } catch (error) {
                 showToast(getErrorMessage(error.code), 'error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = 'Registrieren';
             }
         });
 
-        // Toast Funktion
+        // Password Reset
+        const passwordResetModal = new bootstrap.Modal(document.getElementById('passwordResetModal'));
+        
+        document.getElementById('forgotPasswordBtn').addEventListener('click', () => {
+            authModal.hide();
+            passwordResetModal.show();
+        });
+
+        document.getElementById('passwordResetForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Sende...';
+
+            try {
+                const email = document.getElementById('resetEmail').value;
+                await sendPasswordResetEmail(auth, email);
+                showToast('Link zum Zurücksetzen wurde gesendet', 'success');
+                passwordResetModal.hide();
+            } catch (error) {
+                showToast(getErrorMessage(error.code), 'error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = 'Link senden';
+            }
+        });
+
+        // Auth Check for Features
+        window.checkAuth = function(feature) {
+            if (!auth.currentUser) {
+                showToast('Bitte melden Sie sich an, um diese Funktion zu nutzen', 'info');
+                authModal.show();
+                return;
+            }
+            
+            // Redirect to appropriate feature
+            window.location.href = 'dashboard.html';
+        };
+
+        // Helper Functions
         function showToast(message, type = 'info') {
             const toast = document.getElementById('messageToast');
             const toastTitle = document.getElementById('toastTitle');
@@ -204,7 +380,6 @@
             bsToast.show();
         }
 
-        // Fehlermeldungen
         function getErrorMessage(code) {
             switch (code) {
                 case 'auth/invalid-email':
@@ -225,22 +400,6 @@
                     return 'Ein Fehler ist aufgetreten';
             }
         }
-
-        // Password Toggle
-        document.querySelectorAll('.input-group .btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const input = e.target.closest('.input-group').querySelector('input');
-                const icon = e.target.closest('.btn').querySelector('i');
-                
-                if (input.type === 'password') {
-                    input.type = 'text';
-                    icon.classList.replace('bi-eye', 'bi-eye-slash');
-                } else {
-                    input.type = 'password';
-                    icon.classList.replace('bi-eye-slash', 'bi-eye');
-                }
-            });
-        });
     </script>
 </body>
 </html> 
