@@ -129,38 +129,51 @@ const AuthService = {
 };
 
 // Hauptinitialisierung
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
     "use strict";
     
     try {
         console.log('Initializing application...');
         
-        // Prüfe ob die Initialisierung erfolgreich war
+        // Warte bis Bootstrap verfügbar ist
+        if (typeof bootstrap === 'undefined') {
+            throw new Error('Bootstrap not loaded');
+        }
+        
+        // Initialisiere global state
+        window.globalState = window.globalState || {};
+        
+        // Initialisiere Elemente
         if (!initializeElements()) {
             throw new Error('Element initialization failed');
         }
         
-        // Rest der Initialisierung nur ausführen, wenn Elemente erfolgreich initialisiert wurden
+        // Rest der Initialisierung
         initializeAuthHandlers();
         initializeMainButtons();
         initializeEventListeners();
         Features.initialize();
         initializeWorkflow();
-        AuthService.checkAuth();
+        await AuthService.checkAuth();
         
-        // Starte Preview-Update-Intervall
         setInterval(updatePreview, 3000);
         
         console.log('Application initialized successfully');
     } catch (error) {
         console.error('Error during initialization:', error);
-        // Verwende alert statt showError, da Toast möglicherweise nicht verfügbar
-        alert('Fehler beim Initialisieren der Anwendung');
+        // Verwende direktes alert statt showError
+        alert('Fehler beim Initialisieren der Anwendung: ' + error.message);
     }
 });
 
 function initializeElements() {
     try {
+        // Warte bis Bootstrap vollständig geladen ist
+        if (typeof bootstrap === 'undefined') {
+            console.error('Bootstrap is not loaded');
+            return false;
+        }
+
         globalState.elements = {
             jobPosting: document.getElementById('jobPosting'),
             jobPostingURL: document.getElementById('jobPostingURL'),
@@ -182,8 +195,13 @@ function initializeElements() {
             },
             saveApiSettingsBtn: document.getElementById('saveApiSettingsBtn'),
             apiKeyInput: document.getElementById('apiKeyInput'),
-            apiModal: document.getElementById('apiModal') ? 
-                new bootstrap.Modal(document.getElementById('apiModal')) : null,
+            apiModal: (() => {
+                const el = document.getElementById('apiModal');
+                return el ? new bootstrap.Modal(el, {
+                    backdrop: true,
+                    keyboard: true
+                }) : null;
+            })(),
             colorPicker: safeGetElem('colorPicker'),
             fontSelect: safeGetElem('fontSelect'),
             borderToggle: safeGetElem('borderToggle'),
@@ -193,8 +211,13 @@ function initializeElements() {
                 new bootstrap.Modal(document.getElementById('suggestionsModal')) : null,
             helpModal: document.getElementById('helpModal') ? 
                 new bootstrap.Modal(document.getElementById('helpModal')) : null,
-            messageToast: document.getElementById('messageToast') ? 
-                new bootstrap.Toast(document.getElementById('messageToast')) : null,
+            messageToast: (() => {
+                const el = document.getElementById('messageToast');
+                return el ? new bootstrap.Toast(el, {
+                    delay: 3000,
+                    animation: true
+                }) : null;
+            })(),
             startBtn: safeGetElem('startBtn'),
             uploadResumeBtn: safeGetElem('uploadResumeBtn'),
             createResumeBtn: safeGetElem('createResumeBtn'),
@@ -218,8 +241,13 @@ function initializeElements() {
             letterStyle: safeGetElem('letterStyle'),
             
             // Modals
-            loginModal: document.getElementById('loginModal') ? 
-                new bootstrap.Modal(document.getElementById('loginModal')) : null,
+            loginModal: (() => {
+                const el = document.getElementById('loginModal');
+                return el ? new bootstrap.Modal(el, {
+                    backdrop: true,
+                    keyboard: true
+                }) : null;
+            })(),
             registerModal: document.getElementById('registerModal') ? 
                 new bootstrap.Modal(document.getElementById('registerModal')) : null,
             passwordResetModal: document.getElementById('passwordResetModal') ? 
