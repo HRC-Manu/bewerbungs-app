@@ -1,12 +1,9 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getAuth } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
-import { getStorage } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
+import { getAuth, connectAuthEmulator } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { getFirestore, connectFirestoreEmulator } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-import { connectAuthEmulator } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { connectStorageEmulator } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
-import { connectDatabaseEmulator } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+import { getStorage, connectStorageEmulator } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
+import { getDatabase, connectDatabaseEmulator } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -20,7 +17,7 @@ import { connectDatabaseEmulator } from "https://www.gstatic.com/firebasejs/10.7
  * 5. Registriere die App falls nötig
  * 6. Kopiere die Konfigurationsdaten hier rein
  */
-const firebaseConfig = {
+export const firebaseConfig = {
     apiKey: "AIzaSyDfwqJUkCQNXafFRB7hVXupPh0XBoHbdQg",
     authDomain: "bewerbungs-app.firebaseapp.com",
     projectId: "bewerbungs-app",
@@ -60,6 +57,51 @@ try {
     throw error;
 }
 
+// Entwicklungsmodus für localhost
+if (window.location.hostname === 'localhost') {
+    // Emulator-Verbindungen für lokale Entwicklung
+    connectAuthEmulator(auth, "http://localhost:9099");
+    connectFirestoreEmulator(db, 'localhost', 8080);
+    connectStorageEmulator(storage, "localhost", 9199);
+    connectDatabaseEmulator(rtdb, "localhost", 9000);
+    
+    console.log('Firebase läuft im Entwicklungsmodus');
+}
+
+// Test-Funktion für die Firebase-Verbindung
+export async function testFirebaseConnection() {
+    try {
+        // Test Auth
+        await auth._getRecaptchaConfig();
+        console.log('✓ Firebase Auth Verbindung OK');
+
+        // Test Firestore
+        const testDoc = await db.collection('test').doc('connection').set({
+            timestamp: new Date().toISOString(),
+            status: 'ok'
+        });
+        console.log('✓ Firestore Verbindung OK');
+
+        // Test Storage
+        const testRef = storage.ref().child('test/connection.txt');
+        await testRef.putString('test');
+        console.log('✓ Storage Verbindung OK');
+
+        // Test Realtime Database
+        const testRef2 = rtdb.ref('test/connection');
+        await testRef2.set({
+            timestamp: new Date().toISOString(),
+            status: 'ok'
+        });
+        console.log('✓ Realtime Database Verbindung OK');
+
+        return true;
+    } catch (error) {
+        console.error('Firebase Verbindungsfehler:', error);
+        throw new Error('Firebase Verbindung fehlgeschlagen: ' + error.message);
+    }
+}
+
 // Exportiere die Services
 export { 
     app,
@@ -68,34 +110,3 @@ export {
     rtdb as database,
     storage
 };
-
-// Test-Funktion für die Verbindung
-export const testFirebaseConnection = async () => {
-    if (!app) {
-        console.error('Firebase nicht initialisiert');
-        return false;
-    }
-
-    try {
-        // Teste die Authentifizierung
-        await auth._getRecaptchaConfig();
-        console.log('Firebase Auth Verbindung OK');
-        
-        // Teste die Firestore-Datenbank
-        const testDoc = await db.collection('test').doc('connection').set({
-            timestamp: new Date().toISOString(),
-            status: 'ok'
-        });
-        console.log('Firestore Verbindung OK');
-        
-        return true;
-    } catch (error) {
-        console.error('Firebase Verbindungsfehler:', error);
-        return false;
-    }
-};
-
-// Entwicklungsmodus für localhost
-if (window.location.hostname === 'localhost') {
-    console.log('Entwicklungsmodus aktiv - Firebase läuft im Entwicklungsmodus');
-}

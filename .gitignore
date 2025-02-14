@@ -7,7 +7,7 @@
 /docs/js/config.js
 
 # Dependencies
-/node_modules
+node_modules/
 /.pnp
 .pnp.js
 
@@ -33,4 +33,43 @@ yarn-error.log*
 .idea/
 .vscode/
 *.swp
-*.swo 
+*.swo
+
+# Build files
+dist/
+build/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# IDE files
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Firebase config
+/docs/js/config.js
+
+# Firebase cache
+.firebase/
+.firebaserc
+firebase-debug.log
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+
