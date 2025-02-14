@@ -85,25 +85,11 @@ function initializeEventListeners() {
     });
 
     // URL Input Handler
-    elements.jobPostingURL?.addEventListener('input', async function() {
-        const url = this.value.trim();
-        if (url && isValidURL(url)) {
-            try {
-                showLoading(elements.analyzeBtn, 'Lade Stellenanzeige...');
-                const jobText = await fetchJobPosting(url);
-                if (jobText) {
-                    elements.jobPosting.value = jobText;
-                    showSuccess('Stellenanzeige erfolgreich geladen');
-                    checkRequiredUploads();
-                }
-            } catch (error) {
-                showError('Fehler beim Laden der Stellenanzeige');
-                console.error('URL fetch error:', error);
-            } finally {
-                hideLoading(elements.analyzeBtn, 'Analysieren');
-            }
-        }
-    });
+    elements.jobPostingURL?.addEventListener('input', debounce(handleJobPostingURL, 500));
+
+    // Paste & Example Buttons
+    elements.pasteBtn?.addEventListener('click', handlePaste);
+    elements.loadExampleBtn?.addEventListener('click', handleLoadExample);
 
     // Analyze Button
     elements.analyzeBtn?.addEventListener('click', handleAnalyze);
@@ -132,33 +118,6 @@ function initializeEventListeners() {
         });
     }
 
-    // Paste & Example Buttons
-    if (elements.pasteBtn) {
-        elements.pasteBtn.addEventListener('click', async () => {
-            try {
-                const text = await navigator.clipboard.readText();
-                if (elements.jobPosting) {
-                    elements.jobPosting.value = text;
-                    showSuccess('Text aus Zwischenablage eingefügt');
-                }
-            } catch (err) {
-                showError('Fehler beim Einfügen aus der Zwischenablage');
-            }
-        });
-    }
-
-    if (elements.loadExampleBtn && elements.jobPosting) {
-        elements.loadExampleBtn.addEventListener('click', () => {
-            const exampleText = `
-                [BEISPIEL-STELLENANZEIGE]
-                Wir suchen eine/n Softwareentwickler/in (m/w/d) 
-                mit Fokus auf JavaScript/TypeScript...
-            `;
-            elements.jobPosting.value = exampleText;
-            showSuccess('Beispiel-Stellenanzeige wurde eingefügt');
-        });
-    }
-
     // Initialize other features
     initializeFileUpload();
     initializeTextareaListeners();
@@ -166,13 +125,14 @@ function initializeEventListeners() {
     // Hauptbuttons
     elements.startBtn?.addEventListener('click', startWorkflow);
     elements.uploadResumeBtn?.addEventListener('click', () => handleResumeUpload());
-    elements.createResumeBtn?.addEventListener('click', () => elements.resumeCreatorModal.show());
+    elements.createResumeBtn?.addEventListener('click', () => handleCreateResume());
+    elements.createCoverLetterBtn?.addEventListener('click', () => handleCreateCoverLetter());
     elements.uploadCoverLetterBtn?.addEventListener('click', () => handleCoverLetterUpload());
     elements.settingsBtn?.addEventListener('click', () => elements.settingsModal.show());
     elements.helpBtn?.addEventListener('click', () => elements.helpModal.show());
     
     // Workflow Navigation
-    elements.prevStepBtn?.addEventListener('click', () => prevStep());
+    elements.prevStepBtn?.addEventListener('click', () => handlePrevStep());
     elements.nextStepBtn?.addEventListener('click', () => handleNextStep());
     
     // Settings
@@ -627,4 +587,385 @@ function renderCompanyInfo(company) {
                 .join(', ')}</p>
         </div>
     `;
+}
+
+// Neue Funktionen für die Buttons
+function handleCreateResume() {
+    const { elements } = globalState;
+    
+    // Initialisiere den Resume Builder
+    initializeResumeBuilder();
+    elements.resumeCreatorModal.show();
+}
+
+function handleCreateCoverLetter() {
+    const { elements } = globalState;
+    
+    if (!globalState.resumeData) {
+        showError('Bitte laden Sie zuerst einen Lebenslauf hoch oder erstellen Sie einen.');
+        return;
+    }
+    
+    // Starte den Workflow direkt bei Schritt 2 (Stellenanzeige)
+    elements.workflowModal.show();
+    showStep(2);
+}
+
+function handlePrevStep() {
+    const { currentStep } = globalState;
+    
+    if (currentStep > 1) {
+        showStep(currentStep - 1);
+    }
+}
+
+async function handleJobPostingURL(event) {
+    const url = event.target.value.trim();
+    if (url && isValidURL(url)) {
+        try {
+            showLoading(elements.jobPosting, 'Lade Stellenanzeige...');
+            const jobText = await fetchJobPosting(url);
+            if (jobText) {
+                elements.jobPosting.value = jobText;
+                showSuccess('Stellenanzeige erfolgreich geladen');
+            }
+        } catch (error) {
+            showError('Fehler beim Laden der Stellenanzeige');
+            console.error('URL fetch error:', error);
+        } finally {
+            hideLoading(elements.jobPosting);
+        }
+    }
+}
+
+async function handlePaste() {
+    try {
+        const text = await navigator.clipboard.readText();
+        if (elements.jobPosting) {
+            elements.jobPosting.value = text;
+            showSuccess('Text aus Zwischenablage eingefügt');
+        }
+    } catch (err) {
+        showError('Fehler beim Einfügen aus der Zwischenablage');
+    }
+}
+
+function handleLoadExample() {
+    if (elements.jobPosting) {
+        const exampleText = `
+            Stellenbezeichnung: Senior Fullstack-Entwickler (m/w/d)
+
+            Wir suchen zum nächstmöglichen Zeitpunkt einen erfahrenen Fullstack-Entwickler für unser agiles Entwicklungsteam.
+
+            Ihre Aufgaben:
+            - Entwicklung moderner Webanwendungen mit React und Node.js
+            - Konzeption und Implementierung von Microservices
+            - Code Reviews und Mentoring von Junioren
+            - Enge Zusammenarbeit mit Product Ownern und UX-Designern
+
+            Ihr Profil:
+            - Mind. 3 Jahre Berufserfahrung in der Webentwicklung
+            - Sehr gute Kenntnisse in JavaScript/TypeScript, React und Node.js
+            - Erfahrung mit Datenbanken (SQL und NoSQL)
+            - Agile Entwicklungsmethoden (Scrum/Kanban)
+
+            Wir bieten:
+            - Flexible Arbeitszeiten und Remote-Möglichkeiten
+            - Moderne Technologie-Stack und innovative Projekte
+            - Regelmäßige Weiterbildungen
+            - Attraktives Gehalt und zusätzliche Benefits
+        `;
+        elements.jobPosting.value = exampleText;
+        showSuccess('Beispiel-Stellenanzeige wurde eingefügt');
+    }
+}
+
+// Hilfsfunktion für URL-Input Debouncing
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+function initializeResumeBuilder() {
+    const { elements } = globalState;
+    
+    if (!elements.resumeBuilder) return;
+    
+    elements.resumeBuilder.innerHTML = `
+        <form id="resumeForm" class="resume-form">
+            <div class="mb-4">
+                <h5>Persönliche Daten</h5>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <input type="text" class="form-control" placeholder="Vorname" required>
+                    </div>
+                    <div class="col-md-6">
+                        <input type="text" class="form-control" placeholder="Nachname" required>
+                    </div>
+                    <div class="col-12">
+                        <input type="email" class="form-control" placeholder="E-Mail" required>
+                    </div>
+                    <div class="col-12">
+                        <input type="tel" class="form-control" placeholder="Telefon">
+                    </div>
+                    <div class="col-12">
+                        <textarea class="form-control" rows="2" placeholder="Adresse"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <h5>Berufserfahrung</h5>
+                <div id="experienceContainer">
+                    <!-- Dynamisch generierte Erfahrungseinträge -->
+                </div>
+                <button type="button" class="btn btn-outline-primary btn-sm mt-2" id="addExperienceBtn">
+                    <i class="bi bi-plus"></i> Erfahrung hinzufügen
+                </button>
+            </div>
+
+            <div class="mb-4">
+                <h5>Ausbildung</h5>
+                <div id="educationContainer">
+                    <!-- Dynamisch generierte Ausbildungseinträge -->
+                </div>
+                <button type="button" class="btn btn-outline-primary btn-sm mt-2" id="addEducationBtn">
+                    <i class="bi bi-plus"></i> Ausbildung hinzufügen
+                </button>
+            </div>
+
+            <div class="mb-4">
+                <h5>Fähigkeiten</h5>
+                <div id="skillsContainer" class="mb-2">
+                    <!-- Dynamisch generierte Skills -->
+                </div>
+                <div class="input-group">
+                    <input type="text" class="form-control" id="skillInput" placeholder="Neue Fähigkeit">
+                    <button type="button" class="btn btn-outline-primary" id="addSkillBtn">
+                        <i class="bi bi-plus"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="text-end mt-4">
+                <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">Abbrechen</button>
+                <button type="submit" class="btn btn-primary">Lebenslauf erstellen</button>
+            </div>
+        </form>
+    `;
+
+    // Event-Handler für das Formular
+    const form = elements.resumeBuilder.querySelector('#resumeForm');
+    form?.addEventListener('submit', handleResumeFormSubmit);
+
+    // Event-Handler für die "Hinzufügen" Buttons
+    const addExperienceBtn = elements.resumeBuilder.querySelector('#addExperienceBtn');
+    const addEducationBtn = elements.resumeBuilder.querySelector('#addEducationBtn');
+    const addSkillBtn = elements.resumeBuilder.querySelector('#addSkillBtn');
+
+    addExperienceBtn?.addEventListener('click', () => addExperienceEntry());
+    addEducationBtn?.addEventListener('click', () => addEducationEntry());
+    addSkillBtn?.addEventListener('click', () => addSkill());
+
+    // Initial einen leeren Eintrag für jede Sektion hinzufügen
+    addExperienceEntry();
+    addEducationEntry();
+}
+
+function addExperienceEntry(data = {}) {
+    const container = document.getElementById('experienceContainer');
+    if (!container) return;
+
+    const entry = document.createElement('div');
+    entry.className = 'experience-entry border rounded p-3 mb-3';
+    entry.innerHTML = `
+        <div class="row g-3">
+            <div class="col-md-6">
+                <input type="text" class="form-control" placeholder="Position" 
+                       value="${data.position || ''}" required>
+            </div>
+            <div class="col-md-6">
+                <input type="text" class="form-control" placeholder="Unternehmen"
+                       value="${data.company || ''}" required>
+            </div>
+            <div class="col-md-6">
+                <input type="month" class="form-control" placeholder="Von"
+                       value="${data.from || ''}" required>
+            </div>
+            <div class="col-md-6">
+                <input type="month" class="form-control" placeholder="Bis"
+                       value="${data.to || ''}" required>
+            </div>
+            <div class="col-12">
+                <textarea class="form-control" rows="3" 
+                          placeholder="Beschreibung">${data.description || ''}</textarea>
+            </div>
+        </div>
+        <button type="button" class="btn btn-outline-danger btn-sm mt-2 remove-entry">
+            <i class="bi bi-trash"></i>
+        </button>
+    `;
+
+    entry.querySelector('.remove-entry')?.addEventListener('click', () => {
+        if (container.children.length > 1) {
+            entry.remove();
+        }
+    });
+
+    container.appendChild(entry);
+}
+
+function addEducationEntry(data = {}) {
+    const container = document.getElementById('educationContainer');
+    if (!container) return;
+
+    const entry = document.createElement('div');
+    entry.className = 'education-entry border rounded p-3 mb-3';
+    entry.innerHTML = `
+        <div class="row g-3">
+            <div class="col-md-6">
+                <input type="text" class="form-control" placeholder="Abschluss"
+                       value="${data.degree || ''}" required>
+            </div>
+            <div class="col-md-6">
+                <input type="text" class="form-control" placeholder="Institution"
+                       value="${data.institution || ''}" required>
+            </div>
+            <div class="col-md-6">
+                <input type="month" class="form-control" placeholder="Von"
+                       value="${data.from || ''}" required>
+            </div>
+            <div class="col-md-6">
+                <input type="month" class="form-control" placeholder="Bis"
+                       value="${data.to || ''}" required>
+            </div>
+            <div class="col-12">
+                <textarea class="form-control" rows="2" 
+                          placeholder="Beschreibung">${data.description || ''}</textarea>
+            </div>
+        </div>
+        <button type="button" class="btn btn-outline-danger btn-sm mt-2 remove-entry">
+            <i class="bi bi-trash"></i>
+        </button>
+    `;
+
+    entry.querySelector('.remove-entry')?.addEventListener('click', () => {
+        if (container.children.length > 1) {
+            entry.remove();
+        }
+    });
+
+    container.appendChild(entry);
+}
+
+function addSkill(skillName = '') {
+    const container = document.getElementById('skillsContainer');
+    const input = document.getElementById('skillInput');
+    if (!container || !input) return;
+
+    const skill = skillName || input.value.trim();
+    if (!skill) return;
+
+    const skillElement = document.createElement('span');
+    skillElement.className = 'badge bg-primary me-2 mb-2 p-2';
+    skillElement.innerHTML = `
+        ${skill}
+        <button type="button" class="btn-close btn-close-white ms-2" aria-label="Entfernen"></button>
+    `;
+
+    skillElement.querySelector('.btn-close')?.addEventListener('click', () => {
+        skillElement.remove();
+    });
+
+    container.appendChild(skillElement);
+    input.value = '';
+}
+
+async function handleResumeFormSubmit(event) {
+    event.preventDefault();
+    
+    try {
+        const formData = collectResumeFormData();
+        globalState.resumeData = formData;
+        
+        // Konvertiere die Daten in ein strukturiertes Format
+        const resumeText = convertResumeDataToText(formData);
+        window.resumeText = resumeText;
+        
+        showSuccess('Lebenslauf erfolgreich erstellt');
+        elements.resumeCreatorModal.hide();
+        
+        // Optional: Starte den Workflow automatisch
+        startWorkflow();
+    } catch (error) {
+        console.error('Error creating resume:', error);
+        showError('Fehler beim Erstellen des Lebenslaufs');
+    }
+}
+
+function collectResumeFormData() {
+    const form = document.getElementById('resumeForm');
+    if (!form) return null;
+
+    const formData = {
+        personal: {
+            firstName: form.querySelector('input[placeholder="Vorname"]').value,
+            lastName: form.querySelector('input[placeholder="Nachname"]').value,
+            email: form.querySelector('input[type="email"]').value,
+            phone: form.querySelector('input[type="tel"]').value,
+            address: form.querySelector('textarea[placeholder="Adresse"]').value
+        },
+        experience: Array.from(form.querySelectorAll('.experience-entry')).map(entry => ({
+            position: entry.querySelector('input[placeholder="Position"]').value,
+            company: entry.querySelector('input[placeholder="Unternehmen"]').value,
+            from: entry.querySelector('input[type="month"]:first-of-type').value,
+            to: entry.querySelector('input[type="month"]:last-of-type').value,
+            description: entry.querySelector('textarea').value
+        })),
+        education: Array.from(form.querySelectorAll('.education-entry')).map(entry => ({
+            degree: entry.querySelector('input[placeholder="Abschluss"]').value,
+            institution: entry.querySelector('input[placeholder="Institution"]').value,
+            from: entry.querySelector('input[type="month"]:first-of-type').value,
+            to: entry.querySelector('input[type="month"]:last-of-type').value,
+            description: entry.querySelector('textarea').value
+        })),
+        skills: Array.from(form.querySelectorAll('#skillsContainer .badge'))
+            .map(badge => badge.textContent.trim())
+    };
+
+    return formData;
+}
+
+function convertResumeDataToText(data) {
+    return `
+PERSÖNLICHE DATEN
+${data.personal.firstName} ${data.personal.lastName}
+${data.personal.email}
+${data.personal.phone}
+${data.personal.address}
+
+BERUFSERFAHRUNG
+${data.experience.map(exp => `
+${exp.from} - ${exp.to}
+${exp.position} bei ${exp.company}
+${exp.description}
+`).join('\n')}
+
+AUSBILDUNG
+${data.education.map(edu => `
+${edu.from} - ${edu.to}
+${edu.degree} - ${edu.institution}
+${edu.description}
+`).join('\n')}
+
+FÄHIGKEITEN
+${data.skills.join(', ')}
+    `.trim();
 }
