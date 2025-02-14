@@ -12,6 +12,7 @@ import { auth } from './firebase-config.js';
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { ref, set } from "firebase/database";
 import { db } from './firebase-config.js';
+import { testFirebaseConnection } from './firebase-config.js';
 
 // Auth Service
 const AuthService = {
@@ -180,11 +181,18 @@ document.addEventListener('DOMContentLoaded', async function() {
         
         setInterval(updatePreview, 3000);
         
+        // Teste Firebase-Verbindung
+        const isConnected = await testFirebaseConnection();
+        if (isConnected) {
+            console.log('Firebase-Verbindung erfolgreich getestet!');
+        } else {
+            console.warn('Firebase-Verbindung konnte nicht getestet werden');
+        }
+        
         console.log('Application initialized successfully');
     } catch (error) {
         console.error('Error during initialization:', error);
-        // Verwende direktes alert statt showError
-        alert('Fehler beim Initialisieren der Anwendung: ' + error.message);
+        showError('Fehler beim Initialisieren der Anwendung: ' + error.message);
     }
 });
 
