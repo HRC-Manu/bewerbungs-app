@@ -760,6 +760,7 @@ body {
 
 /* Text Alignment */
 .text-align-match {
+    text-align: -webkit-match-parent;
     text-align: match-parent;
 }
 
@@ -769,15 +770,17 @@ body {
     }
 }
 
+@supports (text-align: match-parent) {
+    .text-align-match {
+        text-align: match-parent;
+    }
+}
+
 /* Print Adjustments */
 @media print {
     * {
+        -webkit-print-color-adjust: exact;
         print-color-adjust: exact;
-    }
-    @supports (-webkit-print-color-adjust: exact) {
-        * {
-            -webkit-print-color-adjust: exact;
-        }
     }
 }
 
@@ -798,7 +801,6 @@ body {
 /* Firefox-specific video styles */
 @-moz-document url-prefix() {
     .video-container video {
-        /* Firefox-spezifische Anpassungen */
         display: inline-block;
     }
 }

@@ -820,9 +820,110 @@
             const generateBtn = document.getElementById('generateVideoBtn');
             const fallback = document.querySelector('.video-fallback');
             
+            let isPlaying = false;
+            let playPromise = null;
+
+            // Prüfe, ob alle Elemente gefunden wurden
+            if (!video || !playBtn || !replayBtn || !muteBtn || !fallback) {
+                console.error('Konnte nicht alle Video-Steuerungselemente finden');
+                return;
+            }
+
             // Video-Generator initialisieren
             const videoGenerator = new DemoVideoGenerator(canvas);
             
+            // Fehlerbehandlung für Video-Laden
+            video.addEventListener('error', function(e) {
+                console.error('Videofehler:', e);
+                video.style.display = 'none';
+                fallback.style.display = 'block';
+            });
+
+            // Play/Pause-Button
+            playBtn.addEventListener('click', async function() {
+                if (!isPlaying) {
+                    try {
+                        // Warte auf vorherige Play-Promise
+                        if (playPromise !== null) {
+                            await playPromise;
+                        }
+                        // Starte neue Wiedergabe
+                        playPromise = video.play();
+                        await playPromise;
+                        isPlaying = true;
+                        playBtn.querySelector('i').classList.replace('bi-play-fill', 'bi-pause-fill');
+                    } catch (error) {
+                        console.error('Abspielen fehlgeschlagen:', error);
+                        isPlaying = false;
+                        playBtn.querySelector('i').classList.replace('bi-pause-fill', 'bi-play-fill');
+                    } finally {
+                        playPromise = null;
+                    }
+                } else {
+                    try {
+                        // Warte auf vorherige Play-Promise
+                        if (playPromise !== null) {
+                            await playPromise;
+                        }
+                        video.pause();
+                        isPlaying = false;
+                        playBtn.querySelector('i').classList.replace('bi-pause-fill', 'bi-play-fill');
+                    } catch (error) {
+                        console.error('Pause fehlgeschlagen:', error);
+                    }
+                }
+            });
+
+            // Neu-Starten-Button
+            replayBtn.addEventListener('click', async function() {
+                try {
+                    // Warte auf vorherige Play-Promise
+                    if (playPromise !== null) {
+                        await playPromise;
+                    }
+                    video.currentTime = 0;
+                    playPromise = video.play();
+                    await playPromise;
+                    isPlaying = true;
+                    playBtn.querySelector('i').classList.replace('bi-play-fill', 'bi-pause-fill');
+                } catch (error) {
+                    console.error('Neustart fehlgeschlagen:', error);
+                    isPlaying = false;
+                } finally {
+                    playPromise = null;
+                }
+            });
+
+            // Ton-Button
+            muteBtn.addEventListener('click', function() {
+                video.muted = !video.muted;
+                const icon = muteBtn.querySelector('i');
+                if (video.muted) {
+                    icon.classList.remove('bi-volume-up');
+                    icon.classList.add('bi-volume-mute');
+                } else {
+                    icon.classList.remove('bi-volume-mute');
+                    icon.classList.add('bi-volume-up');
+                }
+            });
+
+            // Video-Events
+            video.addEventListener('play', function() {
+                isPlaying = true;
+                playBtn.querySelector('i').classList.replace('bi-play-fill', 'bi-pause-fill');
+            });
+
+            video.addEventListener('pause', function() {
+                isPlaying = false;
+                playBtn.querySelector('i').classList.replace('bi-pause-fill', 'bi-play-fill');
+            });
+
+            video.addEventListener('ended', function() {
+                isPlaying = false;
+                playBtn.querySelector('i').classList.replace('bi-pause-fill', 'bi-play-fill');
+                playPromise = null;
+            });
+
             // Generate-Button Handler
             generateBtn?.addEventListener('click', async function() {
                 try {
@@ -838,9 +939,6 @@
                     generateBtn.innerHTML = '<i class="bi bi-camera-video"></i><span class="ms-1">Demo generieren</span>';
                 }
             });
-
-            // Rest der Video-Steuerung wie gehabt...
-            // [Vorheriger Video-Steuerungs-Code bleibt unverändert]
         });
     </script>
 </body>
