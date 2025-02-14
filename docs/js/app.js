@@ -7,10 +7,133 @@ import { Features } from './features.js';
 import { initializeWorkflow, showStep, nextStep, prevStep } from './workflow.js';
 import { safeGetElem, extractJobAdText } from './utils.js';
 
+// Auth Service
+const AuthService = {
+    currentUser: null,
+    
+    async login(email, password, remember = false) {
+        try {
+            const response = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            });
+            
+            if (!response.ok) {
+                throw new Error('Anmeldung fehlgeschlagen');
+            }
+            
+            const data = await response.json();
+            this.currentUser = data.user;
+            
+            if (remember) {
+                localStorage.setItem('authToken', data.token);
+            } else {
+                sessionStorage.setItem('authToken', data.token);
+            }
+            
+            this.updateUI();
+            return data.user;
+        } catch (error) {
+            console.error('Login error:', error);
+            throw error;
+        }
+    },
+    
+    async register(userData) {
+        try {
+            const response = await fetch('/api/auth/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(userData)
+            });
+            
+            if (!response.ok) {
+                throw new Error('Registrierung fehlgeschlagen');
+            }
+            
+            const data = await response.json();
+            return data;
+        } catch (error) {
+            console.error('Register error:', error);
+            throw error;
+        }
+    },
+    
+    async resetPassword(email) {
+        try {
+            const response = await fetch('/api/auth/reset-password', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email })
+            });
+            
+            if (!response.ok) {
+                throw new Error('Passwort-Reset fehlgeschlagen');
+            }
+            
+            return true;
+        } catch (error) {
+            console.error('Password reset error:', error);
+            throw error;
+        }
+    },
+    
+    logout() {
+        this.currentUser = null;
+        localStorage.removeItem('authToken');
+        sessionStorage.removeItem('authToken');
+        this.updateUI();
+    },
+    
+    async checkAuth() {
+        const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+        if (!token) return false;
+        
+        try {
+            const response = await fetch('/api/auth/verify', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            
+            if (!response.ok) {
+                this.logout();
+                return false;
+            }
+            
+            const data = await response.json();
+            this.currentUser = data.user;
+            this.updateUI();
+            return true;
+        } catch (error) {
+            console.error('Auth check error:', error);
+            this.logout();
+            return false;
+        }
+    },
+    
+    updateUI() {
+        const authButtons = document.getElementById('authButtons');
+        const userMenu = document.getElementById('userMenu');
+        const userDisplayName = document.getElementById('userDisplayName');
+        
+        if (this.currentUser) {
+            authButtons.classList.add('d-none');
+            userMenu.classList.remove('d-none');
+            userDisplayName.textContent = `${this.currentUser.firstName} ${this.currentUser.lastName}`;
+        } else {
+            authButtons.classList.remove('d-none');
+            userMenu.classList.add('d-none');
+            userDisplayName.textContent = 'Benutzer';
+        }
+    }
+};
+
 document.addEventListener('DOMContentLoaded', function() {
     "use strict";
     
     initializeApp();
+    initializeAuthHandlers();
+    AuthService.checkAuth();
 });
 
 function initializeApp() {
@@ -968,4 +1091,130 @@ ${edu.description}
 FÄHIGKEITEN
 ${data.skills.join(', ')}
     `.trim();
+}
+
+// Event-Handler für Auth-Funktionen
+function initializeAuthHandlers() {
+    const loginBtn = document.getElementById('loginBtn');
+    const registerBtn = document.getElementById('registerBtn');
+    const logoutBtn = document.getElementById('logoutBtn');
+    const forgotPasswordBtn = document.getElementById('forgotPasswordBtn');
+    
+    const loginModal = new bootstrap.Modal(document.getElementById('loginModal'));
+    const registerModal = new bootstrap.Modal(document.getElementById('registerModal'));
+    const passwordResetModal = new bootstrap.Modal(document.getElementById('passwordResetModal'));
+    
+    // Login
+    loginBtn?.addEventListener('click', () => loginModal.show());
+    
+    document.getElementById('loginForm')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const email = document.getElementById('loginEmail').value;
+        const password = document.getElementById('loginPassword').value;
+        const remember = document.getElementById('rememberMe').checked;
+        
+        try {
+            showLoading(e.target, 'Anmeldung...');
+            await AuthService.login(email, password, remember);
+            loginModal.hide();
+            showSuccess('Erfolgreich angemeldet');
+        } catch (error) {
+            showError('Anmeldung fehlgeschlagen');
+        } finally {
+            hideLoading(e.target);
+        }
+    });
+    
+    // Register
+    registerBtn?.addEventListener('click', () => registerModal.show());
+    
+    document.getElementById('registerForm')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const userData = {
+            firstName: document.getElementById('registerFirstName').value,
+            lastName: document.getElementById('registerLastName').value,
+            email: document.getElementById('registerEmail').value,
+            password: document.getElementById('registerPassword').value
+        };
+        
+        const passwordConfirm = document.getElementById('registerPasswordConfirm').value;
+        
+        if (userData.password !== passwordConfirm) {
+            showError('Passwörter stimmen nicht überein');
+            return;
+        }
+        
+        try {
+            showLoading(e.target, 'Registrierung...');
+            await AuthService.register(userData);
+            registerModal.hide();
+            showSuccess('Registrierung erfolgreich');
+            loginModal.show();
+        } catch (error) {
+            showError('Registrierung fehlgeschlagen');
+        } finally {
+            hideLoading(e.target);
+        }
+    });
+    
+    // Logout
+    logoutBtn?.addEventListener('click', () => {
+        AuthService.logout();
+        showSuccess('Erfolgreich abgemeldet');
+    });
+    
+    // Password Reset
+    forgotPasswordBtn?.addEventListener('click', () => {
+        loginModal.hide();
+        passwordResetModal.show();
+    });
+    
+    document.getElementById('passwordResetForm')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const email = document.getElementById('resetEmail').value;
+        
+        try {
+            showLoading(e.target, 'Sende Link...');
+            await AuthService.resetPassword(email);
+            passwordResetModal.hide();
+            showSuccess('Password-Reset-Link wurde gesendet');
+        } catch (error) {
+            showError('Fehler beim Senden des Reset-Links');
+        } finally {
+            hideLoading(e.target);
+        }
+    });
+    
+    // Password Visibility Toggle
+    document.querySelectorAll('.toggle-password').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const input = this.previousElementSibling;
+            const type = input.type === 'password' ? 'text' : 'password';
+            input.type = type;
+            this.querySelector('i').classList.toggle('bi-eye');
+            this.querySelector('i').classList.toggle('bi-eye-slash');
+        });
+    });
+    
+    // Password Strength
+    document.getElementById('registerPassword')?.addEventListener('input', function() {
+        const strength = checkPasswordStrength(this.value);
+        const indicator = this.parentElement.nextElementSibling;
+        
+        indicator.className = 'password-strength mt-2';
+        if (strength > 0) indicator.classList.add(strength === 1 ? 'weak' : strength === 2 ? 'medium' : 'strong');
+    });
+}
+
+function checkPasswordStrength(password) {
+    let strength = 0;
+    
+    if (password.length >= 8) strength++;
+    if (/[A-Z]/.test(password) && /[a-z]/.test(password)) strength++;
+    if (/[0-9]/.test(password) && /[^A-Za-z0-9]/.test(password)) strength++;
+    
+    return strength;
 }
