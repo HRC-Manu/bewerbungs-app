@@ -477,6 +477,12 @@ function handleSettingsSave(e) {
         letterStyle: elements.letterStyle.value
     };
     
+    // GitHub Token speichern
+    const githubToken = document.getElementById('githubToken').value;
+    if (githubToken) {
+        localStorage.setItem('githubToken', githubToken);
+    }
+    
     localStorage.setItem('appSettings', JSON.stringify(settings));
     showSuccess('Einstellungen gespeichert');
     elements.settingsModal.hide();
