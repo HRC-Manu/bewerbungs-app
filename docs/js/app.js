@@ -79,6 +79,8 @@ document.addEventListener('DOMContentLoaded', async function() {
         setupPaywallLogic();
         setupAdminUI();
         
+        initializeExplanationButtons();
+        
         console.log('Application initialized successfully');
     } catch (error) {
         console.error('[App Init Error]', error);
@@ -1619,5 +1621,35 @@ function setupAdminUI() {
     async function loadVoucherCodes() {
         const codes = await AdminService.getAllVoucherCodes();
         voucherList.innerHTML = codes.map(c => `<div>- ${c}</div>`).join('');
+    }
+}
+
+function initializeExplanationButtons() {
+    const step1Btn = document.querySelector('.explanation-section button:nth-of-type(1)');
+    const step2Btn = document.querySelector('.explanation-section button:nth-of-type(2)');
+    const step3Btn = document.querySelector('.explanation-section button:nth-of-type(3)');
+
+    // Wenn du dein Workflow-Funktionalität hast:
+    if (step1Btn) {
+        step1Btn.disabled = false;
+        step1Btn.addEventListener('click', () => {
+            // z.B. showStep(1) oder handleResumeUpload(); 
+            // Hier beispielhaft:
+            showStep(1);
+        });
+    }
+    if (step2Btn) {
+        step2Btn.disabled = false;
+        step2Btn.addEventListener('click', () => {
+            // z.B. showStep(2) oder handlePasteJobAd();
+            showStep(2);
+        });
+    }
+    if (step3Btn) {
+        step3Btn.disabled = false;
+        step3Btn.addEventListener('click', () => {
+            // z.B. showStep(3) oder generateLetter();
+            showStep(3);
+        });
     }
 }
