@@ -36,32 +36,45 @@ export function hideLoading(element, originalText = '') {
 }
 
 export function showSuccess(message) {
-    const toast = globalState.elements.messageToast;
-    const toastTitle = document.getElementById('toastTitle');
-    const toastMessage = document.getElementById('toastMessage');
-    
-    if (toast && toastTitle && toastMessage) {
-        toastTitle.textContent = 'Erfolg';
-        toastTitle.className = 'me-auto text-success';
-        toastMessage.textContent = message;
-        toast.show();
-    } else {
-        console.log('Success:', message);
+    try {
+        const toast = globalState?.elements?.messageToast;
+        const toastTitle = document.getElementById('toastTitle');
+        const toastMessage = document.getElementById('toastMessage');
+        
+        if (toast && toastTitle && toastMessage) {
+            toastTitle.textContent = 'Erfolg';
+            toastTitle.className = 'me-auto text-success';
+            toastMessage.textContent = message;
+            toast.show();
+        } else {
+            console.log('Success:', message);
+            // Optional: alert(message);
+        }
+    } catch (error) {
+        console.log('Success (fallback):', message);
     }
 }
 
 export function showError(message) {
-    const toast = globalState.elements.messageToast;
-    const toastTitle = document.getElementById('toastTitle');
-    const toastMessage = document.getElementById('toastMessage');
-    
-    if (toast && toastTitle && toastMessage) {
-        toastTitle.textContent = 'Fehler';
-        toastTitle.className = 'me-auto text-danger';
-        toastMessage.textContent = message;
-        toast.show();
-    } else {
-        console.error('Error:', message);
+    try {
+        const toast = globalState?.elements?.messageToast;
+        const toastTitle = document.getElementById('toastTitle');
+        const toastMessage = document.getElementById('toastMessage');
+        
+        if (toast && toastTitle && toastMessage) {
+            toastTitle.textContent = 'Fehler';
+            toastTitle.className = 'me-auto text-danger';
+            toastMessage.textContent = message;
+            toast.show();
+        } else {
+            // Fallback wenn Toast nicht verfügbar
+            console.error('Error:', message);
+            alert(message);
+        }
+    } catch (error) {
+        // Ultimate Fallback
+        console.error('Error in showError:', error);
+        alert(message);
     }
 }
 
