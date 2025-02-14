@@ -167,69 +167,79 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function initializeElements() {
-    globalState.elements = {
-        jobPosting: document.getElementById('jobPosting'),
-        jobPostingURL: document.getElementById('jobPostingURL'),
-        resumeUpload: document.getElementById('resumeUpload'),
-        coverLetterUpload: document.getElementById('coverLetterUpload'),
-        analyzeBtn: document.getElementById('analyzeBtn'),
-        generateSuggestionsBtn: document.getElementById('generateSuggestionsBtn'),
-        pasteBtn: document.getElementById('pasteBtn'),
-        loadExampleBtn: document.getElementById('loadExampleBtn'),
-        coverLetterPreview: document.getElementById('coverLetterPreview'),
-        resumePreview: document.getElementById('resumePreview'),
-        coverLetterEditor: document.getElementById('coverLetterEditor'),
-        coverLetterSections: {
-            recipient: document.getElementById('coverLetterRecipient'),
-            subject: document.getElementById('coverLetterSubject'),
-            introduction: document.getElementById('coverLetterIntro'),
-            main: document.getElementById('coverLetterMain'),
-            closing: document.getElementById('coverLetterClosing')
-        },
-        saveApiSettingsBtn: document.getElementById('saveApiSettingsBtn'),
-        apiKeyInput: document.getElementById('apiKeyInput'),
-        apiModal: bootstrap.Modal.getOrCreateInstance(document.getElementById('apiModal')),
-        colorPicker: safeGetElem('colorPicker'),
-        fontSelect: safeGetElem('fontSelect'),
-        borderToggle: safeGetElem('borderToggle'),
-        refreshPreviewBtn: safeGetElem('refreshPreviewBtn'),
-        modernPreviewContainer: safeGetElem('modernPreviewContainer'),
-        suggestionsModal: new bootstrap.Modal(document.getElementById('suggestionsModal')),
-        helpModal: new bootstrap.Modal(document.getElementById('helpModal')),
-        messageToast: new bootstrap.Toast(document.getElementById('messageToast')),
-        startBtn: safeGetElem('startBtn'),
-        uploadResumeBtn: safeGetElem('uploadResumeBtn'),
-        createResumeBtn: safeGetElem('createResumeBtn'),
-        uploadCoverLetterBtn: safeGetElem('uploadCoverLetterBtn'),
-        settingsBtn: safeGetElem('settingsBtn'),
-        prevStepBtn: safeGetElem('prevStepBtn'),
-        nextStepBtn: safeGetElem('nextStepBtn'),
-        workflowSteps: {
-            step1: safeGetElem('step1'),
-            step2: safeGetElem('step2'),
-            step3: safeGetElem('step3'),
-            step4: safeGetElem('step4'),
-            step5: safeGetElem('step5')
-        },
-        resumeAnalysis: safeGetElem('resumeAnalysis'),
-        jobAnalysis: safeGetElem('jobAnalysis'),
-        matchingResults: safeGetElem('matchingResults'),
-        resumeBuilder: safeGetElem('resumeBuilder'),
-        settingsForm: safeGetElem('settingsForm'),
-        aiProvider: safeGetElem('aiProvider'),
-        letterStyle: safeGetElem('letterStyle'),
+    try {
+        globalState.elements = {
+            jobPosting: document.getElementById('jobPosting'),
+            jobPostingURL: document.getElementById('jobPostingURL'),
+            resumeUpload: document.getElementById('resumeUpload'),
+            coverLetterUpload: document.getElementById('coverLetterUpload'),
+            analyzeBtn: document.getElementById('analyzeBtn'),
+            generateSuggestionsBtn: document.getElementById('generateSuggestionsBtn'),
+            pasteBtn: document.getElementById('pasteBtn'),
+            loadExampleBtn: document.getElementById('loadExampleBtn'),
+            coverLetterPreview: document.getElementById('coverLetterPreview'),
+            resumePreview: document.getElementById('resumePreview'),
+            coverLetterEditor: document.getElementById('coverLetterEditor'),
+            coverLetterSections: {
+                recipient: document.getElementById('coverLetterRecipient'),
+                subject: document.getElementById('coverLetterSubject'),
+                introduction: document.getElementById('coverLetterIntro'),
+                main: document.getElementById('coverLetterMain'),
+                closing: document.getElementById('coverLetterClosing')
+            },
+            saveApiSettingsBtn: document.getElementById('saveApiSettingsBtn'),
+            apiKeyInput: document.getElementById('apiKeyInput'),
+            apiModal: document.getElementById('apiModal') ? 
+                new bootstrap.Modal(document.getElementById('apiModal')) : null,
+            colorPicker: safeGetElem('colorPicker'),
+            fontSelect: safeGetElem('fontSelect'),
+            borderToggle: safeGetElem('borderToggle'),
+            refreshPreviewBtn: safeGetElem('refreshPreviewBtn'),
+            modernPreviewContainer: safeGetElem('modernPreviewContainer'),
+            suggestionsModal: new bootstrap.Modal(document.getElementById('suggestionsModal')),
+            helpModal: document.getElementById('helpModal') ? 
+                new bootstrap.Modal(document.getElementById('helpModal')) : null,
+            messageToast: document.getElementById('messageToast') ? 
+                new bootstrap.Toast(document.getElementById('messageToast')) : null,
+            startBtn: safeGetElem('startBtn'),
+            uploadResumeBtn: safeGetElem('uploadResumeBtn'),
+            createResumeBtn: safeGetElem('createResumeBtn'),
+            uploadCoverLetterBtn: safeGetElem('uploadCoverLetterBtn'),
+            settingsBtn: safeGetElem('settingsBtn'),
+            prevStepBtn: safeGetElem('prevStepBtn'),
+            nextStepBtn: safeGetElem('nextStepBtn'),
+            workflowSteps: {
+                step1: safeGetElem('step1'),
+                step2: safeGetElem('step2'),
+                step3: safeGetElem('step3'),
+                step4: safeGetElem('step4'),
+                step5: safeGetElem('step5')
+            },
+            resumeAnalysis: safeGetElem('resumeAnalysis'),
+            jobAnalysis: safeGetElem('jobAnalysis'),
+            matchingResults: safeGetElem('matchingResults'),
+            resumeBuilder: safeGetElem('resumeBuilder'),
+            settingsForm: safeGetElem('settingsForm'),
+            aiProvider: safeGetElem('aiProvider'),
+            letterStyle: safeGetElem('letterStyle'),
+            
+            // Modals
+            loginModal: document.getElementById('loginModal') ? 
+                new bootstrap.Modal(document.getElementById('loginModal')) : null,
+            registerModal: document.getElementById('registerModal') ? 
+                new bootstrap.Modal(document.getElementById('registerModal')) : null,
+            passwordResetModal: new bootstrap.Modal(document.getElementById('passwordResetModal')),
+            workflowModal: document.getElementById('workflowModal') ? 
+                new bootstrap.Modal(document.getElementById('workflowModal')) : null,
+            settingsModal: document.getElementById('settingsModal') ? 
+                new bootstrap.Modal(document.getElementById('settingsModal')) : null,
+        };
         
-        // Modals
-        loginModal: new bootstrap.Modal(document.getElementById('loginModal')),
-        registerModal: new bootstrap.Modal(document.getElementById('registerModal')),
-        passwordResetModal: new bootstrap.Modal(document.getElementById('passwordResetModal')),
-        workflowModal: new bootstrap.Modal(document.getElementById('workflowModal')),
-        settingsModal: new bootstrap.Modal(document.getElementById('settingsModal')),
-        helpModal: new bootstrap.Modal(document.getElementById('helpModal')),
-    };
-    
-    // Debug-Log für Initialisierung
-    console.log('Elements initialized:', Object.keys(globalState.elements));
+        // Debug-Log für Initialisierung
+        console.log('Elements initialized:', Object.keys(globalState.elements));
+    } catch (error) {
+        console.error('Error initializing elements:', error);
+    }
 }
 
 function initializeEventListeners() {
