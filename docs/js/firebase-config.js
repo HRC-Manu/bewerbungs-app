@@ -1,8 +1,8 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, connectAuthEmulator } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { getFirestore, connectFirestoreEmulator } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-import { getStorage, connectStorageEmulator } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
+import { getFirestore, connectFirestoreEmulator, collection, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getStorage, connectStorageEmulator, ref, uploadString } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 import { getDatabase, connectDatabaseEmulator } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
@@ -24,7 +24,8 @@ export const firebaseConfig = {
     storageBucket: "bewerbungs-app.appspot.com",
     messagingSenderId: "540459849039",
     appId: "1:540459849039:web:9eda29b3e754d48472613a",
-    measurementId: "G-5QHBC1W4J3"
+    measurementId: "G-5QHBC1W4J3",
+    databaseURL: "https://bewerbungs-app.firebaseio.com"
 };
 
 // Initialisiere Firebase mit Fehlerbehandlung
@@ -76,15 +77,17 @@ export async function testFirebaseConnection() {
         console.log('✓ Firebase Auth Verbindung OK');
 
         // Test Firestore
-        const testDoc = await db.collection('test').doc('connection').set({
+        const testCollection = collection(db, 'test');
+        const testDocRef = doc(testCollection, 'connection');
+        await setDoc(testDocRef, {
             timestamp: new Date().toISOString(),
             status: 'ok'
         });
         console.log('✓ Firestore Verbindung OK');
 
         // Test Storage
-        const testRef = storage.ref().child('test/connection.txt');
-        await testRef.putString('test');
+        const testRef = ref(storage, 'test/connection.txt');
+        await uploadString(testRef, 'test');
         console.log('✓ Storage Verbindung OK');
 
         // Test Realtime Database
