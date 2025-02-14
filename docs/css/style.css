@@ -9,10 +9,14 @@
     --gray: #6c757d;
     --border: #dee2e6;
     --shadow: rgba(0,0,0,0.08);
-    text-size-adjust: 100%;
+}
+
+/* Text Size Adjustment */
+html {
     -webkit-text-size-adjust: 100%;
     -moz-text-size-adjust: 100%;
     -ms-text-size-adjust: 100%;
+    text-size-adjust: 100%;
 }
 
 body {
@@ -756,16 +760,24 @@ body {
 
 /* Text Alignment */
 .text-align-match {
-    text-align: -webkit-match-parent;
     text-align: match-parent;
+}
+
+@supports (-webkit-text-align: -webkit-match-parent) {
+    .text-align-match {
+        text-align: -webkit-match-parent;
+    }
 }
 
 /* Print Adjustments */
 @media print {
     * {
-        color-adjust: exact;
-        -webkit-print-color-adjust: exact;
         print-color-adjust: exact;
+    }
+    @supports (-webkit-print-color-adjust: exact) {
+        * {
+            -webkit-print-color-adjust: exact;
+        }
     }
 }
 
@@ -780,25 +792,15 @@ body {
 .video-container video {
     width: 100%;
     height: auto;
-    background-color: #f8f9fa;
+    background-color: var(--light);
 }
 
-.video-fallback {
-    display: none;
-}
-
-.video-fallback-static {
-    display: none;
-    text-align: center;
-    padding: 2rem;
-    background-color: #f8f9fa;
-    border-radius: 0.375rem;
-}
-
-/* Show fallback when video is not supported */
-video:not([playsinline]) + .video-fallback,
-.no-video .video-fallback-static {
-    display: block;
+/* Firefox-specific video styles */
+@-moz-document url-prefix() {
+    .video-container video {
+        /* Firefox-spezifische Anpassungen */
+        display: inline-block;
+    }
 }
 
 /* Modal Improvements */
