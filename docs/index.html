@@ -17,11 +17,46 @@
                 Bewerbungsassistent
             </a>
             <div class="navbar-nav ms-auto">
-                <button id="settingsBtn" class="btn btn-outline-light me-2">
-                    <i class="bi bi-gear"></i>
-                    <span class="ms-2">Einstellungen</span>
-                </button>
-                <button id="helpBtn" class="btn btn-outline-light">
+                <div class="auth-buttons me-3" id="authButtons">
+                    <button id="loginBtn" class="btn btn-outline-light me-2">
+                        <i class="bi bi-box-arrow-in-right"></i>
+                        <span class="ms-2">Anmelden</span>
+                    </button>
+                    <button id="registerBtn" class="btn btn-light">
+                        <i class="bi bi-person-plus"></i>
+                        <span class="ms-2">Registrieren</span>
+                    </button>
+                </div>
+                <div class="user-menu d-none" id="userMenu">
+                    <div class="dropdown">
+                        <button class="btn btn-outline-light dropdown-toggle" type="button" id="userDropdown" data-bs-toggle="dropdown">
+                            <i class="bi bi-person-circle me-2"></i>
+                            <span id="userDisplayName">Benutzer</span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li>
+                                <a class="dropdown-item" href="#" id="profileBtn">
+                                    <i class="bi bi-person me-2"></i>
+                                    Profil
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="#" id="settingsBtn">
+                                    <i class="bi bi-gear me-2"></i>
+                                    Einstellungen
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item" href="#" id="logoutBtn">
+                                    <i class="bi bi-box-arrow-right me-2"></i>
+                                    Abmelden
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <button id="helpBtn" class="btn btn-outline-light ms-2">
                     <i class="bi bi-question-circle"></i>
                     <span class="ms-2">Hilfe</span>
                 </button>
@@ -284,6 +319,149 @@
                 <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
             </div>
             <div class="toast-body" id="toastMessage"></div>
+        </div>
+    </div>
+
+    <!-- Login Modal -->
+    <div class="modal fade" id="loginModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Anmelden</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="loginForm">
+                        <div class="mb-3">
+                            <label class="form-label">E-Mail</label>
+                            <input type="email" class="form-control" id="loginEmail" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Passwort</label>
+                            <div class="input-group">
+                                <input type="password" class="form-control" id="loginPassword" required>
+                                <button class="btn btn-outline-secondary toggle-password" type="button">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="rememberMe">
+                            <label class="form-check-label" for="rememberMe">Angemeldet bleiben</label>
+                        </div>
+                        <div class="text-end">
+                            <button type="button" class="btn btn-link" id="forgotPasswordBtn">
+                                Passwort vergessen?
+                            </button>
+                            <button type="submit" class="btn btn-primary">Anmelden</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Register Modal -->
+    <div class="modal fade" id="registerModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Registrieren</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="registerForm">
+                        <div class="mb-3">
+                            <label class="form-label">Vorname</label>
+                            <input type="text" class="form-control" id="registerFirstName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Nachname</label>
+                            <input type="text" class="form-control" id="registerLastName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">E-Mail</label>
+                            <input type="email" class="form-control" id="registerEmail" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Passwort</label>
+                            <div class="input-group">
+                                <input type="password" class="form-control" id="registerPassword" required>
+                                <button class="btn btn-outline-secondary toggle-password" type="button">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                            </div>
+                            <div class="password-strength mt-2"></div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Passwort bestätigen</label>
+                            <div class="input-group">
+                                <input type="password" class="form-control" id="registerPasswordConfirm" required>
+                                <button class="btn btn-outline-secondary toggle-password" type="button">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="termsAccepted" required>
+                            <label class="form-check-label" for="termsAccepted">
+                                Ich akzeptiere die <a href="#" data-bs-toggle="modal" data-bs-target="#termsModal">Nutzungsbedingungen</a>
+                            </label>
+                        </div>
+                        <div class="text-end">
+                            <button type="submit" class="btn btn-primary">Registrieren</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Password Reset Modal -->
+    <div class="modal fade" id="passwordResetModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Passwort zurücksetzen</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="passwordResetForm">
+                        <div class="mb-3">
+                            <label class="form-label">E-Mail</label>
+                            <input type="email" class="form-control" id="resetEmail" required>
+                        </div>
+                        <div class="text-end">
+                            <button type="submit" class="btn btn-primary">Link senden</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Terms Modal -->
+    <div class="modal fade" id="termsModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Nutzungsbedingungen</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <h6>1. Nutzung des Dienstes</h6>
+                    <p>Der Bewerbungsassistent ist ein Online-Dienst zur Erstellung von Bewerbungsunterlagen...</p>
+                    
+                    <h6>2. Datenschutz</h6>
+                    <p>Ihre persönlichen Daten werden gemäß unserer Datenschutzerklärung verarbeitet...</p>
+                    
+                    <h6>3. Verantwortlichkeiten</h6>
+                    <p>Sie sind für die Richtigkeit Ihrer Angaben verantwortlich...</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Verstanden</button>
+                </div>
+            </div>
         </div>
     </div>
 
