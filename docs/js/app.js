@@ -6,6 +6,10 @@ import { AIService } from './ai-service.js';
 import { Features } from './features.js';
 import { initializeWorkflow, showStep, nextStep, prevStep } from './workflow.js';
 import { safeGetElem, extractJobAdText } from './utils.js';
+import AuthService from './services/auth-service.js';
+import DocumentService from './services/document-service.js';
+import { auth } from './firebase-config.js';
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 // Auth Service
 const AuthService = {
@@ -127,6 +131,22 @@ const AuthService = {
         }
     }
 };
+
+// Füge dies am Anfang deiner app.js hinzu
+onAuthStateChanged(auth, (user) => {
+    if (user) {
+        // User ist eingeloggt
+        console.log('Eingeloggt als:', user.email);
+        document.getElementById('authButtons').classList.add('d-none');
+        document.getElementById('userMenu').classList.remove('d-none');
+        document.getElementById('userDisplayName').textContent = user.email;
+    } else {
+        // User ist ausgeloggt
+        console.log('Ausgeloggt');
+        document.getElementById('authButtons').classList.remove('d-none');
+        document.getElementById('userMenu').classList.add('d-none');
+    }
+});
 
 // Hauptinitialisierung
 document.addEventListener('DOMContentLoaded', async function() {
@@ -1169,16 +1189,14 @@ function initializeAuthHandlers() {
         
         const email = document.getElementById('loginEmail').value;
         const password = document.getElementById('loginPassword').value;
-        const remember = document.getElementById('rememberMe').checked;
         
         try {
             showLoading(e.target, 'Anmeldung...');
-            await AuthService.login(email, password, remember);
+            await AuthService.login(email, password);
             globalState.elements.loginModal.hide();
             showSuccess('Erfolgreich angemeldet');
-            updateUIAfterLogin();
         } catch (error) {
-            showError('Anmeldung fehlgeschlagen');
+            showError(error.message);
         } finally {
             hideLoading(e.target);
         }
@@ -1192,36 +1210,7 @@ function initializeAuthHandlers() {
     });
     
     // Register Form Submit
-    document.getElementById('registerForm')?.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        console.log('Register form submitted');
-        
-        const userData = {
-            firstName: document.getElementById('registerFirstName').value,
-            lastName: document.getElementById('registerLastName').value,
-            email: document.getElementById('registerEmail').value,
-            password: document.getElementById('registerPassword').value
-        };
-        
-        const passwordConfirm = document.getElementById('registerPasswordConfirm').value;
-        
-        if (userData.password !== passwordConfirm) {
-            showError('Passwörter stimmen nicht überein');
-            return;
-        }
-        
-        try {
-            showLoading(e.target, 'Registrierung...');
-            await AuthService.register(userData);
-            globalState.elements.registerModal.hide();
-            showSuccess('Registrierung erfolgreich');
-            globalState.elements.loginModal.show();
-        } catch (error) {
-            showError('Registrierung fehlgeschlagen');
-        } finally {
-            hideLoading(e.target);
-        }
-    });
+    document.getElementById('registerForm')?.addEventListener('submit', handleRegisterSubmit);
     
     // Logout Button
     logoutBtn?.addEventListener('click', () => {
@@ -1270,11 +1259,19 @@ function initializeAuthHandlers() {
     
     // Password Strength
     document.getElementById('registerPassword')?.addEventListener('input', function() {
-        const strength = checkPasswordStrength(this.value);
-        const indicator = this.parentElement.nextElementSibling;
+        checkPasswordStrength(this.value);
+    });
+    
+    // Passwörter live vergleichen
+    document.getElementById('registerPasswordConfirm')?.addEventListener('input', function() {
+        const password = document.getElementById('registerPassword').value;
+        const confirmPassword = this.value;
         
-        indicator.className = 'password-strength mt-2';
-        if (strength > 0) indicator.classList.add(strength === 1 ? 'weak' : strength === 2 ? 'medium' : 'strong');
+        if (password !== confirmPassword) {
+            this.setCustomValidity('Passwörter stimmen nicht überein');
+        } else {
+            this.setCustomValidity('');
+        }
     });
     
     console.log('Auth handlers initialized');
@@ -1282,11 +1279,29 @@ function initializeAuthHandlers() {
 
 function checkPasswordStrength(password) {
     let strength = 0;
-    
-    if (password.length >= 8) strength++;
-    if (/[A-Z]/.test(password) && /[a-z]/.test(password)) strength++;
-    if (/[0-9]/.test(password) && /[^A-Za-z0-9]/.test(password)) strength++;
-    
+    const minLength = 8;
+    const hasUpperCase = /[A-Z]/.test(password);
+    const hasLowerCase = /[a-z]/.test(password);
+    const hasNumbers = /\d/.test(password);
+    const hasSpecialChars = /[^A-Za-z0-9]/.test(password);
+
+    if (password.length >= minLength) strength++;
+    if (hasUpperCase && hasLowerCase) strength++;
+    if (hasNumbers) strength++;
+    if (hasSpecialChars) strength++;
+
+    const indicator = document.querySelector('.password-strength');
+    if (indicator) {
+        indicator.className = 'password-strength mt-2';
+        if (strength > 0) {
+            indicator.classList.add(
+                strength === 1 ? 'weak' : 
+                strength === 2 ? 'medium' : 
+                'strong'
+            );
+        }
+    }
+
     return strength;
 }
 
@@ -1379,5 +1394,58 @@ function updateUIAfterLogout() {
     const workflowModal = bootstrap.Modal.getInstance(document.getElementById('workflowModal'));
     if (workflowModal) {
         workflowModal.hide();
+    }
+}
+
+// Verbesserte Registrierungsfunktion mit Firebase
+async function handleRegisterSubmit(e) {
+    e.preventDefault();
+    const form = e.target;
+    
+    try {
+        // Validiere Passwörter
+        const password = document.getElementById('registerPassword').value;
+        const passwordConfirm = document.getElementById('registerPasswordConfirm').value;
+        
+        if (password !== passwordConfirm) {
+            showError('Passwörter stimmen nicht überein');
+            return;
+        }
+
+        // Validiere Nutzungsbedingungen
+        const termsAccepted = document.getElementById('termsAccepted').checked;
+        if (!termsAccepted) {
+            showError('Bitte akzeptieren Sie die Nutzungsbedingungen');
+            return;
+        }
+
+        // Sammle Formulardaten
+        const userData = {
+            firstName: document.getElementById('registerFirstName').value,
+            lastName: document.getElementById('registerLastName').value,
+            email: document.getElementById('registerEmail').value,
+            password: password
+        };
+
+        showLoading(form.querySelector('button[type="submit"]'), 'Registriere...');
+
+        // Registriere mit Firebase
+        await AuthService.register(userData);
+
+        // Schließe Register-Modal
+        const registerModal = bootstrap.Modal.getInstance(document.getElementById('registerModal'));
+        registerModal.hide();
+
+        showSuccess('Registrierung erfolgreich! Bitte melden Sie sich an.');
+        setTimeout(() => {
+            const loginModal = new bootstrap.Modal(document.getElementById('loginModal'));
+            loginModal.show();
+        }, 1000);
+
+    } catch (error) {
+        console.error('Register error:', error);
+        showError(error.message);
+    } finally {
+        hideLoading(form.querySelector('button[type="submit"]'), 'Registrieren');
     }
 }
