@@ -77,15 +77,25 @@
             stent
         </h1>
         <p class="lead mb-4">Erstellen Sie professionelle Bewerbungen mit KI-Unterstützung</p>
-        <!-- Video mit deutschen Kommentaren, lautlos -->
-        <video id="shortDemoVideo" width="640" height="360" autoplay muted loop playsinline aria-label="Kurzes Einführungs-Video">
-            <source src="videos/short_demo.mp4" type="video/mp4">
-            <!-- Fallback-Text für Browser ohne Video-Support -->
-            Ihr Browser unterstützt kein HTML5-Video. Hier würde ein kurzes Anleitungsvideo erscheinen.
-        </video>
-        <p class="text-muted mt-3">
-            (Dieses Video zeigt: Lebenslauf hochladen, Stellenanzeige einfügen und per Klick Anschreiben generieren.)
-        </p>
+        
+        <!-- Video-Container mit Fallback -->
+        <div class="video-container mb-4">
+            <video id="shortDemoVideo" width="640" height="360" poster="images/demo-poster.jpg" 
+                   class="shadow-sm rounded" autoplay muted loop playsinline 
+                   aria-label="Kurzes Einführungs-Video zur Benutzung der App">
+                <source src="videos/short_demo.mp4" type="video/mp4">
+                <div class="video-fallback p-4 bg-light rounded">
+                    <i class="bi bi-play-circle display-4 text-primary mb-3"></i>
+                    <p>Hier würde ein kurzes Anleitungsvideo erscheinen, das zeigt:</p>
+                    <ul class="text-start list-unstyled">
+                        <li><i class="bi bi-check2 text-success me-2"></i>Lebenslauf hochladen</li>
+                        <li><i class="bi bi-check2 text-success me-2"></i>Stellenanzeige einfügen</li>
+                        <li><i class="bi bi-check2 text-success me-2"></i>Anschreiben generieren</li>
+                    </ul>
+                </div>
+            </video>
+        </div>
+        
         <button id="startBtn" class="btn btn-primary btn-lg mt-4" 
                 aria-label="Bewerbungsprozess starten">
             <i class="bi bi-play-circle me-2" aria-hidden="true"></i>
@@ -355,21 +365,25 @@
                 <div class="modal-body">
                     <!-- Design Controls -->
                     <div class="mb-3 d-flex gap-2 align-items-center">
+                        <label for="colorPicker" class="visually-hidden">Farbe wählen</label>
                         <input type="color" id="colorPicker" class="form-control form-control-color" 
-                               title="Wählen Sie eine Farbe">
-                        <select id="fontSelect" class="form-select w-auto">
+                               title="Wählen Sie eine Farbe für das Design">
+                        <label for="fontSelect" class="visually-hidden">Schriftart wählen</label>
+                        <select id="fontSelect" class="form-select w-auto"
+                                title="Wählen Sie eine Schriftart">
                             <option value="Arial">Arial</option>
                             <option value="Times New Roman">Times New Roman</option>
                             <option value="Calibri">Calibri</option>
                         </select>
                         <div class="form-check">
-                            <input type="checkbox" id="borderToggle" class="form-check-input">
+                            <input type="checkbox" id="borderToggle" class="form-check-input"
+                                   title="Rahmen ein-/ausblenden">
                             <label class="form-check-label" for="borderToggle">Rahmen anzeigen</label>
                         </div>
                         <button id="refreshPreviewBtn" class="btn btn-outline-primary"
-                                aria-label="Vorschau aktualisieren"
                                 title="Vorschau aktualisieren">
                             <i class="bi bi-arrow-clockwise" aria-hidden="true"></i>
+                            <span>Aktualisieren</span>
                         </button>
                     </div>
                     
@@ -423,49 +437,70 @@
             <div id="progressBar" 
                  class="progress-bar" 
                  role="progressbar"
-                 aria-label="Verarbeitungsfortschritt"
+                 aria-label="Fortschritt im Bewerbungsprozess"
+                 aria-valuenow="0"
+                 aria-valuemin="0"
+                 aria-valuemax="100"
                  style="width: 0%;">
+                <span class="visually-hidden">0% abgeschlossen</span>
             </div>
         </div>
     </div>
 
     <!-- Feature Buttons -->
     <div class="feature-buttons d-none">
-        <button id="interviewerName" class="btn btn-outline-secondary">
-            <i class="bi bi-person"></i> Interviewer
+        <button id="interviewerName" class="btn btn-outline-secondary"
+                title="Interviewer-Namen eingeben">
+            <i class="bi bi-person" aria-hidden="true"></i>
+            <span>Interviewer</span>
         </button>
         
         <div class="input-group">
+            <label for="remotePdfURL" class="visually-hidden">PDF URL eingeben</label>
             <input type="url" id="remotePdfURL" class="form-control" 
-                   placeholder="PDF URL eingeben">
-            <button id="loadRemotePdfBtn" class="btn btn-outline-primary">
-                <i class="bi bi-cloud-download"></i> Laden
+                   placeholder="PDF URL eingeben"
+                   title="Geben Sie die URL einer PDF-Datei ein">
+            <button id="loadRemotePdfBtn" class="btn btn-outline-primary"
+                    title="PDF von URL laden">
+                <i class="bi bi-cloud-download" aria-hidden="true"></i>
+                <span>Laden</span>
             </button>
         </div>
         
-        <button id="ttsBtn" class="btn btn-outline-secondary">
-            <i class="bi bi-volume-up"></i> Vorlesen
+        <button id="ttsBtn" class="btn btn-outline-secondary"
+                title="Text vorlesen lassen">
+            <i class="bi bi-volume-up" aria-hidden="true"></i>
+            <span>Vorlesen</span>
         </button>
         
-        <button id="similarityBtn" class="btn btn-outline-info">
-            <i class="bi bi-search"></i> Ähnlichkeit prüfen
+        <button id="similarityBtn" class="btn btn-outline-info"
+                title="Ähnlichkeit mit anderen Dokumenten prüfen">
+            <i class="bi bi-search" aria-hidden="true"></i>
+            <span>Ähnlichkeit prüfen</span>
         </button>
         
         <div class="form-check form-switch">
-            <input type="checkbox" id="multiPageToggle" class="form-check-input">
+            <input type="checkbox" id="multiPageToggle" class="form-check-input"
+                   title="Mehrseitige Ansicht aktivieren">
             <label class="form-check-label" for="multiPageToggle">Mehrseitige Ansicht</label>
         </div>
         
-        <button id="pdfExportBtn" class="btn btn-outline-primary">
-            <i class="bi bi-file-pdf"></i> Als PDF exportieren
+        <button id="pdfExportBtn" class="btn btn-outline-primary"
+                title="Als PDF-Datei exportieren">
+            <i class="bi bi-file-pdf" aria-hidden="true"></i>
+            <span>Als PDF exportieren</span>
         </button>
         
-        <button id="collabConnectBtn" class="btn btn-outline-success">
-            <i class="bi bi-people"></i> Live-Kollaboration
+        <button id="collabConnectBtn" class="btn btn-outline-success"
+                title="Live-Kollaboration starten">
+            <i class="bi bi-people" aria-hidden="true"></i>
+            <span>Live-Kollaboration</span>
         </button>
         
-        <button id="archiveBtn" class="btn btn-outline-secondary">
-            <i class="bi bi-archive"></i> Archivieren
+        <button id="archiveBtn" class="btn btn-outline-secondary"
+                title="Dokument archivieren">
+            <i class="bi bi-archive" aria-hidden="true"></i>
+            <span>Archivieren</span>
         </button>
     </div>
 
@@ -674,6 +709,7 @@
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
         import { getFirestore } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
         import { getStorage } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
+        import { getDatabase } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
         
         // Firebase wird automatisch aus firebase-config.js initialisiert
     </script>
