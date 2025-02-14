@@ -155,51 +155,59 @@ export function initAuthObserver(callback) {
 export async function testFirebaseConnection(testEmail = 'test@example.com', testPassword = 'testPassword123') {
     try {
         // Test Auth mit Anmeldung
-        await auth._getRecaptchaConfig();
-        console.log('✓ Firebase Auth Verbindung OK');
+        try {
+            await auth._getRecaptchaConfig();
+            console.log('✓ Firebase Auth Verbindung OK');
+        } catch (error) {
+            throw new Error('Firebase Auth nicht verfügbar. Bitte prüfen Sie, ob Authentication in der Firebase Console aktiviert ist.');
+        }
 
         // Versuche Anmeldung oder Registrierung
         let user;
         try {
             user = await signIn(testEmail, testPassword);
+            console.log('✓ Anmeldung erfolgreich');
         } catch (error) {
             if (error.code === 'auth/user-not-found') {
-                user = await signUp(testEmail, testPassword);
+                try {
+                    user = await signUp(testEmail, testPassword);
+                    console.log('✓ Registrierung erfolgreich');
+                } catch (signUpError) {
+                    if (signUpError.code === 'auth/email-already-in-use') {
+                        throw new Error('E-Mail bereits registriert, aber Anmeldung fehlgeschlagen. Bitte anderes Testkonto verwenden.');
+                    } else if (signUpError.code === 'auth/operation-not-allowed') {
+                        throw new Error('Email/Password-Anmeldung ist nicht aktiviert. Bitte in der Firebase Console unter Authentication aktivieren.');
+                    } else {
+                        throw signUpError;
+                    }
+                }
+            } else if (error.code === 'auth/operation-not-allowed') {
+                throw new Error('Email/Password-Anmeldung ist nicht aktiviert. Bitte in der Firebase Console unter Authentication aktivieren.');
             } else {
                 throw error;
             }
         }
-        console.log('✓ Test-Benutzer angemeldet');
-
-        // Test Firestore
-        const testCollection = collection(db, 'test');
-        const testDocRef = doc(testCollection, 'connection');
-        await setDoc(testDocRef, {
-            timestamp: new Date().toISOString(),
-            status: 'ok'
-        });
-
-        // Test query
-        const testQuery = query(testCollection, limit(1));
-        await getDocs(testQuery);
-        console.log('✓ Firestore Verbindung OK');
-
-        // Test Storage
-        const testRef = ref(storage, 'test/connection.txt');
-        await uploadString(testRef, 'test');
-        console.log('✓ Storage Verbindung OK');
 
         // Test Realtime Database - Angepasst an die Regeln
         if (auth.currentUser) {
-            const userId = auth.currentUser.uid;
-            const testDbRef = dbRef(rtdb, `users/${userId}/applications/test`);
-            await dbSet(testDbRef, {
-                jobTitle: 'Test Position',
-                company: 'Test Company',
-                status: 'test',
-                timestamp: new Date().toISOString()
-            });
-            console.log('✓ Realtime Database Verbindung OK');
+            try {
+                const userId = auth.currentUser.uid;
+                const testDbRef = dbRef(rtdb, `users/${userId}/test`);
+                await dbSet(testDbRef, {
+                    timestamp: new Date().toISOString(),
+                    status: 'ok'
+                });
+                console.log('✓ Realtime Database Verbindung OK');
+                
+                // Cleanup
+                await dbSet(testDbRef, null);
+            } catch (error) {
+                if (error.code === 'PERMISSION_DENIED') {
+                    throw new Error('Realtime Database Zugriff verweigert. Bitte prüfen Sie die Datenbank-Regeln in der Firebase Console.');
+                } else {
+                    throw error;
+                }
+            }
         } else {
             console.log('⚠️ Realtime Database Test übersprungen - Benutzer nicht angemeldet');
         }
@@ -207,23 +215,7 @@ export async function testFirebaseConnection(testEmail = 'test@example.com', tes
         return true;
     } catch (error) {
         console.error('Firebase Verbindungsfehler:', error);
-        throw new Error('Firebase Verbindung fehlgeschlagen: ' + error.message);
-    } finally {
-        // Cleanup
-        try {
-            const testRef = ref(storage, 'test/connection.txt');
-            await deleteObject(testRef).catch(() => {});
-            
-            if (auth.currentUser) {
-                const userId = auth.currentUser.uid;
-                const testDbRef = dbRef(rtdb, `users/${userId}/applications/test`);
-                await dbSet(testDbRef, null);
-                // Optional: Abmelden nach Test
-                // await logOut();
-            }
-        } catch (error) {
-            console.warn('Cleanup warning:', error);
-        }
+        throw new Error(`Firebase Verbindung fehlgeschlagen: ${error.message}`);
     }
 }
 
