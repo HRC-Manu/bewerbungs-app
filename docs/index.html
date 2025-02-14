@@ -18,13 +18,9 @@
             </a>
             <div class="navbar-nav ms-auto">
                 <div class="auth-buttons me-3" id="authButtons">
-                    <button id="loginBtn" class="btn btn-outline-light me-2">
+                    <button id="loginBtn" class="btn btn-light">
                         <i class="bi bi-box-arrow-in-right"></i>
                         <span class="ms-2">Anmelden</span>
-                    </button>
-                    <button id="registerBtn" class="btn btn-light">
-                        <i class="bi bi-person-plus"></i>
-                        <span class="ms-2">Registrieren</span>
                     </button>
                 </div>
                 <div class="user-menu d-none" id="userMenu">
@@ -71,7 +67,11 @@
                 <!-- Willkommenskarte -->
                 <div class="card shadow-sm mb-4 welcome-card">
                     <div class="card-body text-center py-5">
-                        <h1 class="display-4 mb-4">Willkommen beim Bewerbungsassistenten</h1>
+                        <h1 class="display-4 mb-4">
+                            Willkommen beim Bewerbungsassistenten 
+                            <i class="bi bi-magic text-primary"></i>
+                            <span class="text-primary">AI</span>
+                        </h1>
                         <p class="lead mb-4">Erstellen Sie professionelle Bewerbungen mit KI-Unterstützung</p>
                         <button id="startBtn" class="btn btn-primary btn-lg">
                             <i class="bi bi-play-circle me-2"></i>
@@ -349,13 +349,20 @@
                             <input type="checkbox" class="form-check-input" id="rememberMe">
                             <label class="form-check-label" for="rememberMe">Angemeldet bleiben</label>
                         </div>
-                        <div class="text-end">
-                            <button type="button" class="btn btn-link" id="forgotPasswordBtn">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <button type="button" class="btn btn-link p-0" id="forgotPasswordBtn">
                                 Passwort vergessen?
                             </button>
                             <button type="submit" class="btn btn-primary">Anmelden</button>
                         </div>
                     </form>
+                    <hr class="my-4">
+                    <p class="text-center mb-0">
+                        Noch kein Konto? 
+                        <a href="#" id="showRegisterBtn" data-bs-toggle="modal" data-bs-target="#registerModal">
+                            Jetzt registrieren
+                        </a>
+                    </p>
                 </div>
             </div>
         </div>
