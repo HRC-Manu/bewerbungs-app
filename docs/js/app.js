@@ -11,8 +11,7 @@ import DocumentService from './services/document-service.js';
 import { auth } from './firebase-config.js';
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { ref, set } from "firebase/database";
-import { db } from './firebase-config.js';
-import { testFirebaseConnection } from './firebase-config.js';
+import { db, testFirebaseConnection } from './firebase-config.js';
 
 // Auth Service
 const AuthService = {
