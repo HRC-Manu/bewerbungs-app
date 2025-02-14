@@ -133,7 +133,7 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">Bewerbungsprozess</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Schließen"></button>
                 </div>
                 <div class="modal-body p-0">
                     <!-- Workflow Steps -->
@@ -225,7 +225,7 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">Lebenslauf erstellen</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Schließen"></button>
                 </div>
                 <div class="modal-body">
                     <div id="resumeBuilder" class="resume-builder-container"></div>
@@ -240,13 +240,13 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">Einstellungen</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Schließen"></button>
                 </div>
                 <div class="modal-body">
                     <form id="settingsForm">
                         <div class="mb-3">
-                            <label class="form-label">KI-Provider</label>
-                            <select class="form-select" id="aiProvider">
+                            <label for="aiProvider" class="form-label">KI-Provider</label>
+                            <select class="form-select" id="aiProvider" aria-label="KI-Provider auswählen">
                                 <option value="openai">OpenAI (GPT-4)</option>
                                 <option value="anthropic">Anthropic (Claude)</option>
                                 <option value="local">Lokales Modell</option>
@@ -279,7 +279,7 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">Hilfe</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Schließen"></button>
                 </div>
                 <div class="modal-body">
                     <div class="accordion" id="helpAccordion">
@@ -326,7 +326,7 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">Anmelden</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Schließen"></button>
                 </div>
                 <div class="modal-body">
                     <form id="loginForm">
@@ -338,8 +338,8 @@
                             <label class="form-label">Passwort</label>
                             <div class="input-group">
                                 <input type="password" class="form-control" id="loginPassword" required>
-                                <button class="btn btn-outline-secondary toggle-password" type="button">
-                                    <i class="bi bi-eye"></i>
+                                <button class="btn btn-outline-secondary toggle-password" type="button" aria-label="Passwort anzeigen/verbergen">
+                                    <i class="bi bi-eye" aria-hidden="true"></i>
                                 </button>
                             </div>
                         </div>
@@ -372,7 +372,7 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">Registrieren</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Schließen"></button>
                 </div>
                 <div class="modal-body">
                     <form id="registerForm">
@@ -392,8 +392,8 @@
                             <label class="form-label">Passwort</label>
                             <div class="input-group">
                                 <input type="password" class="form-control" id="registerPassword" required>
-                                <button class="btn btn-outline-secondary toggle-password" type="button">
-                                    <i class="bi bi-eye"></i>
+                                <button class="btn btn-outline-secondary toggle-password" type="button" aria-label="Passwort anzeigen/verbergen">
+                                    <i class="bi bi-eye" aria-hidden="true"></i>
                                 </button>
                             </div>
                             <div class="password-strength mt-2"></div>
@@ -402,8 +402,8 @@
                             <label class="form-label">Passwort bestätigen</label>
                             <div class="input-group">
                                 <input type="password" class="form-control" id="registerPasswordConfirm" required>
-                                <button class="btn btn-outline-secondary toggle-password" type="button">
-                                    <i class="bi bi-eye"></i>
+                                <button class="btn btn-outline-secondary toggle-password" type="button" aria-label="Passwort anzeigen/verbergen">
+                                    <i class="bi bi-eye" aria-hidden="true"></i>
                                 </button>
                             </div>
                         </div>
@@ -428,7 +428,7 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">Passwort zurücksetzen</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Schließen"></button>
                 </div>
                 <div class="modal-body">
                     <form id="passwordResetForm">
@@ -451,7 +451,7 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">Nutzungsbedingungen</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Schließen"></button>
                 </div>
                 <div class="modal-body">
                     <h6>1. Nutzung des Dienstes</h6>
