@@ -5,939 +5,237 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-Content-Type-Options" content="nosniff">
     <meta http-equiv="Cache-Control" content="public, max-age=31536000, immutable">
-    <title>Bewerbungsassistent</title>
+    <title>Bewerbungsassistent - Login</title>
     
-    <!-- Preload critical resources -->
-    <link rel="preload" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" as="style">
-    <link rel="preload" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" as="style">
-    <link rel="preload" href="css/style.css" as="style">
-    
-    <!-- Stylesheets -->
+    <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
     <link href="css/style.css" rel="stylesheet">
-    
-    <!-- Firebase Configuration -->
-    <script type="module">
-        import { app, auth, db, storage, testFirebaseConnection } from './js/firebase-config.js';
-        
-        // Teste Firebase-Verbindung
-        window.addEventListener('DOMContentLoaded', async () => {
-            try {
-                await testFirebaseConnection();
-                console.log('Firebase erfolgreich initialisiert');
-            } catch (error) {
-                console.error('Firebase Initialisierungsfehler:', error);
-                // Zeige Fehlermeldung
-                const errorMessage = document.createElement('div');
-                errorMessage.className = 'error-message';
-                errorMessage.textContent = 'Firebase konnte nicht initialisiert werden: ' + error.message;
-                document.body.appendChild(errorMessage);
-            }
-        });
-    </script>
 </head>
 <body class="bg-light">
-    <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg" aria-label="Haupt-Navigation">
+    <!-- Minimale Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
         <div class="container">
             <a class="navbar-brand" href="#">
-                <i class="bi bi-file-text me-2" aria-hidden="true"></i>
+                <i class="bi bi-file-text me-2"></i>
                 Bewerbungsassistent
             </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent"
-                    aria-controls="navbarContent" aria-expanded="false" aria-label="Navigation umschalten">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarContent">
-                <div class="navbar-nav ms-auto">
-                    <div class="auth-buttons me-3" id="authButtons">
-                        <button id="loginBtn" class="btn btn-light" 
-                                aria-label="Benutzeranmeldung starten">
-                            <i class="bi bi-box-arrow-in-right" aria-hidden="true"></i>
-                            <span class="ms-2">Anmelden</span>
-                        </button>
-                    </div>
-                    <div class="user-menu d-none" id="userMenu">
-                        <div class="dropdown">
-                            <button class="btn btn-outline-light dropdown-toggle" type="button" id="userDropdown" 
-                                    data-bs-toggle="dropdown" aria-expanded="false">
-                                <i class="bi bi-person-circle me-2" aria-hidden="true"></i>
-                                <span id="userDisplayName" aria-live="polite">Benutzer</span>
-                            </button>
-                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                                <li>
-                                    <a class="dropdown-item" href="#" id="profileBtn">
-                                        <i class="bi bi-person me-2" aria-hidden="true"></i>
-                                        Profil
-                                    </a>
-                                </li>
-                                <li>
-                                    <a class="dropdown-item" href="#" id="settingsBtn">
-                                        <i class="bi bi-gear me-2" aria-hidden="true"></i>
-                                        Einstellungen
-                                    </a>
-                                </li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li>
-                                    <a class="dropdown-item" href="#" id="logoutBtn">
-                                        <i class="bi bi-box-arrow-right me-2" aria-hidden="true"></i>
-                                        Abmelden
-                                    </a>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                    <button id="helpBtn" class="btn btn-outline-light ms-2"
-                            aria-label="Hilfemenü öffnen">
-                        <i class="bi bi-question-circle" aria-hidden="true"></i>
-                        <span class="ms-2">Hilfe</span>
-                    </button>
-                </div>
-            </div>
         </div>
     </nav>
 
-    <!-- Hauptheader -->
-    <header class="text-center py-5">
-        <h1 class="display-4 mb-4" aria-level="1">
-            <span class="text-primary">AI</span>-Bewerbungsass
-            <i class="bi bi-magic text-primary" aria-hidden="true"></i>
-            stent
-        </h1>
-        <p class="lead mb-4">Erstellen Sie professionelle Bewerbungen mit KI-Unterstützung</p>
-        
-        <!-- Video-Container mit Fallback -->
-        <div class="video-container mb-4">
-            <!-- Canvas für Video-Generierung (versteckt) -->
-            <canvas id="demoCanvas" style="display: none;"></canvas>
-            
-            <!-- Firefox-kompatible Video-Implementierung -->
-            <div class="video-wrapper position-relative">
-                <video id="shortDemoVideo" 
-                       class="shadow-sm rounded w-100" 
-                       muted 
-                       loop
-                       preload="none"
-                       aria-label="Kurzes Einführungs-Video zur Benutzung der App"
-                       poster="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='640' height='360' viewBox='0 0 640 360'%3E%3Crect width='100%25' height='100%25' fill='%23f8f9fa'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='system-ui' font-size='14' fill='%236c757d'%3EVideo-Vorschau%3C/text%3E%3C/svg%3E">
-                    <!-- Fallback für Browser ohne Video-Support -->
-                    <div class="video-fallback p-4 bg-light rounded">
-                        <i class="bi bi-play-circle display-4 text-primary mb-3" aria-hidden="true"></i>
-                        <p>Hier sehen Sie die wichtigsten Funktionen der App:</p>
-                        <ul class="text-start list-unstyled">
-                            <li><i class="bi bi-check2 text-success me-2" aria-hidden="true"></i>Lebenslauf hochladen</li>
-                            <li><i class="bi bi-check2 text-success me-2" aria-hidden="true"></i>Stellenanzeige einfügen</li>
-                            <li><i class="bi bi-check2 text-success me-2" aria-hidden="true"></i>Anschreiben generieren</li>
-                        </ul>
-                    </div>
-                </video>
-                <!-- Play/Pause Button -->
-                <button class="video-control-btn btn btn-light rounded-circle position-absolute" 
-                        style="top: 50%; left: 50%; transform: translate(-50%, -50%);"
-                        aria-label="Video abspielen/pausieren">
-                    <i class="bi bi-play-fill" aria-hidden="true"></i>
-                </button>
-            </div>
-            <!-- Zusätzliche Steuerelemente -->
-            <div class="video-controls mt-2 d-flex justify-content-center gap-2">
-                <button class="btn btn-sm btn-outline-primary" id="replayBtn" aria-label="Video neu starten">
-                    <i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i>
-                    <span class="ms-1">Neu starten</span>
-                </button>
-                <button class="btn btn-sm btn-outline-secondary" id="muteBtn" aria-label="Ton ein/ausschalten">
-                    <i class="bi bi-volume-mute" aria-hidden="true"></i>
-                    <span class="ms-1">Ton</span>
-                </button>
-                <button class="btn btn-sm btn-outline-success" id="generateVideoBtn" aria-label="Neues Demo-Video generieren">
-                    <i class="bi bi-camera-video" aria-hidden="true"></i>
-                    <span class="ms-1">Demo generieren</span>
-                </button>
-            </div>
-        </div>
-        
-        <button id="startBtn" class="btn btn-primary btn-lg mt-4" 
-                aria-label="Bewerbungsprozess starten">
-            <i class="bi bi-play-circle me-2" aria-hidden="true"></i>
-            Bewerbungsprozess starten
-        </button>
-    </header>
-
-    <!-- Hauptinhalt -->
-    <main class="container py-5" aria-label="Hauptinhalt">
+    <!-- Hauptcontainer -->
+    <div class="container mt-5">
         <div class="row justify-content-center">
-            <div class="col-lg-8">
-                <!-- Willkommenskarte -->
-                <div class="card shadow-sm mb-4 welcome-card">
-                    <div class="card-body text-center py-5">
-                        <p class="text-muted mb-4">
-                            Bitte logge dich ein oder verwende einen Gutscheincode, 
-                            um den vollen Funktionsumfang freizuschalten. 
-                        </p>
-                        <div id="paywallContainer" class="input-group mt-4 d-none">
-                            <input type="text" id="paywallVoucher" class="form-control" 
-                                   placeholder="Gutscheincode eingeben ..." 
-                                   aria-label="Gutscheincode eingeben">
-                            <button class="btn btn-primary" id="paywallSubmitBtn"
-                                    title="Gutscheincode prüfen">
-                                Freischalten
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Optionskarten (Lebenslauf / Anschreiben) -->
-                <div id="featureCards" class="row g-4 d-none" aria-label="Funktionsauswahl">
-                    <!-- Lebenslauf Option -->
-                    <div class="col-md-6">
-                        <div class="card shadow-sm h-100">
-                            <div class="card-body text-center p-4">
-                                <i class="bi bi-file-person display-4 mb-3 text-primary" aria-hidden="true"></i>
-                                <h3>Lebenslauf</h3>
-                                <p class="text-muted mb-4">
-                                    Laden Sie Ihren Lebenslauf hoch oder erstellen Sie einen neuen
-                                </p>
-                                <div class="d-grid gap-2">
-                                    <button id="uploadResumeBtn" class="btn btn-outline-primary"
-                                            aria-label="Lebenslauf hochladen">
-                                        <i class="bi bi-upload me-2" aria-hidden="true"></i>
-                                        Lebenslauf hochladen
-                                    </button>
-                                    <button id="createResumeBtn" class="btn btn-outline-primary"
-                                            aria-label="Neuen Lebenslauf erstellen">
-                                        <i class="bi bi-pencil me-2" aria-hidden="true"></i>
-                                        Neuen Lebenslauf erstellen
-                                    </button>
-                                </div>
+            <div class="col-md-6 col-lg-4">
+                <!-- Login Card -->
+                <div class="card shadow-sm">
+                    <div class="card-body p-4">
+                        <h4 class="card-title text-center mb-4">Anmeldung</h4>
+                        
+                        <!-- Login Form -->
+                        <form id="loginForm">
+                            <div class="mb-3">
+                                <label for="email" class="form-label">E-Mail</label>
+                                <input type="email" class="form-control" id="email" required>
                             </div>
-                        </div>
-                    </div>
-
-                    <!-- Anschreiben Option -->
-                    <div class="col-md-6">
-                        <div class="card shadow-sm h-100">
-                            <div class="card-body text-center p-4">
-                                <i class="bi bi-file-text display-4 mb-3 text-primary" aria-hidden="true"></i>
-                                <h3>Anschreiben</h3>
-                                <p class="text-muted mb-4">
-                                    Erstellen Sie ein neues Anschreiben oder laden Sie ein bestehendes als Vorlage hoch
-                                </p>
-                                <div class="d-grid gap-2">
-                                    <button id="createCoverLetterBtn" class="btn btn-outline-primary"
-                                            aria-label="Neues Anschreiben erstellen">
-                                        <i class="bi bi-pencil me-2" aria-hidden="true"></i>
-                                        Neues Anschreiben erstellen
-                                    </button>
-                                    <button id="uploadCoverLetterBtn" class="btn btn-outline-primary"
-                                            aria-label="Anschreiben hochladen">
-                                        <i class="bi bi-upload me-2" aria-hidden="true"></i>
-                                        Anschreiben hochladen
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </main>
-
-    <!-- Modals -->
-    <!-- Workflow Modal -->
-    <div class="modal fade" id="workflowModal" tabindex="-1" data-bs-backdrop="static">
-        <div class="modal-dialog modal-xl modal-dialog-scrollable">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Bewerbungsprozess</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Schließen"></button>
-                </div>
-                <div class="modal-body p-0">
-                    <!-- Workflow Steps -->
-                    <div class="workflow-container">
-                        <!-- Step 1: Lebenslauf-Analyse -->
-                        <div class="workflow-step" id="step1">
-                            <div class="step-header">
-                                <h4>1. Lebenslauf-Analyse</h4>
-                                <p class="text-muted">Analyse Ihrer Qualifikationen und Erfahrungen</p>
-                            </div>
-                            <div class="step-content">
-                                <div id="resumeAnalysis" class="analysis-results"></div>
-                            </div>
-                        </div>
-
-                        <!-- Step 2: Stellenanzeige -->
-                        <div class="workflow-step d-none" id="step2">
-                            <div class="step-header">
-                                <h4>2. Stellenanzeige</h4>
-                                <p class="text-muted">Fügen Sie die Stellenanzeige ein oder geben Sie eine URL an</p>
-                            </div>
-                            <div class="step-content">
-                                <div class="mb-3">
-                                    <input type="text" id="jobPostingURL" class="form-control" 
-                                           placeholder="https://www.example.com/job/12345">
-                                    <small class="text-muted">URL zur Stellenanzeige (optional)</small>
-                                </div>
-                                <div class="mb-3">
-                                    <textarea id="jobPosting" class="form-control" rows="8"
-                                            placeholder="Fügen Sie hier die Stellenanzeige ein..."></textarea>
-                                </div>
-                                <div id="jobAnalysis" class="analysis-results d-none"></div>
-                            </div>
-                        </div>
-
-                        <!-- Step 3: Matching & Vorschläge -->
-                        <div class="workflow-step d-none" id="step3">
-                            <div class="step-header">
-                                <h4>3. Matching & Vorschläge</h4>
-                                <p class="text-muted">KI-basierte Analyse und Anpassungsvorschläge</p>
-                            </div>
-                            <div class="step-content">
-                                <div id="matchingResults" class="matching-results"></div>
-                                <div id="suggestions" class="suggestions-grid"></div>
-                            </div>
-                        </div>
-
-                        <!-- Step 4: Anschreiben-Generator -->
-                        <div class="workflow-step d-none" id="step4">
-                            <div class="step-header">
-                                <h4>4. Anschreiben-Generator</h4>
-                                <p class="text-muted">Personalisiertes Anschreiben erstellen</p>
-                            </div>
-                            <div class="step-content">
-                                <div id="coverLetterEditor"></div>
-                            </div>
-                        </div>
-
-                        <!-- Step 5: Finalisierung -->
-                        <div class="workflow-step d-none" id="step5">
-                            <div class="step-header">
-                                <h4>5. Finalisierung</h4>
-                                <p class="text-muted">Überprüfen und exportieren</p>
-                            </div>
-                            <div class="step-content">
-                                <div class="preview-container"></div>
-                                <div class="export-options"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer justify-content-between">
-                    <button type="button" class="btn btn-secondary" id="prevStepBtn">
-                        <i class="bi bi-arrow-left me-2"></i>
-                        Zurück
-                    </button>
-                    <button type="button" class="btn btn-primary" id="nextStepBtn">
-                        Weiter
-                        <i class="bi bi-arrow-right ms-2"></i>
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Resume Creator Modal -->
-    <div class="modal fade" id="resumeCreatorModal" tabindex="-1">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Lebenslauf erstellen</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Schließen"></button>
-                </div>
-                <div class="modal-body">
-                    <div id="resumeBuilder" class="resume-builder-container"></div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Settings Modal -->
-    <div class="modal fade" id="settingsModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Einstellungen</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Schließen"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="settingsForm">
-                        <!-- GitHub Integration -->
-                        <div class="mb-3 github-integration">
-                            <h5>GitHub Integration</h5>
-                            <div class="form-group">
-                                <label for="githubToken" class="form-label">GitHub Token</label>
-                                <div class="token-input-container">
-                                    <input type="password" class="form-control" id="githubToken">
-                                    <button type="button" class="token-toggle" aria-label="Toggle token visibility">
+                            <div class="mb-3">
+                                <label for="password" class="form-label">Passwort</label>
+                                <div class="input-group">
+                                    <input type="password" class="form-control" id="password" required>
+                                    <button class="btn btn-outline-secondary" type="button" id="togglePassword">
                                         <i class="bi bi-eye"></i>
                                     </button>
                                 </div>
-                                <small class="form-text text-muted">Dein GitHub Personal Access Token für die automatische Synchronisation</small>
-                                <div class="github-status disconnected">
-                                    <i class="bi bi-circle-fill"></i>
-                                    <span>Nicht verbunden</span>
-                                </div>
                             </div>
-                        </div>
-
-                        <!-- Bestehende Einstellungen -->
-                        <div class="mb-3">
-                            <label for="letterStyle" class="form-label">Anschreiben-Stil auswählen</label>
-                            <select class="form-select" id="letterStyle" 
-                                    title="Anschreiben-Stil auswählen"
-                                    aria-label="Anschreiben-Stil">
-                                <option value="formal">Formell</option>
-                                <option value="modern">Modern</option>
-                                <option value="creative">Kreativ</option>
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label for="aiProvider" class="form-label">KI-Provider</label>
-                            <select class="form-select" id="aiProvider" 
-                                    aria-label="KI-Provider auswählen">
-                                <option value="openai">OpenAI (GPT-4)</option>
-                                <option value="anthropic">Anthropic (Claude)</option>
-                                <option value="local">Lokales Modell</option>
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label" for="apiKeyInput">API-Schlüssel</label>
-                            <input type="password" id="apiKeyInput" class="form-control"
-                                   placeholder="API-Key eingeben"
-                                   aria-label="API-Schlüssel eingeben">
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-primary" id="saveSettingsBtn">Speichern</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Preview Modal -->
-    <div class="modal fade" id="previewModal" tabindex="-1" aria-labelledby="previewModalTitle">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="previewModalTitle">Vorschau</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Schließen"></button>
-                </div>
-                <div class="modal-body">
-                    <!-- Design Controls -->
-                    <div class="mb-3 d-flex gap-2 align-items-center">
-                        <label for="colorPicker" class="visually-hidden">Farbe wählen</label>
-                        <input type="color" id="colorPicker" class="form-control form-control-color" 
-                               title="Wählen Sie eine Farbe für das Design"
-                               aria-label="Farbe für das Design auswählen">
-                               
-                        <label for="fontSelect" class="visually-hidden">Schriftart wählen</label>
-                        <select id="fontSelect" class="form-select w-auto"
-                                title="Wählen Sie eine Schriftart"
-                                aria-label="Schriftart auswählen">
-                            <option value="Arial">Arial</option>
-                            <option value="Times New Roman">Times New Roman</option>
-                            <option value="Calibri">Calibri</option>
-                        </select>
-                        
-                        <div class="form-check">
-                            <input type="checkbox" id="borderToggle" class="form-check-input"
-                                   title="Rahmen ein-/ausblenden"
-                                   aria-label="Rahmen ein- oder ausblenden">
-                            <label class="form-check-label" for="borderToggle">Rahmen anzeigen</label>
-                        </div>
-                        
-                        <button id="refreshPreviewBtn" class="btn btn-outline-primary"
-                                title="Vorschau aktualisieren"
-                                aria-label="Vorschau aktualisieren">
-                            <i class="bi bi-arrow-clockwise" aria-hidden="true"></i>
-                            <span>Aktualisieren</span>
-                        </button>
-                    </div>
-                    
-                    <!-- Preview Container -->
-                    <div id="modernPreviewContainer" class="preview-container p-4 border rounded" 
-                         role="region" aria-label="Dokumentvorschau">
-                        <!-- Content will be inserted here -->
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Help Modal -->
-    <div class="modal fade" id="helpModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Hilfe</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Schließen"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="accordion" id="helpAccordion">
-                        <div class="accordion-item">
-                            <h2 class="accordion-header">
-                                <button class="accordion-button" type="button" data-bs-toggle="collapse" 
-                                        data-bs-target="#collapseOne">
-                                    Erste Schritte
-                                </button>
-                            </h2>
-                            <div id="collapseOne" class="accordion-collapse collapse show" 
-                                 data-bs-parent="#helpAccordion">
-                                <div class="accordion-body">
-                                    <ol>
-                                        <li>Wählen Sie eine Option für Ihren Lebenslauf</li>
-                                        <li>Optional: Laden Sie ein bestehendes Anschreiben hoch</li>
-                                        <li>Klicken Sie auf "Bewerbungsprozess starten"</li>
-                                        <li>Folgen Sie dem geführten Prozess</li>
-                                    </ol>
-                                </div>
+                            <div class="mb-3 form-check">
+                                <input type="checkbox" class="form-check-input" id="rememberMe">
+                                <label class="form-check-label" for="rememberMe">Angemeldet bleiben</label>
                             </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Admin Modal für Gutscheincodes -->
-    <div class="modal fade" id="adminModal" tabindex="-1" aria-labelledby="adminModalTitle">
-      <div class="modal-dialog modal-md">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title" id="adminModalTitle">Gutscheincodes verwalten</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Schließen"></button>
-          </div>
-          <div class="modal-body">
-            <div id="voucherList" class="mb-3" aria-live="polite">
-              <!-- Dynamische Liste aller existierenden Codes -->
-            </div>
-            <div class="input-group">
-              <label for="newVoucherCodeInput" class="visually-hidden">Neuer Gutscheincode</label>
-              <input type="text" class="form-control" id="newVoucherCodeInput" 
-                     placeholder="Neuen Code hinzufügen..."
-                     aria-label="Neuen Gutscheincode eingeben">
-              <button class="btn btn-success" id="addVoucherBtn" 
-                      title="Gutscheincode zur Liste hinzufügen">
-                <i class="bi bi-plus-circle" aria-hidden="true"></i>
-                <span>Hinzufügen</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Login Modal -->
-    <div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalTitle">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="loginModalTitle">Anmelden</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Schließen"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="loginForm">
-                        <div class="mb-3">
-                            <label class="form-label" for="loginEmail">E-Mail-Adresse</label>
-                            <input type="email" class="form-control" id="loginEmail" required
-                                   aria-required="true"
-                                   title="E-Mail-Adresse eingeben">
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label" for="loginPassword">Passwort</label>
-                            <div class="input-group">
-                                <input type="password" class="form-control" id="loginPassword" required
-                                       aria-required="true"
-                                       title="Passwort eingeben">
-                                <button class="btn btn-outline-secondary toggle-password" type="button" 
-                                        aria-label="Passwort anzeigen/verbergen"
-                                        title="Passwort anzeigen/verbergen">
-                                    <i class="bi bi-eye" aria-hidden="true"></i>
-                                </button>
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary">Anmelden</button>
                             </div>
-                        </div>
-                        <div class="mb-3 form-check">
-                            <input type="checkbox" class="form-check-input" id="rememberMe"
-                                   title="Angemeldet bleiben">
-                            <label class="form-check-label" for="rememberMe">Angemeldet bleiben</label>
-                        </div>
-                        <div class="d-flex justify-content-between align-items-center">
-                            <button type="button" class="btn btn-link p-0" id="forgotPasswordBtn"
-                                    title="Passwort zurücksetzen">
-                                Passwort vergessen?
-                            </button>
-                            <button type="submit" class="btn btn-primary" 
-                                    title="Anmelden per E-Mail und Passwort">
-                                Anmelden
+                        </form>
+
+                        <div class="text-center mt-3">
+                            <button type="button" class="btn btn-link" id="showRegisterBtn">
+                                Noch kein Konto? Registrieren
                             </button>
                         </div>
-                    </form>
-                    <hr class="my-4">
-                    <p class="text-center mb-0">
-                        Noch kein Konto? 
-                        <a href="#" id="showRegisterBtn" data-bs-toggle="modal" data-bs-target="#registerModal"
-                           title="Zum Registrierungsformular">
-                            Jetzt registrieren
-                        </a>
-                    </p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Register Modal -->
-    <div class="modal fade" id="registerModal" tabindex="-1" aria-labelledby="registerModalTitle">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="registerModalTitle">Registrieren</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Schließen"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="registerForm">
-                        <div class="mb-3">
-                            <label class="form-label" for="registerFirstName">Vorname</label>
-                            <input type="text" class="form-control" id="registerFirstName" required 
-                                   aria-required="true"
-                                   title="Bitte Vornamen eingeben">
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label" for="registerLastName">Nachname</label>
-                            <input type="text" class="form-control" id="registerLastName" required 
-                                   aria-required="true"
-                                   title="Bitte Nachnamen eingeben">
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label" for="registerEmail">E-Mail-Adresse</label>
-                            <input type="email" class="form-control" id="registerEmail" required 
-                                   aria-required="true"
-                                   title="E-Mail-Adresse eingeben">
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label" for="registerPassword">Passwort</label>
-                            <div class="input-group">
-                                <input type="password" class="form-control" id="registerPassword" required
-                                       aria-required="true"
-                                       title="Passwort festlegen">
-                                <button class="btn btn-outline-secondary toggle-password" type="button" 
-                                        aria-label="Passwort anzeigen/verbergen"
-                                        title="Passwort anzeigen/verbergen">
-                                    <i class="bi bi-eye" aria-hidden="true"></i>
-                                </button>
-                            </div>
-                            <div class="password-strength mt-2" aria-live="polite"></div>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label" for="registerPasswordConfirm">Passwort bestätigen</label>
-                            <div class="input-group">
-                                <input type="password" class="form-control" id="registerPasswordConfirm" required
-                                       aria-required="true"
-                                       title="Passwort zur Bestätigung nochmals eingeben">
-                                <button class="btn btn-outline-secondary toggle-password" type="button" 
-                                        aria-label="Passwort anzeigen/verbergen"
-                                        title="Passwort anzeigen/verbergen">
-                                    <i class="bi bi-eye" aria-hidden="true"></i>
-                                </button>
-                            </div>
-                        </div>
-                        <div class="mb-3 form-check">
-                            <input type="checkbox" class="form-check-input" id="termsAccepted" required
-                                   aria-required="true"
-                                   title="Nutzungsbedingungen akzeptieren">
-                            <label class="form-check-label" for="termsAccepted">
-                                Ich akzeptiere die <a href="#" data-bs-toggle="modal" data-bs-target="#termsModal"
-                                   title="Nutzungsbedingungen anzeigen">Nutzungsbedingungen</a>
-                            </label>
-                        </div>
-                        <div class="text-end">
-                            <button type="submit" class="btn btn-primary" 
-                                    title="Registrierung abschließen">Registrieren</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Password Reset Modal -->
-    <div class="modal fade" id="passwordResetModal" tabindex="-1" aria-labelledby="passwordResetModalTitle">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="passwordResetModalTitle">Passwort zurücksetzen</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Schließen"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="passwordResetForm">
-                        <div class="mb-3">
-                            <label class="form-label" for="resetEmail">E-Mail</label>
-                            <input type="email" class="form-control" id="resetEmail" required
-                                   aria-required="true"
-                                   title="E-Mail-Adresse für Passwort-Reset eingeben">
-                        </div>
-                        <div class="text-end">
-                            <button type="submit" class="btn btn-primary" 
-                                    title="Passwort-Reset-Link anfordern">Link senden</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Terms Modal -->
-    <div class="modal fade" id="termsModal" tabindex="-1" aria-labelledby="termsModalTitle">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="termsModalTitle">Nutzungsbedingungen</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Schließen"></button>
-                </div>
-                <div class="modal-body">
-                    <div role="document">
-                        <h6>1. Nutzung des Dienstes</h6>
-                        <p>Der Bewerbungsassistent ist ein Online-Dienst zur Erstellung von Bewerbungsunterlagen...</p>
-                        
-                        <h6>2. Datenschutz</h6>
-                        <p>Ihre persönlichen Daten werden gemäß unserer Datenschutzerklärung verarbeitet...</p>
-                        
-                        <h6>3. Verantwortlichkeiten</h6>
-                        <p>Sie sind für die Richtigkeit Ihrer Angaben verantwortlich...</p>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal"
-                            title="Nutzungsbedingungen schließen">Verstanden</button>
+
+                <!-- Register Card (initially hidden) -->
+                <div class="card shadow-sm d-none" id="registerCard">
+                    <div class="card-body p-4">
+                        <h4 class="card-title text-center mb-4">Registrierung</h4>
+                        
+                        <!-- Register Form -->
+                        <form id="registerForm">
+                            <div class="mb-3">
+                                <label for="registerName" class="form-label">Name</label>
+                                <input type="text" class="form-control" id="registerName" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="registerEmail" class="form-label">E-Mail</label>
+                                <input type="email" class="form-control" id="registerEmail" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="registerPassword" class="form-label">Passwort</label>
+                                <div class="input-group">
+                                    <input type="password" class="form-control" id="registerPassword" required>
+                                    <button class="btn btn-outline-secondary" type="button" id="toggleRegisterPassword">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+                                </div>
+                                <div class="password-strength mt-2"></div>
+                            </div>
+                            <div class="mb-3 form-check">
+                                <input type="checkbox" class="form-check-input" id="terms" required>
+                                <label class="form-check-label" for="terms">
+                                    Ich akzeptiere die Nutzungsbedingungen
+                                </label>
+                            </div>
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary">Registrieren</button>
+                            </div>
+                        </form>
+
+                        <div class="text-center mt-3">
+                            <button type="button" class="btn btn-link" id="showLoginBtn">
+                                Zurück zur Anmeldung
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Toast Container -->
+    <!-- Toast Container für Benachrichtigungen -->
     <div class="toast-container position-fixed bottom-0 end-0 p-3">
         <div id="messageToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
             <div class="toast-header">
-                <i class="bi bi-info-circle me-2" aria-hidden="true"></i>
+                <i class="bi bi-info-circle me-2"></i>
                 <strong class="me-auto" id="toastTitle">Nachricht</strong>
-                <button type="button" class="btn-close" data-bs-dismiss="toast" 
-                        aria-label="Nachricht schließen"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Schließen"></button>
             </div>
-            <div class="toast-body" id="toastMessage" role="status"></div>
+            <div class="toast-body" id="toastMessage"></div>
         </div>
     </div>
 
-    <!-- Progress Bar Container -->
-    <div class="progress-container position-fixed bottom-0 start-0 end-0" aria-live="polite">
-        <div class="progress">
-            <div id="progressBar" 
-                 class="progress-bar" 
-                 role="progressbar"
-                 aria-label="Fortschritt im Bewerbungsprozess"
-                 aria-valuenow="0"
-                 aria-valuemin="0"
-                 aria-valuemax="100"
-                 style="width: 0%;">
-                <span class="visually-hidden">0% abgeschlossen</span>
-            </div>
-        </div>
-    </div>
-
-    <!-- Feature Buttons -->
-    <div class="feature-buttons d-none">
-        <button id="interviewerName" class="btn btn-outline-secondary"
-                title="Interviewer-Namen eingeben">
-            <i class="bi bi-person" aria-hidden="true"></i>
-            <span>Interviewer</span>
-        </button>
-        
-        <div class="input-group">
-            <label for="remotePdfURL" class="visually-hidden">PDF URL eingeben</label>
-            <input type="url" id="remotePdfURL" class="form-control" 
-                   placeholder="PDF URL eingeben"
-                   title="Geben Sie die URL einer PDF-Datei ein">
-            <button id="loadRemotePdfBtn" class="btn btn-outline-primary"
-                    title="PDF von URL laden">
-                <i class="bi bi-cloud-download" aria-hidden="true"></i>
-                <span>Laden</span>
-            </button>
-        </div>
-        
-        <button id="ttsBtn" class="btn btn-outline-secondary"
-                title="Text vorlesen lassen">
-            <i class="bi bi-volume-up" aria-hidden="true"></i>
-            <span>Vorlesen</span>
-        </button>
-        
-        <button id="similarityBtn" class="btn btn-outline-info"
-                title="Ähnlichkeit mit anderen Dokumenten prüfen">
-            <i class="bi bi-search" aria-hidden="true"></i>
-            <span>Ähnlichkeit prüfen</span>
-        </button>
-        
-        <div class="form-check form-switch">
-            <input type="checkbox" id="multiPageToggle" class="form-check-input"
-                   title="Mehrseitige Ansicht aktivieren">
-            <label class="form-check-label" for="multiPageToggle">Mehrseitige Ansicht</label>
-        </div>
-        
-        <button id="pdfExportBtn" class="btn btn-outline-primary"
-                title="Als PDF-Datei exportieren">
-            <i class="bi bi-file-pdf" aria-hidden="true"></i>
-            <span>Als PDF exportieren</span>
-        </button>
-        
-        <button id="collabConnectBtn" class="btn btn-outline-success"
-                title="Live-Kollaboration starten">
-            <i class="bi bi-people" aria-hidden="true"></i>
-            <span>Live-Kollaboration</span>
-        </button>
-        
-        <button id="archiveBtn" class="btn btn-outline-secondary"
-                title="Dokument archivieren">
-            <i class="bi bi-archive" aria-hidden="true"></i>
-            <span>Archivieren</span>
-        </button>
-    </div>
-
-    <!-- Bootstrap Bundle with Popper -->
+    <!-- Bootstrap Bundle mit Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
-    <!-- App Scripts -->
-    <script type="module" src="js/main.js"></script>
-    <script type="module" src="js/video-creator.js"></script>
-    <script type="module" src="js/video-manager.js"></script>
-
-    <!-- Video-Steuerungs-Script -->
+    <!-- Firebase SDK -->
     <script type="module">
-        import DemoVideoGenerator from './js/demo-video.js';
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { 
+            getAuth,
+            signInWithEmailAndPassword,
+            createUserWithEmailAndPassword
+        } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        
+        // Firebase Konfiguration und Initialisierung
+        import { firebaseConfig } from './js/firebase-config.js';
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
 
-        document.addEventListener('DOMContentLoaded', function() {
-            // Hole alle benötigten Elemente
-            const video = document.getElementById('shortDemoVideo');
-            const canvas = document.getElementById('demoCanvas');
-            const playBtn = document.querySelector('.video-control-btn');
-            const replayBtn = document.getElementById('replayBtn');
-            const muteBtn = document.getElementById('muteBtn');
-            const generateBtn = document.getElementById('generateVideoBtn');
-            const fallback = document.querySelector('.video-fallback');
-            
-            let isPlaying = false;
-            let playPromise = null;
+        // UI-Elemente
+        const loginForm = document.getElementById('loginForm');
+        const registerForm = document.getElementById('registerForm');
+        const showRegisterBtn = document.getElementById('showRegisterBtn');
+        const showLoginBtn = document.getElementById('showLoginBtn');
+        const loginCard = document.querySelector('.card');
+        const registerCard = document.getElementById('registerCard');
 
-            // Prüfe, ob alle Elemente gefunden wurden
-            if (!video || !playBtn || !replayBtn || !muteBtn || !fallback) {
-                console.error('Konnte nicht alle Video-Steuerungselemente finden');
-                return;
+        // Toggle zwischen Login und Register
+        showRegisterBtn.addEventListener('click', () => {
+            loginCard.classList.add('d-none');
+            registerCard.classList.remove('d-none');
+        });
+
+        showLoginBtn.addEventListener('click', () => {
+            registerCard.classList.add('d-none');
+            loginCard.classList.remove('d-none');
+        });
+
+        // Login Handler
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            try {
+                const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                showToast('Erfolgreich angemeldet', 'success');
+                // Hier später: Weiterleitung zum Dashboard
+            } catch (error) {
+                showToast(getErrorMessage(error.code), 'error');
             }
+        });
 
-            // Video-Generator initialisieren
-            const videoGenerator = new DemoVideoGenerator(canvas);
+        // Register Handler
+        registerForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('registerEmail').value;
+            const password = document.getElementById('registerPassword').value;
+
+            try {
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                showToast('Registrierung erfolgreich', 'success');
+                // Hier später: Weiterleitung zum Dashboard
+            } catch (error) {
+                showToast(getErrorMessage(error.code), 'error');
+            }
+        });
+
+        // Toast Funktion
+        function showToast(message, type = 'info') {
+            const toast = document.getElementById('messageToast');
+            const toastTitle = document.getElementById('toastTitle');
+            const toastMessage = document.getElementById('toastMessage');
             
-            // Fehlerbehandlung für Video-Laden
-            video.addEventListener('error', function(e) {
-                console.error('Videofehler:', e);
-                video.style.display = 'none';
-                fallback.style.display = 'block';
-            });
+            toastTitle.textContent = type === 'error' ? 'Fehler' : 'Erfolg';
+            toastMessage.textContent = message;
+            
+            const bsToast = new bootstrap.Toast(toast);
+            bsToast.show();
+        }
 
-            // Play/Pause-Button
-            playBtn.addEventListener('click', async function() {
-                if (!isPlaying) {
-                    try {
-                        // Warte auf vorherige Play-Promise
-                        if (playPromise !== null) {
-                            await playPromise;
-                        }
-                        // Starte neue Wiedergabe
-                        playPromise = video.play();
-                        await playPromise;
-                        isPlaying = true;
-                        playBtn.querySelector('i').classList.replace('bi-play-fill', 'bi-pause-fill');
-                    } catch (error) {
-                        console.error('Abspielen fehlgeschlagen:', error);
-                        isPlaying = false;
-                        playBtn.querySelector('i').classList.replace('bi-pause-fill', 'bi-play-fill');
-                    } finally {
-                        playPromise = null;
-                    }
+        // Fehlermeldungen
+        function getErrorMessage(code) {
+            switch (code) {
+                case 'auth/invalid-email':
+                    return 'Ungültige E-Mail-Adresse';
+                case 'auth/user-disabled':
+                    return 'Dieser Account wurde deaktiviert';
+                case 'auth/user-not-found':
+                    return 'Kein Account mit dieser E-Mail gefunden';
+                case 'auth/wrong-password':
+                    return 'Falsches Passwort';
+                case 'auth/email-already-in-use':
+                    return 'Diese E-Mail wird bereits verwendet';
+                case 'auth/operation-not-allowed':
+                    return 'Operation nicht erlaubt';
+                case 'auth/weak-password':
+                    return 'Das Passwort ist zu schwach';
+                default:
+                    return 'Ein Fehler ist aufgetreten';
+            }
+        }
+
+        // Password Toggle
+        document.querySelectorAll('.input-group .btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const input = e.target.closest('.input-group').querySelector('input');
+                const icon = e.target.closest('.btn').querySelector('i');
+                
+                if (input.type === 'password') {
+                    input.type = 'text';
+                    icon.classList.replace('bi-eye', 'bi-eye-slash');
                 } else {
-                    try {
-                        // Warte auf vorherige Play-Promise
-                        if (playPromise !== null) {
-                            await playPromise;
-                        }
-                        video.pause();
-                        isPlaying = false;
-                        playBtn.querySelector('i').classList.replace('bi-pause-fill', 'bi-play-fill');
-                    } catch (error) {
-                        console.error('Pause fehlgeschlagen:', error);
-                    }
-                }
-            });
-
-            // Neu-Starten-Button
-            replayBtn.addEventListener('click', async function() {
-                try {
-                    // Warte auf vorherige Play-Promise
-                    if (playPromise !== null) {
-                        await playPromise;
-                    }
-                    video.currentTime = 0;
-                    playPromise = video.play();
-                    await playPromise;
-                    isPlaying = true;
-                    playBtn.querySelector('i').classList.replace('bi-play-fill', 'bi-pause-fill');
-                } catch (error) {
-                    console.error('Neustart fehlgeschlagen:', error);
-                    isPlaying = false;
-                } finally {
-                    playPromise = null;
-                }
-            });
-
-            // Ton-Button
-            muteBtn.addEventListener('click', function() {
-                video.muted = !video.muted;
-                const icon = muteBtn.querySelector('i');
-                if (video.muted) {
-                    icon.classList.remove('bi-volume-up');
-                    icon.classList.add('bi-volume-mute');
-                } else {
-                    icon.classList.remove('bi-volume-mute');
-                    icon.classList.add('bi-volume-up');
-                }
-            });
-
-            // Video-Events
-            video.addEventListener('play', function() {
-                isPlaying = true;
-                playBtn.querySelector('i').classList.replace('bi-play-fill', 'bi-pause-fill');
-            });
-
-            video.addEventListener('pause', function() {
-                isPlaying = false;
-                playBtn.querySelector('i').classList.replace('bi-pause-fill', 'bi-play-fill');
-            });
-
-            video.addEventListener('ended', function() {
-                isPlaying = false;
-                playBtn.querySelector('i').classList.replace('bi-pause-fill', 'bi-play-fill');
-                playPromise = null;
-            });
-
-            // Generate-Button Handler
-            generateBtn?.addEventListener('click', async function() {
-                try {
-                    generateBtn.disabled = true;
-                    generateBtn.innerHTML = '<i class="bi bi-hourglass-split"></i><span class="ms-1">Generiere...</span>';
-                    await videoGenerator.startRecording();
-                    showSuccess('Demo-Video wurde erfolgreich generiert!');
-                } catch (error) {
-                    console.error('Fehler bei der Video-Generierung:', error);
-                    showError('Video-Generierung fehlgeschlagen');
-                } finally {
-                    generateBtn.disabled = false;
-                    generateBtn.innerHTML = '<i class="bi bi-camera-video"></i><span class="ms-1">Demo generieren</span>';
+                    input.type = 'password';
+                    icon.classList.replace('bi-eye-slash', 'bi-eye');
                 }
             });
         });

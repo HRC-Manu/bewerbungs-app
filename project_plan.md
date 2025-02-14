@@ -1,66 +1,73 @@
 # Project Plan: AI-Powered Job Application Assistant
 
-## 1. Requirements Analysis and Conceptual Design
-- Clarify the specific needs and requirements of the user's friend
-- Define functional and non-functional requirements based on his needs
-- Consider future scalability as a non-functional requirement
-- Select technologies that enable easy scalability
-- Design a scalable system architecture (e.g. microservices or serverless)
-- Create a basic data model
-- Sketch user interface concept based on the friend's preferences
+## 1. Web-App Basis (Frontend)
+- Erstellen der HTML/CSS Grundstruktur
+- Responsive Design mit Bootstrap
+- Implementierung der UI-Komponenten:
+  - Login/Register Formulare
+  - Bewerbungsformular
+  - PDF-Upload
+  - Vorschau-Bereich
 
-## 2. Set up Development Environment  
-- Create repository on GitHub
-- Install required tools and libraries
-- Set up basic project structure
-- Define a simple development workflow
+## 2. Firebase Integration
+- Authentication einrichten
+  - Email/Password Login
+  - Benutzerprofile
+- Realtime Database konfigurieren
+  - Bewerbungsdaten-Struktur
+  - Sicherheitsregeln
+- Storage einrichten
+  - PDF-Upload
+  - Dokumenten-Management
 
-## 3. Implement Core Functionality
-- Input forms for job posting and CV
-- Extraction of data from uploaded PDFs
-- Integration of ChatGPT API for cover letter and CV generation
-- Preview of generated documents
-- Export functions for PDF and Word
-- Use scalable data stores (e.g. NoSQL databases or object storage)
-- Decouple frontend and backend (e.g. through APIs)
-- Implement caching and asynchronous processing where applicable
+## 3. KI-Integration
+- ChatGPT API einbinden
+  - Anschreiben-Generierung
+  - Lebenslauf-Analyse
+- DeepL API (optional)
+  - Übersetzungsfunktionen
+- Fehlerbehandlung und Fallbacks
 
-## 4. Integrate Additional APIs
-- Check with the friend if additional APIs like DeepL are needed
-- If required, integrate them into the application flow
-- Adapt user interface if needed
+## 4. Kernfunktionen
+- PDF-Verarbeitung
+  - Text-Extraktion
+  - Formatierung
+- Bewerbungsgenerator
+  - Vorlagen-System
+  - Anpassbare Layouts
+- Export-Funktionen
+  - PDF-Export
+  - Word-Export
 
-## 5. Design User Interface
-- Design structure and navigation of the interface based on the friend's feedback
-- Implement individual screens with HTML/CSS
-- Add basic interactions and transitions with JavaScript 
-- Ensure compatibility with the friend's devices
+## 5. Benutzeroberfläche verfeinern
+- Fortschrittsanzeige
+- Feedback-System
+- Tooltips und Hilfe-Texte
+- Responsive Anpassungen
+- Loading-States
 
-## 6. Testing and Quality Assurance
-- Perform essential functionality tests
-- Conduct manual tests of the user interface with the friend
-- Fix identified bugs
-- Optimize performance if needed
-- Implement monitoring to identify bottlenecks
-- Automate tests and deployment
+## 6. Premium-Features
+- Bezahlsystem einrichten
+- Erweiterte Funktionen:
+  - Mehrere Vorlagen
+  - KI-Optimierung
+  - Unbegrenzte Speicherung
+- Admin-Dashboard
 
-## 7. Deployment and Commissioning
-- Select a hosting solution that allows for easy scaling 
-- Containerize the application (e.g. with Docker)
-- Set up the environment 
-- Deploy the application
-- Perform basic tests and final acceptance with the friend
-- Provide instructions for use and support
+## 7. Deployment & Launch
+- Firebase Hosting konfigurieren
+- Performance-Optimierung
+- SEO-Einstellungen
+- Launch-Checkliste
 
-## Next Steps
-- Discuss the detailed requirements with the user's friend
-- Prioritize features based on his needs
-- Create a timeline for regular feedback cycles
-- Schedule regular sync meetings with the friend to discuss progress and incorporate his feedback
-- Start with the requirements analysis and conceptual design
+## Nächste Schritte
+1. HTML/CSS Grundgerüst erstellen
+2. Firebase Auth implementieren
+3. PDF-Upload einrichten
+4. ChatGPT Integration starten
 
-## 8. Prioritize work packages and define dependencies
-- Estimate efforts for each package
-- Create concrete timeline with milestones
-- Schedule regular sync meetings to discuss progress, adjust priorities and identify issues early
-- Use this plan as a guide and adapt flexibly to new insights 
+## Prioritäten
+1. Funktionierendes Login-System
+2. Basis-PDF-Verarbeitung
+3. Einfache KI-Integration
+4. Export-Funktionen
