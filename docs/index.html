@@ -80,20 +80,33 @@
         
         <!-- Video-Container mit Fallback -->
         <div class="video-container mb-4">
-            <video id="shortDemoVideo" width="640" height="360" poster="images/demo-poster.jpg" 
-                   class="shadow-sm rounded" autoplay muted loop playsinline 
-                   aria-label="Kurzes Einführungs-Video zur Benutzung der App">
+            <video id="shortDemoVideo" width="640" height="360" 
+                   class="shadow-sm rounded" 
+                   autoplay muted loop
+                   playsinline webkit-playsinline
+                   aria-label="Kurzes Einführungs-Video zur Benutzung der App"
+                   poster="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='640' height='360' viewBox='0 0 640 360'%3E%3Crect width='100%25' height='100%25' fill='%23f8f9fa'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='system-ui' font-size='14' fill='%236c757d'%3EVideo-Vorschau%3C/text%3E%3C/svg%3E">
                 <source src="videos/short_demo.mp4" type="video/mp4">
+                <source src="videos/short_demo.webm" type="video/webm">
+                <!-- Fallback für Browser ohne Video-Support -->
                 <div class="video-fallback p-4 bg-light rounded">
-                    <i class="bi bi-play-circle display-4 text-primary mb-3"></i>
-                    <p>Hier würde ein kurzes Anleitungsvideo erscheinen, das zeigt:</p>
+                    <i class="bi bi-play-circle display-4 text-primary mb-3" aria-hidden="true"></i>
+                    <p>Hier sehen Sie normalerweise ein kurzes Anleitungsvideo. Die wichtigsten Funktionen sind:</p>
                     <ul class="text-start list-unstyled">
-                        <li><i class="bi bi-check2 text-success me-2"></i>Lebenslauf hochladen</li>
-                        <li><i class="bi bi-check2 text-success me-2"></i>Stellenanzeige einfügen</li>
-                        <li><i class="bi bi-check2 text-success me-2"></i>Anschreiben generieren</li>
+                        <li><i class="bi bi-check2 text-success me-2" aria-hidden="true"></i>Lebenslauf hochladen</li>
+                        <li><i class="bi bi-check2 text-success me-2" aria-hidden="true"></i>Stellenanzeige einfügen</li>
+                        <li><i class="bi bi-check2 text-success me-2" aria-hidden="true"></i>Anschreiben generieren</li>
                     </ul>
+                    <noscript>
+                        <p class="text-muted">JavaScript ist deaktiviert. Bitte aktivieren Sie JavaScript für die volle Funktionalität.</p>
+                    </noscript>
                 </div>
             </video>
+            <!-- Zusätzlicher Fallback für ältere Browser -->
+            <div class="video-fallback-static d-none">
+                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='640' height='360' viewBox='0 0 640 360'%3E%3Crect width='100%25' height='100%25' fill='%23f8f9fa'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='system-ui' font-size='14' fill='%236c757d'%3EVideo nicht verfügbar%3C/text%3E%3C/svg%3E"
+                     alt="Video-Vorschau" width="640" height="360" class="img-fluid rounded">
+            </div>
         </div>
         
         <button id="startBtn" class="btn btn-primary btn-lg mt-4" 
@@ -751,7 +764,7 @@
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
         import { getFirestore } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
         import { getStorage } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
-        import { getDatabase } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
         
         // Firebase wird automatisch aus firebase-config.js initialisiert
     </script>
