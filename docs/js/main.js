@@ -1,18 +1,38 @@
 // Hauptdatei für die Bewerbungs-App
-import { initializeApp } from 'firebase/app';
-import { getAuth, connectAuthEmulator, setPersistence, browserLocalPersistence, browserSessionPersistence } from 'firebase/auth';
-import { getFirestore, connectFirestoreEmulator, enableIndexedDbPersistence, collection, getDocs, query, where } from 'firebase/firestore';
-import { getStorage, connectStorageEmulator } from 'firebase/storage';
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+import { 
+    getAuth, 
+    connectAuthEmulator, 
+    setPersistence, 
+    browserLocalPersistence 
+} from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+import { 
+    getFirestore, 
+    connectFirestoreEmulator, 
+    enableIndexedDbPersistence,
+    collection,
+    getDocs,
+    query,
+    where,
+    doc,
+    setDoc
+} from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+import { 
+    getStorage, 
+    connectStorageEmulator 
+} from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js';
 import { FIREBASE_CONFIG } from './config.js';
 import { VideoManager } from './video-manager.js';
 import AuthService from './services/auth-service.js';
+import { firebaseConnectionTester } from './firebase-connection.js';
 
 // Performance Monitoring
 let startTime = performance.now();
 const performanceMetrics = {
     initTime: 0,
     authTime: 0,
-    renderTime: 0
+    renderTime: 0,
+    connectionTestTime: 0
 };
 
 // Globaler Error-Handler für Fehler-Tracking
@@ -53,13 +73,25 @@ let firebaseAuth = null;
 let firebaseDb = null;
 let firebaseStorage = null;
 
-// Firebase Initialization mit Retry-Mechanismus
+// Firebase Initialization mit Verbindungstest
 async function initializeFirebase(retryCount = 3) {
+    // Erst Verbindungstest durchführen
+    console.log('[Firebase] Running connection test...');
+    const connectionTest = await firebaseConnectionTester.testConnection();
+    performanceMetrics.connectionTestTime = connectionTest.connectionTime;
+
+    if (!connectionTest.success) {
+        console.error('[Firebase] Connection test failed:', connectionTest);
+        throw new Error(`Firebase connection test failed: ${connectionTest.lastError?.message}`);
+    }
+
+    console.log('[Firebase] Connection test successful, initializing services...');
+
     for (let i = 0; i < retryCount; i++) {
         try {
             // Check if already initialized
             if (firebaseApp) {
-                console.warn('Firebase already initialized, returning existing instance');
+                console.warn('[Firebase] Already initialized, returning existing instance');
                 return { 
                     app: firebaseApp, 
                     auth: firebaseAuth, 
@@ -70,20 +102,20 @@ async function initializeFirebase(retryCount = 3) {
 
             // Initialize Firebase
             firebaseApp = initializeApp(FIREBASE_CONFIG);
-            console.log('Firebase App initialized');
+            console.log('[Firebase] App initialized');
 
             // Initialize Auth
             firebaseAuth = getAuth(firebaseApp);
             await setPersistence(firebaseAuth, browserLocalPersistence);
-            console.log('Firebase Auth initialized');
+            console.log('[Firebase] Auth initialized');
 
             // Initialize Firestore
             firebaseDb = getFirestore(firebaseApp);
-            console.log('Firebase Firestore initialized');
+            console.log('[Firebase] Firestore initialized');
 
             // Initialize Storage
             firebaseStorage = getStorage(firebaseApp);
-            console.log('Firebase Storage initialized');
+            console.log('[Firebase] Storage initialized');
 
             // Entwicklungsmodus-Emulatoren
             if (window.location.hostname === 'localhost') {
@@ -91,35 +123,41 @@ async function initializeFirebase(retryCount = 3) {
                     connectAuthEmulator(firebaseAuth, 'http://localhost:9099');
                     connectFirestoreEmulator(firebaseDb, 'localhost', 8080);
                     connectStorageEmulator(firebaseStorage, 'localhost', 9199);
-                    console.log('Firebase Emulators connected');
+                    console.log('[Firebase] Emulators connected');
                 } catch (emulatorError) {
-                    console.warn('Failed to connect to emulators:', emulatorError);
+                    console.warn('[Firebase] Failed to connect to emulators:', emulatorError);
                 }
-            }
-
-            // Test Firestore connection
-            try {
-                const testQuery = query(collection(firebaseDb, 'test'));
-                await getDocs(testQuery);
-                console.log('Firestore connection test successful');
-            } catch (firestoreError) {
-                console.error('Firestore connection test failed:', firestoreError);
-                throw new Error('Firestore connection failed');
             }
 
             // Enable offline persistence
             try {
                 await enableIndexedDbPersistence(firebaseDb);
-                console.log('Firestore offline persistence enabled');
+                console.log('[Firebase] Offline persistence enabled');
             } catch (persistenceError) {
                 if (persistenceError.code === 'failed-precondition') {
-                    console.warn('Multiple tabs open, persistence enabled in first tab only');
+                    console.warn('[Firebase] Multiple tabs open, persistence enabled in first tab only');
                 } else if (persistenceError.code === 'unimplemented') {
-                    console.warn('Browser doesn\'t support persistence');
+                    console.warn('[Firebase] Browser doesn\'t support persistence');
                 } else {
-                    console.error('Failed to enable persistence:', persistenceError);
+                    console.error('[Firebase] Failed to enable persistence:', persistenceError);
                 }
             }
+
+            // Periodischer Verbindungstest
+            setInterval(async () => {
+                const healthCheck = await firebaseConnectionTester.testConnection();
+                if (!healthCheck.success) {
+                    console.warn('[Firebase] Health check failed:', healthCheck);
+                    app.toastManager.showToast('Verbindungsprobleme erkannt. Versuche wiederherzustellen...', 'warning');
+                    // Versuche Wiederherstellung
+                    try {
+                        await initializeFirebase(1);
+                        app.toastManager.showToast('Verbindung wiederhergestellt', 'success');
+                    } catch (error) {
+                        app.toastManager.showToast('Verbindung konnte nicht wiederhergestellt werden', 'error');
+                    }
+                }
+            }, 60000); // Alle 60 Sekunden
 
             return { 
                 app: firebaseApp, 
@@ -128,14 +166,14 @@ async function initializeFirebase(retryCount = 3) {
                 storage: firebaseStorage 
             };
         } catch (error) {
-            console.error(`Firebase initialization attempt ${i + 1} failed:`, error);
+            console.error(`[Firebase] Initialization attempt ${i + 1} failed:`, error);
             
             // Clear any partial initialization
             if (firebaseApp) {
                 try {
                     await firebaseApp.delete();
                 } catch (deleteError) {
-                    console.warn('Failed to delete Firebase app:', deleteError);
+                    console.warn('[Firebase] Failed to delete app:', deleteError);
                 }
                 firebaseApp = null;
                 firebaseAuth = null;
