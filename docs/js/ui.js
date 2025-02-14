@@ -1,12 +1,14 @@
 import { globalState } from './state.js';
 import { safeGetElem } from './utils.js';
 
-export function showLoading(element, text) {
+export function showLoading(element, text = 'Lädt...') {
+    if (!element) return;
+    
     if (element instanceof HTMLButtonElement) {
         element.disabled = true;
         const originalText = element.innerHTML;
         element.innerHTML = `
-            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+            <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
             ${text}
         `;
         element.dataset.originalText = originalText;
@@ -24,6 +26,8 @@ export function showLoading(element, text) {
 }
 
 export function hideLoading(element, originalText = '') {
+    if (!element) return;
+    
     if (element instanceof HTMLButtonElement) {
         element.disabled = false;
         element.innerHTML = originalText || element.dataset.originalText || element.innerHTML;
@@ -35,20 +39,26 @@ export function hideLoading(element, originalText = '') {
     }
 }
 
-export function showSuccess(message) {
+export function showSuccess(message, duration = 3000) {
     try {
         const toast = globalState?.elements?.messageToast;
+        if (!toast) {
+            console.log('Success:', message);
+            return;
+        }
+
         const toastTitle = document.getElementById('toastTitle');
         const toastMessage = document.getElementById('toastMessage');
         
-        if (toast && toastTitle && toastMessage) {
+        if (toastTitle && toastMessage) {
             toastTitle.textContent = 'Erfolg';
             toastTitle.className = 'me-auto text-success';
             toastMessage.textContent = message;
-            toast.show();
-        } else {
-            console.log('Success:', message);
-            // Optional: alert(message);
+            
+            const bsToast = new bootstrap.Toast(toast, {
+                delay: duration
+            });
+            bsToast.show();
         }
     } catch (error) {
         console.log('Success (fallback):', message);
