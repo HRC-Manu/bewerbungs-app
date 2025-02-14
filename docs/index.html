@@ -355,11 +355,11 @@
     </div>
 
     <!-- Preview Modal -->
-    <div class="modal fade" id="previewModal" tabindex="-1">
+    <div class="modal fade" id="previewModal" tabindex="-1" aria-labelledby="previewModalTitle">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Vorschau</h5>
+                    <h5 class="modal-title" id="previewModalTitle">Vorschau</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Schließen"></button>
                 </div>
                 <div class="modal-body">
@@ -367,28 +367,36 @@
                     <div class="mb-3 d-flex gap-2 align-items-center">
                         <label for="colorPicker" class="visually-hidden">Farbe wählen</label>
                         <input type="color" id="colorPicker" class="form-control form-control-color" 
-                               title="Wählen Sie eine Farbe für das Design">
+                               title="Wählen Sie eine Farbe für das Design"
+                               aria-label="Farbe für das Design auswählen">
+                               
                         <label for="fontSelect" class="visually-hidden">Schriftart wählen</label>
                         <select id="fontSelect" class="form-select w-auto"
-                                title="Wählen Sie eine Schriftart">
+                                title="Wählen Sie eine Schriftart"
+                                aria-label="Schriftart auswählen">
                             <option value="Arial">Arial</option>
                             <option value="Times New Roman">Times New Roman</option>
                             <option value="Calibri">Calibri</option>
                         </select>
+                        
                         <div class="form-check">
                             <input type="checkbox" id="borderToggle" class="form-check-input"
-                                   title="Rahmen ein-/ausblenden">
+                                   title="Rahmen ein-/ausblenden"
+                                   aria-label="Rahmen ein- oder ausblenden">
                             <label class="form-check-label" for="borderToggle">Rahmen anzeigen</label>
                         </div>
+                        
                         <button id="refreshPreviewBtn" class="btn btn-outline-primary"
-                                title="Vorschau aktualisieren">
+                                title="Vorschau aktualisieren"
+                                aria-label="Vorschau aktualisieren">
                             <i class="bi bi-arrow-clockwise" aria-hidden="true"></i>
                             <span>Aktualisieren</span>
                         </button>
                     </div>
                     
                     <!-- Preview Container -->
-                    <div id="modernPreviewContainer" class="preview-container p-4 border rounded">
+                    <div id="modernPreviewContainer" class="preview-container p-4 border rounded" 
+                         role="region" aria-label="Dokumentvorschau">
                         <!-- Content will be inserted here -->
                     </div>
                 </div>
@@ -518,11 +526,11 @@
     </div>
 
     <!-- Register Modal -->
-    <div class="modal fade" id="registerModal" tabindex="-1">
+    <div class="modal fade" id="registerModal" tabindex="-1" aria-labelledby="registerModalTitle">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Registrieren</h5>
+                    <h5 class="modal-title" id="registerModalTitle">Registrieren</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Schließen"></button>
                 </div>
                 <div class="modal-body">
@@ -530,47 +538,60 @@
                         <div class="mb-3">
                             <label class="form-label" for="registerFirstName">Vorname</label>
                             <input type="text" class="form-control" id="registerFirstName" required 
+                                   aria-required="true"
                                    title="Bitte Vornamen eingeben">
                         </div>
                         <div class="mb-3">
                             <label class="form-label" for="registerLastName">Nachname</label>
                             <input type="text" class="form-control" id="registerLastName" required 
+                                   aria-required="true"
                                    title="Bitte Nachnamen eingeben">
                         </div>
                         <div class="mb-3">
                             <label class="form-label" for="registerEmail">E-Mail-Adresse</label>
                             <input type="email" class="form-control" id="registerEmail" required 
+                                   aria-required="true"
                                    title="E-Mail-Adresse eingeben">
                         </div>
                         <div class="mb-3">
                             <label class="form-label" for="registerPassword">Passwort</label>
                             <div class="input-group">
                                 <input type="password" class="form-control" id="registerPassword" required
+                                       aria-required="true"
                                        title="Passwort festlegen">
-                                <button class="btn btn-outline-secondary toggle-password" type="button" aria-label="Passwort anzeigen/verbergen">
+                                <button class="btn btn-outline-secondary toggle-password" type="button" 
+                                        aria-label="Passwort anzeigen/verbergen"
+                                        title="Passwort anzeigen/verbergen">
                                     <i class="bi bi-eye" aria-hidden="true"></i>
                                 </button>
                             </div>
-                            <div class="password-strength mt-2"></div>
+                            <div class="password-strength mt-2" aria-live="polite"></div>
                         </div>
                         <div class="mb-3">
                             <label class="form-label" for="registerPasswordConfirm">Passwort bestätigen</label>
                             <div class="input-group">
                                 <input type="password" class="form-control" id="registerPasswordConfirm" required
+                                       aria-required="true"
                                        title="Passwort zur Bestätigung nochmals eingeben">
-                                <button class="btn btn-outline-secondary toggle-password" type="button" aria-label="Passwort anzeigen/verbergen">
+                                <button class="btn btn-outline-secondary toggle-password" type="button" 
+                                        aria-label="Passwort anzeigen/verbergen"
+                                        title="Passwort anzeigen/verbergen">
                                     <i class="bi bi-eye" aria-hidden="true"></i>
                                 </button>
                             </div>
                         </div>
                         <div class="mb-3 form-check">
-                            <input type="checkbox" class="form-check-input" id="termsAccepted" required>
+                            <input type="checkbox" class="form-check-input" id="termsAccepted" required
+                                   aria-required="true"
+                                   title="Nutzungsbedingungen akzeptieren">
                             <label class="form-check-label" for="termsAccepted">
-                                Ich akzeptiere die <a href="#" data-bs-toggle="modal" data-bs-target="#termsModal">Nutzungsbedingungen</a>
+                                Ich akzeptiere die <a href="#" data-bs-toggle="modal" data-bs-target="#termsModal"
+                                   title="Nutzungsbedingungen anzeigen">Nutzungsbedingungen</a>
                             </label>
                         </div>
                         <div class="text-end">
-                            <button type="submit" class="btn btn-primary">Registrieren</button>
+                            <button type="submit" class="btn btn-primary" 
+                                    title="Registrierung abschließen">Registrieren</button>
                         </div>
                     </form>
                 </div>
@@ -579,21 +600,24 @@
     </div>
 
     <!-- Password Reset Modal -->
-    <div class="modal fade" id="passwordResetModal" tabindex="-1">
+    <div class="modal fade" id="passwordResetModal" tabindex="-1" aria-labelledby="passwordResetModalTitle">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Passwort zurücksetzen</h5>
+                    <h5 class="modal-title" id="passwordResetModalTitle">Passwort zurücksetzen</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Schließen"></button>
                 </div>
                 <div class="modal-body">
                     <form id="passwordResetForm">
                         <div class="mb-3">
-                            <label class="form-label">E-Mail</label>
-                            <input type="email" class="form-control" id="resetEmail" required>
+                            <label class="form-label" for="resetEmail">E-Mail</label>
+                            <input type="email" class="form-control" id="resetEmail" required
+                                   aria-required="true"
+                                   title="E-Mail-Adresse für Passwort-Reset eingeben">
                         </div>
                         <div class="text-end">
-                            <button type="submit" class="btn btn-primary">Link senden</button>
+                            <button type="submit" class="btn btn-primary" 
+                                    title="Passwort-Reset-Link anfordern">Link senden</button>
                         </div>
                     </form>
                 </div>
@@ -602,25 +626,28 @@
     </div>
 
     <!-- Terms Modal -->
-    <div class="modal fade" id="termsModal" tabindex="-1">
+    <div class="modal fade" id="termsModal" tabindex="-1" aria-labelledby="termsModalTitle">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Nutzungsbedingungen</h5>
+                    <h5 class="modal-title" id="termsModalTitle">Nutzungsbedingungen</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Schließen"></button>
                 </div>
                 <div class="modal-body">
-                    <h6>1. Nutzung des Dienstes</h6>
-                    <p>Der Bewerbungsassistent ist ein Online-Dienst zur Erstellung von Bewerbungsunterlagen...</p>
-                    
-                    <h6>2. Datenschutz</h6>
-                    <p>Ihre persönlichen Daten werden gemäß unserer Datenschutzerklärung verarbeitet...</p>
-                    
-                    <h6>3. Verantwortlichkeiten</h6>
-                    <p>Sie sind für die Richtigkeit Ihrer Angaben verantwortlich...</p>
+                    <div role="document">
+                        <h6>1. Nutzung des Dienstes</h6>
+                        <p>Der Bewerbungsassistent ist ein Online-Dienst zur Erstellung von Bewerbungsunterlagen...</p>
+                        
+                        <h6>2. Datenschutz</h6>
+                        <p>Ihre persönlichen Daten werden gemäß unserer Datenschutzerklärung verarbeitet...</p>
+                        
+                        <h6>3. Verantwortlichkeiten</h6>
+                        <p>Sie sind für die Richtigkeit Ihrer Angaben verantwortlich...</p>
+                    </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Verstanden</button>
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal"
+                            title="Nutzungsbedingungen schließen">Verstanden</button>
                 </div>
             </div>
         </div>
