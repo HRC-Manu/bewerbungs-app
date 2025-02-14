@@ -57,22 +57,34 @@ export function showSuccess(message) {
 
 export function showError(message) {
     try {
-        const toast = globalState?.elements?.messageToast;
+        // Prüfe erst ob globalState existiert
+        if (!window.globalState?.elements) {
+            console.error('Global state not initialized');
+            alert(message);
+            return;
+        }
+
+        const toast = globalState.elements.messageToast;
+        if (!toast) {
+            console.warn('Toast not available, falling back to alert');
+            alert(message);
+            return;
+        }
+
         const toastTitle = document.getElementById('toastTitle');
         const toastMessage = document.getElementById('toastMessage');
         
-        if (toast && toastTitle && toastMessage) {
-            toastTitle.textContent = 'Fehler';
-            toastTitle.className = 'me-auto text-danger';
-            toastMessage.textContent = message;
-            toast.show();
-        } else {
-            // Fallback wenn Toast nicht verfügbar
-            console.error('Error:', message);
+        if (!toastTitle || !toastMessage) {
+            console.warn('Toast elements not found, falling back to alert');
             alert(message);
+            return;
         }
+
+        toastTitle.textContent = 'Fehler';
+        toastTitle.className = 'me-auto text-danger';
+        toastMessage.textContent = message;
+        toast.show();
     } catch (error) {
-        // Ultimate Fallback
         console.error('Error in showError:', error);
         alert(message);
     }
