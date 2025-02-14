@@ -6,13 +6,14 @@ import { AIService } from './ai-service.js';
 import { Features } from './features.js';
 import { initializeWorkflow, showStep, nextStep, prevStep } from './workflow.js';
 import { safeGetElem, extractJobAdText } from './utils.js';
+import AuthService from './services/auth-service.js';
 import DocumentService from './services/document-service.js';
 import { auth } from './firebase-config.js';
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { ref, set } from "firebase/database";
 import { db, testFirebaseConnection } from './firebase-config.js';
 
-// Füge dies am Anfang deiner app.js hinzu
+// Auth state listener
 onAuthStateChanged(auth, (user) => {
     if (user) {
         // User ist eingeloggt
