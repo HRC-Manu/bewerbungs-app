@@ -1279,7 +1279,7 @@ function initializeMainButtons() {
         if (!AuthService.currentUser) {
             showError('Bitte melden Sie sich zuerst an');
             elements.loginModal.show();
-            return;
+          return;
         }
         
         try {
