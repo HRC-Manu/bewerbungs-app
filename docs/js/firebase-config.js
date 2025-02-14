@@ -1,6 +1,13 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getAuth, connectAuthEmulator } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { 
+    getAuth, 
+    connectAuthEmulator,
+    signInWithEmailAndPassword,
+    createUserWithEmailAndPassword,
+    signOut,
+    onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { 
     getFirestore, 
     connectFirestoreEmulator, 
@@ -45,7 +52,7 @@ export const firebaseConfig = {
     messagingSenderId: "540459849039",
     appId: "1:540459849039:web:9eda29b3e754d48472613a",
     measurementId: "G-5QHBC1W4J3",
-    databaseURL: "https://bewerbungs-app.firebaseio.com"
+    databaseURL: "https://bewerbungs-app-default-rtdb.europe-west1.firebasedatabase.app"
 };
 
 // Initialisiere Firebase mit Fehlerbehandlung
@@ -89,12 +96,80 @@ if (window.location.hostname === 'localhost') {
     console.log('Firebase läuft im Entwicklungsmodus');
 }
 
-// Test-Funktion für die Firebase-Verbindung
-export async function testFirebaseConnection() {
+// Auth-Funktionen
+export async function signIn(email, password) {
     try {
-        // Test Auth
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        console.log('✓ Anmeldung erfolgreich');
+        return userCredential.user;
+    } catch (error) {
+        console.error('Anmeldefehler:', error);
+        throw error;
+    }
+}
+
+export async function signUp(email, password) {
+    try {
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        console.log('✓ Registrierung erfolgreich');
+        
+        // Initialisiere Benutzerstruktur in Realtime Database
+        const userId = userCredential.user.uid;
+        const userRef = dbRef(rtdb, `users/${userId}`);
+        await dbSet(userRef, {
+            email: email,
+            createdAt: new Date().toISOString(),
+            applications: {}
+        });
+        
+        return userCredential.user;
+    } catch (error) {
+        console.error('Registrierungsfehler:', error);
+        throw error;
+    }
+}
+
+export async function logOut() {
+    try {
+        await signOut(auth);
+        console.log('✓ Abmeldung erfolgreich');
+    } catch (error) {
+        console.error('Abmeldefehler:', error);
+        throw error;
+    }
+}
+
+// Auth State Observer
+export function initAuthObserver(callback) {
+    return onAuthStateChanged(auth, (user) => {
+        if (user) {
+            console.log('Benutzer ist angemeldet:', user.email);
+        } else {
+            console.log('Benutzer ist abgemeldet');
+        }
+        if (callback) callback(user);
+    });
+}
+
+// Erweiterte Test-Funktion mit automatischer Anmeldung
+export async function testFirebaseConnection(testEmail = 'test@example.com', testPassword = 'testPassword123') {
+    try {
+        // Test Auth mit Anmeldung
         await auth._getRecaptchaConfig();
         console.log('✓ Firebase Auth Verbindung OK');
+
+        // Versuche Anmeldung oder Registrierung
+        let user;
+        try {
+            user = await signIn(testEmail, testPassword);
+        } catch (error) {
+            if (error.code === 'auth/user-not-found') {
+                user = await signUp(testEmail, testPassword);
+            } else {
+                throw error;
+            }
+        }
+        console.log('✓ Test-Benutzer angemeldet');
 
         // Test Firestore
         const testCollection = collection(db, 'test');
@@ -114,23 +189,38 @@ export async function testFirebaseConnection() {
         await uploadString(testRef, 'test');
         console.log('✓ Storage Verbindung OK');
 
-        // Test Realtime Database
-        const testDbRef = dbRef(rtdb, 'test/connection');
-        await dbSet(testDbRef, {
-            timestamp: new Date().toISOString(),
-            status: 'ok'
-        });
-        console.log('✓ Realtime Database Verbindung OK');
+        // Test Realtime Database - Angepasst an die Regeln
+        if (auth.currentUser) {
+            const userId = auth.currentUser.uid;
+            const testDbRef = dbRef(rtdb, `users/${userId}/applications/test`);
+            await dbSet(testDbRef, {
+                jobTitle: 'Test Position',
+                company: 'Test Company',
+                status: 'test',
+                timestamp: new Date().toISOString()
+            });
+            console.log('✓ Realtime Database Verbindung OK');
+        } else {
+            console.log('⚠️ Realtime Database Test übersprungen - Benutzer nicht angemeldet');
+        }
 
         return true;
     } catch (error) {
         console.error('Firebase Verbindungsfehler:', error);
         throw new Error('Firebase Verbindung fehlgeschlagen: ' + error.message);
     } finally {
-        // Cleanup test data
+        // Cleanup
         try {
             const testRef = ref(storage, 'test/connection.txt');
             await deleteObject(testRef).catch(() => {});
+            
+            if (auth.currentUser) {
+                const userId = auth.currentUser.uid;
+                const testDbRef = dbRef(rtdb, `users/${userId}/applications/test`);
+                await dbSet(testDbRef, null);
+                // Optional: Abmelden nach Test
+                // await logOut();
+            }
         } catch (error) {
             console.warn('Cleanup warning:', error);
         }
