@@ -14,6 +14,7 @@ import { auth } from './firebase-config.js';
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { ref, set } from "firebase/database";
 import { db, testFirebaseConnection } from './firebase-config.js';
+import AdminService from './services/admin-service.js';
 
 // Auth state listener
 onAuthStateChanged(auth, (user) => {
@@ -74,6 +75,9 @@ document.addEventListener('DOMContentLoaded', async function() {
         
         initializeAutoSync();
         initializeGitHubIntegration();
+        
+        setupPaywallLogic();
+        setupAdminUI();
         
         console.log('Application initialized successfully');
     } catch (error) {
@@ -1536,5 +1540,84 @@ function initializeGitHubIntegration() {
                 showSuccess('Einstellungen gespeichert');
             }
         });
+    }
+}
+
+// NEUE FUNKTION: Zeigt Buttons/Video je nach Login
+function setupPaywallLogic() {
+    const paywallContainer = document.getElementById('paywallContainer');
+    const featureCards = document.getElementById('featureCards');
+    const introVideo = document.getElementById('introVideo');
+    const paywallSubmitBtn = document.getElementById('paywallSubmitBtn');
+    const paywallVoucherInput = document.getElementById('paywallVoucher');
+
+    // Falls eingeloggt oder Admin = wir zeigen Paywall-Eingabe & ggf. Feature-Karten
+    onAuthStateChanged(auth, async (user) => {
+        if (user) {
+            // User ist eingeloggt
+            // Zeige Paywall-Eingabe oder Admin-check
+            paywallContainer.classList.remove('d-none');
+            introVideo.classList.remove('d-none');
+        } else {
+            // User nicht eingeloggt -> Buttons & Paywall ausgeblendet
+            paywallContainer.classList.add('d-none');
+            featureCards.classList.add('d-none');
+        }
+    });
+
+    paywallSubmitBtn?.addEventListener('click', async () => {
+        const code = paywallVoucherInput.value.trim();
+        if (!code) return;
+        const isValid = await AdminService.checkVoucherCode(code);
+        if (isValid) {
+            showSuccess('Gutscheincode akzeptiert – Funktionen freigeschaltet!');
+            // Blende Video aus, Cards ein
+            introVideo.classList.add('d-none');
+            featureCards.classList.remove('d-none');
+            paywallContainer.classList.add('d-none');
+        } else {
+            showError('Ungültiger Gutscheincode!');
+        }
+    });
+}
+
+// NEUE FUNKTION: Admin UI
+function setupAdminUI() {
+    const adminModal = new bootstrap.Modal(document.getElementById('adminModal'), {});
+    const addVoucherBtn = document.getElementById('addVoucherBtn');
+    const newVoucherInput = document.getElementById('newVoucherCodeInput');
+    const voucherList = document.getElementById('voucherList');
+
+    // Prüfen, ob user ein Admin ist => zeige Admin Modal-Button 
+    onAuthStateChanged(auth, async (user) => {
+        if (!user) return;
+
+        const isAdminUser = await AdminService.checkIsAdmin(user.email);
+        if (isAdminUser) {
+            // Allow user to open Admin Modal, z.B. per Button "Einstellungen" oder "Admin"
+            // Füge z.B. in userMenu eine Admin-Schaltfläche an
+            const userMenu = document.getElementById('userMenu');
+            const adminLink = document.createElement('a');
+            adminLink.className = 'dropdown-item';
+            adminLink.textContent = 'Admin-Bereich';
+            adminLink.onclick = () => adminModal.show();
+            userMenu.querySelector('.dropdown-menu')?.prepend(adminLink);
+
+            // Lade vorhandene Codes
+            loadVoucherCodes();
+        }
+    });
+
+    addVoucherBtn?.addEventListener('click', async () => {
+        const code = newVoucherInput.value.trim();
+        if (!code) return;
+        await AdminService.addVoucherCode(code);
+        newVoucherInput.value = '';
+        await loadVoucherCodes();
+    });
+
+    async function loadVoucherCodes() {
+        const codes = await AdminService.getAllVoucherCodes();
+        voucherList.innerHTML = codes.map(c => `<div>- ${c}</div>`).join('');
     }
 }

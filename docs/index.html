@@ -67,19 +67,27 @@
                 <!-- Willkommenskarte -->
                 <div class="card shadow-sm mb-4 welcome-card">
                     <div class="card-body text-center py-5">
-                        <h1 class="display-4 mb-4">
-                            <span class="text-primary">AI</span>-Bewerbungsass<i class="bi bi-magic text-primary"></i>stent
-                        </h1>
-                        <p class="lead mb-4">Erstellen Sie professionelle Bewerbungen mit KI-Unterstützung</p>
-                        <button id="startBtn" class="btn btn-primary btn-lg">
-                            <i class="bi bi-play-circle me-2"></i>
-                            Bewerbungsprozess starten
-                        </button>
+                        <!-- NEU: Video statt aktuellem Start-Button -->
+                        <video id="introVideo" width="640" height="360" controls>
+                            <source src="videos/intro.mp4" type="video/mp4">
+                            <!-- Fallback -->
+                            Dein Browser unterstützt kein HTML5-Video.
+                        </video>
+                        <p class="text-muted mt-3">
+                            Bitte logge dich ein oder verwende einen Gutscheincode, um den vollen Funktionsumfang freizuschalten.
+                        </p>
+
+                        <!-- HINWEIS: Start-Button + Optionale Paywall-Eingabe erst nach Anmeldung -->
+                        <div id="paywallContainer" class="input-group mt-4 d-none">
+                            <input type="text" id="paywallVoucher" class="form-control" placeholder="Gutscheincode eingeben...">
+                            <button class="btn btn-primary" id="paywallSubmitBtn">Freischalten</button>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Optionskarten -->
-                <div class="row g-4">
+                <!-- Optionskarten (Lebenslauf / Anschreiben) EIN KOMMENTAR oder WRAP, 
+                     damit sie erst nach Anmeldung / Paywall sichtbar sind -->
+                <div id="featureCards" class="row g-4 d-none">
                     <!-- Lebenslauf Option -->
                     <div class="col-md-6">
                         <div class="card shadow-sm h-100">
@@ -571,6 +579,27 @@
                 </div>
             </div>
         </div>
+    </div>
+
+    <!-- NEU: Admin Modal für Gutscheincodes -->
+    <div class="modal fade" id="adminModal" tabindex="-1">
+      <div class="modal-dialog modal-md">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Gutscheincodes verwalten</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Schließen"></button>
+          </div>
+          <div class="modal-body">
+            <div id="voucherList" class="mb-3">
+              <!-- Dynamische Liste aller existierenden Codes -->
+            </div>
+            <div class="input-group">
+              <input type="text" class="form-control" id="newVoucherCodeInput" placeholder="Neuen Code hinzufügen...">
+              <button class="btn btn-success" id="addVoucherBtn">Hinzufügen</button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Bootstrap Bundle with Popper (important: place before your app.js) -->
