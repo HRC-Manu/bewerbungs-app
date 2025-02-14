@@ -1,0 +1,152 @@
+import { globalState } from './state.js';
+import { safeGetElem } from './utils.js';
+
+export function showLoading(element, text) {
+    if (element instanceof HTMLButtonElement) {
+        element.disabled = true;
+        element.innerHTML = `<span class="spinner-border spinner-border-sm"></span> ${text}`;
+    } else {
+        const loadingEl = document.createElement('div');
+        loadingEl.className = 'text-center';
+        loadingEl.innerHTML = `
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Lädt...</span>
+            </div>
+            <div class="mt-2">${text}</div>
+        `;
+        element.appendChild(loadingEl);
+    }
+}
+
+export function hideLoading(element, text) {
+    if (element instanceof HTMLButtonElement) {
+        element.disabled = false;
+        element.innerHTML = text;
+    } else {
+        const loadingEl = element.querySelector('.text-center');
+        if (loadingEl) {
+            loadingEl.remove();
+        }
+    }
+}
+
+export function showSuccess(message) {
+    const toast = globalState.elements.messageToast;
+    toast.show();
+    toast.innerHTML = `
+        <div class="toast-header">
+            <strong class="me-auto">Erfolg</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body">${message}</div>
+    `;
+}
+
+export function showError(message) {
+    const toast = globalState.elements.messageToast;
+    toast.show();
+    toast.innerHTML = `
+        <div class="toast-header">
+            <strong class="me-auto">Fehler</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body">${message}</div>
+    `;
+}
+
+export function showWarning(message) {
+    const toast = globalState.elements.messageToast;
+    toast.show();
+    toast.innerHTML = `
+        <div class="toast-header">
+            <strong class="me-auto">Warnung</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body">${message}</div>
+    `;
+}
+
+export function updatePreview() {
+    const sections = globalState.elements.coverLetterSections;
+    let preview = '';
+    
+    if (sections.recipient.value) {
+        preview += `<p>${sections.recipient.value}</p>`;
+    }
+    
+    if (sections.subject.value) {
+        preview += `<p><strong>${sections.subject.value}</strong></p>`;
+    }
+    
+    if (sections.introduction.value) {
+        preview += `<p>${sections.introduction.value}</p>`;
+    }
+    
+    if (sections.main.value) {
+        const paragraphs = sections.main.value.split('\n').filter(p => p.trim());
+        paragraphs.forEach(paragraph => {
+            preview += `<p>${paragraph}</p>`;
+        });
+    }
+    
+    if (sections.closing.value) {
+        preview += `<p>${sections.closing.value}</p>`;
+    }
+    
+    preview += `<p class="mt-4">Mit freundlichen Grüßen<br>[Ihr Name]</p>`;
+    
+    globalState.elements.coverLetterPreview.innerHTML = preview || 'Hier erscheint die Vorschau...';
+}
+
+export function updateProgress() {
+    let completed = 0;
+    const total = 4;
+
+    if (window.resumeText) {
+        completed++;
+    }
+    if (globalState.elements.jobPosting.value.trim().length > 20) {
+        completed++;
+    }
+    const apiKeyStored = localStorage.getItem('myEncryptedApiKey');
+    if (apiKeyStored) {
+        completed++;
+    }
+    if ((globalState.elements.coverLetterEditor?.innerText || '').length > 50) {
+        completed++;
+    }
+
+    const pct = Math.round((completed / total) * 100);
+    const progressBar = safeGetElem('progressBar');
+    if (progressBar) {
+        progressBar.style.width = pct + '%';
+        progressBar.textContent = pct + '%';
+    }
+}
+
+export function applyDesignToPreview() {
+    const container = globalState.elements.modernPreviewContainer;
+    if (!container) return;
+
+    const { backgroundColor, fontFamily, showBorder } = globalState.designSettings;
+    
+    container.style.backgroundColor = backgroundColor;
+    container.style.fontFamily = fontFamily;
+    container.style.border = showBorder ? '1px solid #dee2e6' : 'none';
+}
+
+export function animateCardEntrance(cardId) {
+    const card = safeGetElem(cardId);
+    if (card) {
+        card.classList.remove('fade-in-card');
+        void card.offsetWidth; // Reflow
+        card.classList.add('fade-in-card');
+    }
+}
+
+export function checkCoverLetterLength() {
+    const wordCount = (globalState.elements.coverLetterEditor?.innerText || '').trim().split(/\s+/).filter(Boolean).length;
+    if (wordCount > 600) {
+        showWarning(`Achtung: Das Anschreiben hat bereits ${wordCount} Wörter!`);
+    }
+} 
