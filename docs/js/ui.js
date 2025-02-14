@@ -4,10 +4,15 @@ import { safeGetElem } from './utils.js';
 export function showLoading(element, text) {
     if (element instanceof HTMLButtonElement) {
         element.disabled = true;
-        element.innerHTML = `<span class="spinner-border spinner-border-sm"></span> ${text}`;
+        const originalText = element.innerHTML;
+        element.innerHTML = `
+            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+            ${text}
+        `;
+        element.dataset.originalText = originalText;
     } else {
         const loadingEl = document.createElement('div');
-        loadingEl.className = 'text-center';
+        loadingEl.className = 'loading-overlay';
         loadingEl.innerHTML = `
             <div class="spinner-border text-primary" role="status">
                 <span class="visually-hidden">Lädt...</span>
@@ -18,12 +23,12 @@ export function showLoading(element, text) {
     }
 }
 
-export function hideLoading(element, text) {
+export function hideLoading(element, originalText = '') {
     if (element instanceof HTMLButtonElement) {
         element.disabled = false;
-        element.innerHTML = text;
+        element.innerHTML = originalText || element.dataset.originalText || element.innerHTML;
     } else {
-        const loadingEl = element.querySelector('.text-center');
+        const loadingEl = element.querySelector('.loading-overlay');
         if (loadingEl) {
             loadingEl.remove();
         }
@@ -32,70 +37,77 @@ export function hideLoading(element, text) {
 
 export function showSuccess(message) {
     const toast = globalState.elements.messageToast;
-    toast.show();
-    toast.innerHTML = `
-        <div class="toast-header">
-            <strong class="me-auto">Erfolg</strong>
-            <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
-        </div>
-        <div class="toast-body">${message}</div>
-    `;
+    const toastTitle = document.getElementById('toastTitle');
+    const toastMessage = document.getElementById('toastMessage');
+    
+    if (toast && toastTitle && toastMessage) {
+        toastTitle.textContent = 'Erfolg';
+        toastTitle.className = 'me-auto text-success';
+        toastMessage.textContent = message;
+        toast.show();
+    } else {
+        console.log('Success:', message);
+    }
 }
 
 export function showError(message) {
     const toast = globalState.elements.messageToast;
-    toast.show();
-    toast.innerHTML = `
-        <div class="toast-header">
-            <strong class="me-auto">Fehler</strong>
-            <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
-        </div>
-        <div class="toast-body">${message}</div>
-    `;
+    const toastTitle = document.getElementById('toastTitle');
+    const toastMessage = document.getElementById('toastMessage');
+    
+    if (toast && toastTitle && toastMessage) {
+        toastTitle.textContent = 'Fehler';
+        toastTitle.className = 'me-auto text-danger';
+        toastMessage.textContent = message;
+        toast.show();
+    } else {
+        console.error('Error:', message);
+    }
 }
 
 export function showWarning(message) {
     const toast = globalState.elements.messageToast;
-    toast.show();
-    toast.innerHTML = `
-        <div class="toast-header">
-            <strong class="me-auto">Warnung</strong>
-            <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
-        </div>
-        <div class="toast-body">${message}</div>
-    `;
+    const toastTitle = document.getElementById('toastTitle');
+    const toastMessage = document.getElementById('toastMessage');
+    
+    if (toast && toastTitle && toastMessage) {
+        toastTitle.textContent = 'Warnung';
+        toastTitle.className = 'me-auto text-warning';
+        toastMessage.textContent = message;
+        toast.show();
+    } else {
+        console.warn('Warning:', message);
+    }
 }
 
 export function updatePreview() {
-    const sections = globalState.elements.coverLetterSections;
-    let preview = '';
+    const { elements } = globalState;
+    if (!elements.coverLetterPreview) return;
     
-    if (sections.recipient.value) {
+    let preview = '';
+    const sections = elements.coverLetterSections;
+    
+    if (sections.recipient?.value) {
         preview += `<p>${sections.recipient.value}</p>`;
     }
     
-    if (sections.subject.value) {
+    if (sections.subject?.value) {
         preview += `<p><strong>${sections.subject.value}</strong></p>`;
     }
     
-    if (sections.introduction.value) {
+    if (sections.introduction?.value) {
         preview += `<p>${sections.introduction.value}</p>`;
     }
     
-    if (sections.main.value) {
-        const paragraphs = sections.main.value.split('\n').filter(p => p.trim());
-        paragraphs.forEach(paragraph => {
-            preview += `<p>${paragraph}</p>`;
-        });
+    if (sections.main?.value) {
+        preview += `<p>${sections.main.value}</p>`;
     }
     
-    if (sections.closing.value) {
+    if (sections.closing?.value) {
         preview += `<p>${sections.closing.value}</p>`;
     }
     
-    preview += `<p class="mt-4">Mit freundlichen Grüßen<br>[Ihr Name]</p>`;
-    
-    globalState.elements.coverLetterPreview.innerHTML = preview || 'Hier erscheint die Vorschau...';
+    elements.coverLetterPreview.innerHTML = preview || '<p class="text-muted">Vorschau wird hier angezeigt...</p>';
 }
 
 export function updateProgress() {
