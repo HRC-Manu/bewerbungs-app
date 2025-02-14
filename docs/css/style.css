@@ -1,143 +1,435 @@
-/* Modern Design für den Bewerbungsassistenten */
-
+/* Moderne Farbpalette für Bewerbungs-App */
 :root {
-    --primary: #0d6efd;
-    --primary-dark: #0b5ed7;
-    --success: #198754;
-    --light: #f8f9fa;
-    --dark: #212529;
-    --gray: #6c757d;
-    --border: #dee2e6;
-    --shadow: rgba(0,0,0,0.08);
+    --primary: #2563eb;          /* Professionelles Blau */
+    --primary-dark: #1d4ed8;
+    --success: #059669;          /* Gedämpftes Grün */
+    --light: #f8fafc;
+    --dark: #0f172a;
+    --gray: #64748b;
+    --border: #e2e8f0;
+    --shadow: rgba(15, 23, 42, 0.08);
 }
 
-/* Text Size Adjustment */
-html {
-    -webkit-text-size-adjust: 100%;
-    -moz-text-size-adjust: 100%;
-    -ms-text-size-adjust: 100%;
-    text-size-adjust: 100%;
-}
-
+/* Basis-Styling */
 body {
     background-color: var(--light);
-    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", "Liberation Sans", Arial, sans-serif;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
     color: var(--dark);
+    min-height: 100vh;
 }
 
-/* Navigation */
+/* Moderne Navbar */
 .navbar {
     background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-    box-shadow: 0 2px 4px var(--shadow);
     padding: 1rem 0;
+    box-shadow: 0 2px 4px var(--shadow);
 }
 
 .navbar-brand {
     font-weight: 600;
     font-size: 1.25rem;
     color: white !important;
+    transition: transform 0.2s ease;
 }
 
-.navbar .btn-outline-light {
-    border-color: rgba(255, 255, 255, 0.5);
-    color: white;
-    transition: all 0.2s ease;
-}
-
-.navbar .btn-outline-light:hover {
-    background-color: rgba(255, 255, 255, 0.1);
-    border-color: white;
+.navbar-brand:hover {
     transform: translateY(-1px);
 }
 
-.navbar .btn-outline-light:active {
-    transform: translateY(0);
-}
-
-.navbar .btn-outline-light i {
-    font-size: 1.1rem;
-}
-
-/* Dropdown Menüs in der Navigation */
-.navbar .dropdown-menu {
-    background-color: white;
+/* Card Styling */
+.card {
     border: none;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px var(--shadow);
-    margin-top: 0.5rem;
+    border-radius: 1rem;
+    box-shadow: 0 4px 6px -1px var(--shadow), 0 2px 4px -1px var(--shadow);
+    transition: all 0.3s ease;
+    animation: fadeIn 0.5s ease-out;
 }
 
-.navbar .dropdown-item {
-    color: var(--dark);
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 15px -3px var(--shadow), 0 4px 6px -2px var(--shadow);
+}
+
+/* Form Styling */
+.form-control {
+    border-radius: 0.75rem;
+    border: 1px solid var(--border);
     padding: 0.75rem 1rem;
     transition: all 0.2s ease;
 }
 
-.navbar .dropdown-item:hover {
-    background-color: rgba(13, 110, 253, 0.05);
+.form-control:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+}
+
+.input-group .form-control {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.input-group .btn {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    border-top-right-radius: 0.75rem;
+    border-bottom-right-radius: 0.75rem;
+}
+
+/* Button Styling */
+.btn {
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.75rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    border: none;
+    box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
+}
+
+.btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px rgba(37, 99, 235, 0.25);
+}
+
+.btn-link {
     color: var(--primary);
+    text-decoration: none;
+    padding: 0.5rem 1rem;
 }
 
-.navbar .dropdown-item i {
-    margin-right: 0.5rem;
-    color: var(--gray);
+.btn-link:hover {
+    color: var(--primary-dark);
+    background-color: rgba(37, 99, 235, 0.05);
+    border-radius: 0.5rem;
 }
 
-/* Welcome Card */
-.welcome-card {
-    border-radius: 1rem;
-    overflow: hidden;
-    transition: all 0.3s ease;
+/* Checkbox Styling */
+.form-check-input {
+    border-radius: 0.375rem;
+    border: 1.5px solid var(--border);
 }
 
-.welcome-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 24px var(--shadow);
+.form-check-input:checked {
+    background-color: var(--primary);
+    border-color: var(--primary);
 }
 
-/* Option Cards */
-.card {
+/* Toast Styling */
+.toast {
+    background: white;
     border: none;
     border-radius: 1rem;
-    transition: all 0.3s ease;
+    box-shadow: 0 10px 15px -3px var(--shadow), 0 4px 6px -2px var(--shadow);
 }
 
-.card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 8px 24px var(--shadow);
+.toast-header {
+    border-bottom: 1px solid var(--border);
+    border-top-left-radius: 1rem;
+    border-top-right-radius: 1rem;
 }
 
-.card .btn-outline-primary {
-    border-radius: 0.5rem;
-    padding: 0.75rem 1.25rem;
+/* Animationen */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
-/* Workflow Steps */
-.workflow-container {
-    padding: 2rem;
+/* Password Strength Indicator */
+.password-strength {
+    height: 4px;
+    border-radius: 2px;
+    margin-top: 0.5rem;
+    background: var(--border);
+    overflow: hidden;
 }
 
-.workflow-step {
-    background: white;
-    border-radius: 1rem;
-    padding: 2rem;
-    margin-bottom: 2rem;
-    box-shadow: 0 2px 8px var(--shadow);
+.password-strength::before {
+    content: '';
+    display: block;
+    height: 100%;
+    width: 0;
+    transition: width 0.3s ease;
+    background: var(--primary);
 }
 
-.step-header {
-    margin-bottom: 1.5rem;
+.password-strength.weak::before {
+    width: 33%;
+    background: #ef4444;
 }
 
-.step-header h4 {
-    color: var(--primary);
-    margin-bottom: 0.5rem;
+.password-strength.medium::before {
+    width: 66%;
+    background: #f59e0b;
 }
 
-.step-content {
+.password-strength.strong::before {
+    width: 100%;
+    background: #10b981;
+}
+
+/* Loading State */
+.btn-loading {
+    position: relative;
+    pointer-events: none;
+}
+
+.btn-loading::after {
+    content: '';
+    position: absolute;
+    width: 1rem;
+    height: 1rem;
+    border: 2px solid white;
+    border-radius: 50%;
+    border-top-color: transparent;
+    animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Responsive Anpassungen */
+@media (max-width: 768px) {
+    .card {
+        margin: 1rem;
+    }
+    
+    .btn {
+        padding: 0.625rem 1.25rem;
+    }
+}
+
+/* High Contrast Mode */
+@media (forced-colors: active) {
+    .btn-primary {
+        border: 2px solid currentColor;
+    }
+    
+    .form-control {
+        border: 2px solid currentColor;
+    }
+}
+
+/* Print Adjustments */
+@media print {
+    * {
+        print-color-adjust: exact;
+    }
+}
+
+/* Video Container */
+.video-container {
+    position: relative;
+    width: 100%;
+    max-width: 640px;
+    margin: 0 auto;
+}
+
+.video-container video {
+    width: 100%;
+    height: auto;
+    background-color: var(--light);
+}
+
+/* Firefox-specific video styles */
+@media all and (-moz-overlay-scrollbars) {
+    .video-container video {
+        display: inline-block;
+    }
+}
+
+/* Modal Improvements */
+.modal {
+    --bs-modal-width: min(95vw, 500px);
+}
+
+.modal-lg {
+    --bs-modal-width: min(95vw, 800px);
+}
+
+/* Form Controls */
+.form-control-color {
+    width: 3rem;
+    padding: 0.375rem;
+}
+
+/* Accessibility Improvements */
+.visually-hidden:not(:focus):not(:active) {
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    height: 1px;
+    overflow: hidden;
+    position: absolute;
+    white-space: nowrap;
+    width: 1px;
+}
+
+/* Print Styles */
+@media print {
+    .no-print {
+        display: none !important;
+    }
+    
+    .print-only {
+        display: block !important;
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .feature-buttons {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (min-width: 769px) {
+    .feature-buttons {
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    }
+}
+
+/* Browser-specific fixes */
+@supports not (text-align: -webkit-match-parent) {
+    .text-align-match {
+        text-align: inherit;
+    }
+}
+
+/* Animation classes */
+.fade-in {
+    animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* Utility classes */
+.cursor-pointer {
+    cursor: pointer;
+}
+
+.overflow-hidden {
+    overflow: hidden;
+}
+
+/* Accessibility focus styles */
+:focus-visible {
+    outline: 3px solid #007bff;
+    outline-offset: 2px;
+}
+
+/* Tabellen-Styles */
+th {
+    text-align: inherit;
+    text-align: -webkit-match-parent;
+    text-align: match-parent;
+}
+
+/* Responsive Anpassungen */
+@media screen {
+    body {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+}
+
+/* Entferne inline styles und ersetze sie durch Klassen */
+.loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.8);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.video-controls {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(0, 0, 0, 0.5);
+    padding: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.video-control-btn {
+    background: none;
+    border: none;
+    color: white;
+    cursor: pointer;
+    padding: 5px 10px;
+}
+
+.video-control-btn:hover {
+    opacity: 0.8;
+}
+
+.video-fallback {
+    display: none;
+    text-align: center;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 4px;
+}
+
+/* Form-Styles */
+.form-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* Utility-Klassen */
+.text-ellipsis {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Drucken-Styles */
+@media print {
+    .no-print {
+        display: none !important;
+    }
+    
+    body {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+}
+
+/* Remove inline styles */
+.error-message {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: #dc3545;
+    color: white;
     padding: 1rem;
-    background: var(--light);
-    border-radius: 0.5rem;
+    text-align: center;
+    z-index: 9999;
 }
 
 /* Analysis Results */
@@ -474,86 +766,6 @@ body {
 
 .skill-badge .btn-close:hover {
     opacity: 1;
-}
-
-/* Verbesserte Form-Styles */
-.form-control {
-    border-radius: 0.5rem;
-    border: 1px solid var(--border);
-    padding: 0.75rem;
-    font-size: 1rem;
-    transition: all 0.2s ease;
-}
-
-.form-control:focus {
-    border-color: var(--primary);
-    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.1);
-}
-
-.input-group {
-    border-radius: 0.5rem;
-    overflow: hidden;
-}
-
-.input-group .form-control {
-    border-top-right-radius: 0;
-    border-bottom-right-radius: 0;
-}
-
-.input-group .btn {
-    border-top-left-radius: 0;
-    border-bottom-left-radius: 0;
-}
-
-/* Verbesserte Button-Styles */
-.btn {
-    border-radius: 0.5rem;
-    padding: 0.75rem 1.25rem;
-    font-weight: 500;
-    transition: all 0.2s ease;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-}
-
-.btn-sm {
-    padding: 0.5rem 0.75rem;
-    font-size: 0.875rem;
-}
-
-.btn-primary {
-    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-    border: none;
-}
-
-.btn-primary:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(13, 110, 253, 0.2);
-}
-
-.btn-outline-primary {
-    border-color: var(--primary);
-    color: var(--primary);
-}
-
-.btn-outline-primary:hover {
-    background: var(--primary);
-    color: white;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(13, 110, 253, 0.1);
-}
-
-.btn-outline-danger {
-    border-color: #dc3545;
-    color: #dc3545;
-}
-
-.btn-outline-danger:hover {
-    background: #dc3545;
-    color: white;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.1);
 }
 
 /* Auth Components */
@@ -1005,3 +1217,4 @@ th {
     text-align: center;
     z-index: 9999;
 } 
+
