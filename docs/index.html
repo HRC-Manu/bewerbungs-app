@@ -110,32 +110,43 @@
         
         <!-- Video-Container mit Fallback -->
         <div class="video-container mb-4">
-            <video id="shortDemoVideo" width="640" height="360" 
-                   class="shadow-sm rounded" 
-                   autoplay muted loop
-                   playsinline webkit-playsinline
-                   aria-label="Kurzes Einführungs-Video zur Benutzung der App"
-                   poster="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='640' height='360' viewBox='0 0 640 360'%3E%3Crect width='100%25' height='100%25' fill='%23f8f9fa'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='system-ui' font-size='14' fill='%236c757d'%3EVideo-Vorschau%3C/text%3E%3C/svg%3E">
-                <source src="videos/short_demo.mp4" type="video/mp4">
-                <source src="videos/short_demo.webm" type="video/webm">
-                <!-- Fallback für Browser ohne Video-Support -->
-                <div class="video-fallback p-4 bg-light rounded">
-                    <i class="bi bi-play-circle display-4 text-primary mb-3" aria-hidden="true"></i>
-                    <p>Hier sehen Sie normalerweise ein kurzes Anleitungsvideo. Die wichtigsten Funktionen sind:</p>
-                    <ul class="text-start list-unstyled">
-                        <li><i class="bi bi-check2 text-success me-2" aria-hidden="true"></i>Lebenslauf hochladen</li>
-                        <li><i class="bi bi-check2 text-success me-2" aria-hidden="true"></i>Stellenanzeige einfügen</li>
-                        <li><i class="bi bi-check2 text-success me-2" aria-hidden="true"></i>Anschreiben generieren</li>
-                    </ul>
-                    <noscript>
-                        <p class="text-muted">JavaScript ist deaktiviert. Bitte aktivieren Sie JavaScript für die volle Funktionalität.</p>
-                    </noscript>
-                </div>
-            </video>
-            <!-- Zusätzlicher Fallback für ältere Browser -->
-            <div class="video-fallback-static d-none">
-                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='640' height='360' viewBox='0 0 640 360'%3E%3Crect width='100%25' height='100%25' fill='%23f8f9fa'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='system-ui' font-size='14' fill='%236c757d'%3EVideo nicht verfügbar%3C/text%3E%3C/svg%3E"
-                     alt="Video-Vorschau" width="640" height="360" class="img-fluid rounded">
+            <!-- Firefox-kompatible Video-Implementierung -->
+            <div class="video-wrapper position-relative">
+                <video id="shortDemoVideo" 
+                       class="shadow-sm rounded w-100" 
+                       muted 
+                       loop
+                       preload="none"
+                       aria-label="Kurzes Einführungs-Video zur Benutzung der App"
+                       poster="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='640' height='360' viewBox='0 0 640 360'%3E%3Crect width='100%25' height='100%25' fill='%23f8f9fa'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='system-ui' font-size='14' fill='%236c757d'%3EVideo-Vorschau%3C/text%3E%3C/svg%3E">
+                    <!-- Fallback für Browser ohne Video-Support -->
+                    <div class="video-fallback p-4 bg-light rounded">
+                        <i class="bi bi-play-circle display-4 text-primary mb-3" aria-hidden="true"></i>
+                        <p>Hier sehen Sie die wichtigsten Funktionen der App:</p>
+                        <ul class="text-start list-unstyled">
+                            <li><i class="bi bi-check2 text-success me-2" aria-hidden="true"></i>Lebenslauf hochladen</li>
+                            <li><i class="bi bi-check2 text-success me-2" aria-hidden="true"></i>Stellenanzeige einfügen</li>
+                            <li><i class="bi bi-check2 text-success me-2" aria-hidden="true"></i>Anschreiben generieren</li>
+                        </ul>
+                    </div>
+                </video>
+                <!-- Play/Pause Button -->
+                <button class="video-control-btn btn btn-light rounded-circle position-absolute" 
+                        style="top: 50%; left: 50%; transform: translate(-50%, -50%);"
+                        aria-label="Video abspielen/pausieren">
+                    <i class="bi bi-play-fill" aria-hidden="true"></i>
+                </button>
+            </div>
+            <!-- Zusätzliche Steuerelemente -->
+            <div class="video-controls mt-2 d-flex justify-content-center gap-2">
+                <button class="btn btn-sm btn-outline-primary" id="replayBtn" aria-label="Video neu starten">
+                    <i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i>
+                    <span class="ms-1">Neu starten</span>
+                </button>
+                <button class="btn btn-sm btn-outline-secondary" id="muteBtn" aria-label="Ton ein/ausschalten">
+                    <i class="bi bi-volume-mute" aria-hidden="true"></i>
+                    <span class="ms-1">Ton</span>
+                </button>
             </div>
         </div>
         
@@ -787,5 +798,61 @@
     
     <!-- Dein App-Script -->
     <script type="module" src="js/app.js"></script>
+
+    <!-- Füge das Video-Control-Script hinzu -->
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const video = document.getElementById('shortDemoVideo');
+        const playBtn = document.querySelector('.video-control-btn');
+        const replayBtn = document.getElementById('replayBtn');
+        const muteBtn = document.getElementById('muteBtn');
+        
+        // Prüfe ob Video geladen werden kann
+        video.addEventListener('error', function() {
+            video.style.display = 'none';
+            document.querySelector('.video-fallback').style.display = 'block';
+        });
+        
+        // Play/Pause Funktionalität
+        playBtn?.addEventListener('click', function() {
+            if (video.paused) {
+                video.play();
+                playBtn.querySelector('i').classList.replace('bi-play-fill', 'bi-pause-fill');
+            } else {
+                video.pause();
+                playBtn.querySelector('i').classList.replace('bi-pause-fill', 'bi-play-fill');
+            }
+        });
+        
+        // Replay Funktionalität
+        replayBtn?.addEventListener('click', function() {
+            video.currentTime = 0;
+            video.play();
+        });
+        
+        // Mute Funktionalität
+        muteBtn?.addEventListener('click', function() {
+            video.muted = !video.muted;
+            muteBtn.querySelector('i').classList.toggle('bi-volume-mute');
+            muteBtn.querySelector('i').classList.toggle('bi-volume-up');
+        });
+        
+        // Automatisches Abspielen nur wenn sichtbar
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    video.play().catch(() => {
+                        // Autoplay wurde blockiert oder Video konnte nicht geladen werden
+                        playBtn.style.display = 'block';
+                    });
+                } else {
+                    video.pause();
+                }
+            });
+        });
+        
+        observer.observe(video);
+    });
+    </script>
 </body>
 </html> 
