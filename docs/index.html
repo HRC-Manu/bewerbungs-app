@@ -244,9 +244,29 @@
                 </div>
                 <div class="modal-body">
                     <form id="settingsForm">
+                        <!-- GitHub Integration -->
+                        <div class="mb-3 github-integration">
+                            <h5>GitHub Integration</h5>
+                            <div class="form-group">
+                                <label for="githubToken" class="form-label">GitHub Token</label>
+                                <div class="token-input-container">
+                                    <input type="password" class="form-control" id="githubToken">
+                                    <button type="button" class="token-toggle" aria-label="Toggle token visibility">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+                                </div>
+                                <small class="form-text text-muted">Dein GitHub Personal Access Token für die automatische Synchronisation</small>
+                                <div class="github-status disconnected">
+                                    <i class="bi bi-circle-fill"></i>
+                                    <span>Nicht verbunden</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Bestehende Einstellungen -->
                         <div class="mb-3">
                             <label for="aiProvider" class="form-label">KI-Provider</label>
-                            <select class="form-select" id="aiProvider" aria-label="KI-Provider auswählen">
+                            <select class="form-select" id="aiProvider">
                                 <option value="openai">OpenAI (GPT-4)</option>
                                 <option value="anthropic">Anthropic (Claude)</option>
                                 <option value="local">Lokales Modell</option>
