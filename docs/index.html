@@ -310,11 +310,11 @@
 
     <!-- Toast Container -->
     <div class="toast-container position-fixed bottom-0 end-0 p-3">
-        <div id="messageToast" class="toast" role="alert">
+        <div id="messageToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
             <div class="toast-header">
                 <i class="bi bi-info-circle me-2"></i>
                 <strong class="me-auto" id="toastTitle">Nachricht</strong>
-                <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
             </div>
             <div class="toast-body" id="toastMessage"></div>
         </div>
@@ -470,8 +470,10 @@
         </div>
     </div>
 
-    <!-- Scripts -->
+    <!-- Bootstrap Bundle with Popper (important: place before your app.js) -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Your scripts -->
     <script type="module" src="js/app.js"></script>
 </body>
 </html> 
