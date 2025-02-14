@@ -4,6 +4,7 @@ import { getAuth } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth
 import { getDatabase } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 import { getStorage } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 import { connectFirestoreEmulator, connectAuthEmulator, connectStorageEmulator, connectDatabaseEmulator } from "firebase/firestore";
+import { ref, set } from "firebase/database";
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -26,6 +27,23 @@ const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getDatabase(app);
 export const storage = getStorage(app);
+
+// Test-Funktion hinzufügen
+export const testFirebaseConnection = async () => {
+  try {
+    // Teste die Datenbankverbindung
+    const testRef = ref(db, 'test');
+    await set(testRef, {
+      message: 'Test erfolgreich',
+      timestamp: new Date().toISOString()
+    });
+    console.log('Firebase-Verbindung erfolgreich!');
+    return true;
+  } catch (error) {
+    console.error('Firebase-Verbindungsfehler:', error);
+    return false;
+  }
+};
 
 // Füge diese Zeilen für lokale Entwicklung hinzu
 if (location.hostname === "localhost") {
