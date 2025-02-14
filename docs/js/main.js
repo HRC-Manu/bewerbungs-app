@@ -1,7 +1,7 @@
 // Hauptdatei für die Bewerbungs-App
 import { initializeApp } from 'firebase/app';
 import { getAuth, connectAuthEmulator, setPersistence, browserLocalPersistence, browserSessionPersistence } from 'firebase/auth';
-import { getFirestore, connectFirestoreEmulator, enableIndexedDbPersistence } from 'firebase/firestore';
+import { getFirestore, connectFirestoreEmulator, enableIndexedDbPersistence, collection, getDocs, query, where } from 'firebase/firestore';
 import { getStorage, connectStorageEmulator } from 'firebase/storage';
 import { FIREBASE_CONFIG } from './config.js';
 import { VideoManager } from './video-manager.js';
@@ -47,39 +47,110 @@ if ('serviceWorker' in navigator) {
     });
 }
 
+// Firebase Services (global instances)
+let firebaseApp = null;
+let firebaseAuth = null;
+let firebaseDb = null;
+let firebaseStorage = null;
+
 // Firebase Initialization mit Retry-Mechanismus
 async function initializeFirebase(retryCount = 3) {
     for (let i = 0; i < retryCount; i++) {
         try {
-            const app = initializeApp(FIREBASE_CONFIG);
-            const auth = getAuth(app);
-            const db = getFirestore(app);
-            const storage = getStorage(app);
+            // Check if already initialized
+            if (firebaseApp) {
+                console.warn('Firebase already initialized, returning existing instance');
+                return { 
+                    app: firebaseApp, 
+                    auth: firebaseAuth, 
+                    db: firebaseDb, 
+                    storage: firebaseStorage 
+                };
+            }
+
+            // Initialize Firebase
+            firebaseApp = initializeApp(FIREBASE_CONFIG);
+            console.log('Firebase App initialized');
+
+            // Initialize Auth
+            firebaseAuth = getAuth(firebaseApp);
+            await setPersistence(firebaseAuth, browserLocalPersistence);
+            console.log('Firebase Auth initialized');
+
+            // Initialize Firestore
+            firebaseDb = getFirestore(firebaseApp);
+            console.log('Firebase Firestore initialized');
+
+            // Initialize Storage
+            firebaseStorage = getStorage(firebaseApp);
+            console.log('Firebase Storage initialized');
 
             // Entwicklungsmodus-Emulatoren
             if (window.location.hostname === 'localhost') {
-                connectAuthEmulator(auth, 'http://localhost:9099');
-                connectFirestoreEmulator(db, 'localhost', 8080);
-                connectStorageEmulator(storage, 'localhost', 9199);
+                try {
+                    connectAuthEmulator(firebaseAuth, 'http://localhost:9099');
+                    connectFirestoreEmulator(firebaseDb, 'localhost', 8080);
+                    connectStorageEmulator(firebaseStorage, 'localhost', 9199);
+                    console.log('Firebase Emulators connected');
+                } catch (emulatorError) {
+                    console.warn('Failed to connect to emulators:', emulatorError);
+                }
             }
 
-            // Offline-Persistenz für Firestore aktivieren
-            await enableIndexedDbPersistence(db).catch((err) => {
-                if (err.code === 'failed-precondition') {
-                    console.warn('Multiple tabs open, persistence can only be enabled in one tab at a time.');
-                } else if (err.code === 'unimplemented') {
-                    console.warn('The current browser does not support persistence.');
+            // Test Firestore connection
+            try {
+                const testQuery = query(collection(firebaseDb, 'test'));
+                await getDocs(testQuery);
+                console.log('Firestore connection test successful');
+            } catch (firestoreError) {
+                console.error('Firestore connection test failed:', firestoreError);
+                throw new Error('Firestore connection failed');
+            }
+
+            // Enable offline persistence
+            try {
+                await enableIndexedDbPersistence(firebaseDb);
+                console.log('Firestore offline persistence enabled');
+            } catch (persistenceError) {
+                if (persistenceError.code === 'failed-precondition') {
+                    console.warn('Multiple tabs open, persistence enabled in first tab only');
+                } else if (persistenceError.code === 'unimplemented') {
+                    console.warn('Browser doesn\'t support persistence');
+                } else {
+                    console.error('Failed to enable persistence:', persistenceError);
                 }
-            });
+            }
 
-            // Standard-Persistenz für Auth setzen
-            await setPersistence(auth, browserLocalPersistence);
-
-            return { app, auth, db, storage };
+            return { 
+                app: firebaseApp, 
+                auth: firebaseAuth, 
+                db: firebaseDb, 
+                storage: firebaseStorage 
+            };
         } catch (error) {
             console.error(`Firebase initialization attempt ${i + 1} failed:`, error);
-            if (i === retryCount - 1) throw error;
-            await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1))); // Exponential backoff
+            
+            // Clear any partial initialization
+            if (firebaseApp) {
+                try {
+                    await firebaseApp.delete();
+                } catch (deleteError) {
+                    console.warn('Failed to delete Firebase app:', deleteError);
+                }
+                firebaseApp = null;
+                firebaseAuth = null;
+                firebaseDb = null;
+                firebaseStorage = null;
+            }
+
+            // On last attempt, throw error
+            if (i === retryCount - 1) {
+                throw new Error(`Firebase initialization failed after ${retryCount} attempts: ${error.message}`);
+            }
+
+            // Wait before retrying (exponential backoff)
+            const waitTime = Math.min(1000 * Math.pow(2, i), 10000);
+            await new Promise(resolve => setTimeout(resolve, waitTime));
         }
     }
 }
