@@ -51,6 +51,44 @@
             <p class="lead mb-4">Erstellen Sie professionelle Bewerbungen mit Unterstützung künstlicher Intelligenz</p>
         </div>
 
+        <!-- Workflow Steps -->
+        <div class="workflow-steps mb-5">
+            <div class="row g-4">
+                <div class="col-md-3">
+                    <div class="step-card text-center p-3 h-100 border rounded bg-white shadow-sm">
+                        <div class="step-number mb-2">1</div>
+                        <i class="bi bi-upload display-6 text-primary mb-3"></i>
+                        <h3 class="h5">Lebenslauf hochladen</h3>
+                        <p class="text-muted small mb-0">Laden Sie Ihren bestehenden Lebenslauf hoch</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="step-card text-center p-3 h-100 border rounded bg-white shadow-sm">
+                        <div class="step-number mb-2">2</div>
+                        <i class="bi bi-link-45deg display-6 text-primary mb-3"></i>
+                        <h3 class="h5">Stellenanzeige einfügen</h3>
+                        <p class="text-muted small mb-0">Fügen Sie die Stellenanzeige ein oder geben Sie die URL an</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="step-card text-center p-3 h-100 border rounded bg-white shadow-sm">
+                        <div class="step-number mb-2">3</div>
+                        <i class="bi bi-magic display-6 text-primary mb-3"></i>
+                        <h3 class="h5">KI-Analyse</h3>
+                        <p class="text-muted small mb-0">Unsere KI analysiert Ihre Unterlagen und die Stellenanzeige</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="step-card text-center p-3 h-100 border rounded bg-white shadow-sm">
+                        <div class="step-number mb-2">4</div>
+                        <i class="bi bi-file-earmark-text display-6 text-primary mb-3"></i>
+                        <h3 class="h5">Anschreiben erstellen</h3>
+                        <p class="text-muted small mb-0">Erhalten Sie ein optimiertes, individuelles Anschreiben</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Feature Cards -->
         <div class="row g-4 mb-5">
             <div class="col-md-6">
@@ -124,8 +162,10 @@
                     <div class="modal-header">
                         <h5 class="modal-title" id="loginTitle">Anmeldung</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" 
-                                title="Schließen"
-                                aria-label="Schließen"></button>
+                                title="Schließen" 
+                                aria-label="Schließen">
+                            <span class="visually-hidden">Schließen</span>
+                        </button>
                     </div>
                     <div class="modal-body">
                         <form id="loginForm" autocomplete="on">
@@ -183,7 +223,9 @@
                         <h5 class="modal-title" id="registerTitle">Registrierung</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" 
                                 title="Schließen"
-                                aria-label="Schließen"></button>
+                                aria-label="Schließen">
+                            <span class="visually-hidden">Schließen</span>
+                        </button>
                     </div>
                     <div class="modal-body">
                         <form id="registerForm" autocomplete="on">
@@ -251,7 +293,9 @@
                     <h5 class="modal-title" id="resetTitle">Passwort zurücksetzen</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" 
                             title="Schließen"
-                            aria-label="Schließen"></button>
+                            aria-label="Schließen">
+                        <span class="visually-hidden">Schließen</span>
+                    </button>
                 </div>
                 <div class="modal-body">
                     <form id="passwordResetForm">
@@ -466,20 +510,110 @@
             }
         }
 
-        // Focus Management
-        authModal._element.addEventListener('shown.bs.modal', function () {
-            document.getElementById('email')?.focus();
+        // Improved Focus Management
+        const handleModalShow = (modalElement, focusElement) => {
+            const focusableElements = modalElement.querySelectorAll(
+                'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+            );
+            const firstFocusable = focusableElements[0];
+            const lastFocusable = focusableElements[focusableElements.length - 1];
+
+            // Set initial focus
+            if (focusElement) {
+                setTimeout(() => focusElement.focus(), 100);
+            }
+
+            // Trap focus in modal
+            modalElement.addEventListener('keydown', function(e) {
+                if (e.key === 'Tab') {
+                    if (e.shiftKey) {
+                        if (document.activeElement === firstFocusable) {
+                            e.preventDefault();
+                            lastFocusable.focus();
+                        }
+                    } else {
+                        if (document.activeElement === lastFocusable) {
+                            e.preventDefault();
+                            firstFocusable.focus();
+                        }
+                    }
+                }
+            });
+        };
+
+        // Modal Event Listeners
+        document.getElementById('authModal').addEventListener('shown.bs.modal', function() {
+            handleModalShow(this, document.getElementById('email'));
         });
 
-        // Ensure modals are properly hidden
+        document.getElementById('passwordResetModal').addEventListener('shown.bs.modal', function() {
+            handleModalShow(this, document.getElementById('resetEmail'));
+        });
+
+        // Remove aria-hidden when modal is hidden
         document.querySelectorAll('.modal').forEach(modal => {
-            modal.addEventListener('hidden.bs.modal', function () {
-                // Remove any aria-hidden attributes that might have been added
+            modal.addEventListener('hidden.bs.modal', function() {
                 document.querySelectorAll('[aria-hidden]').forEach(el => {
                     el.removeAttribute('aria-hidden');
                 });
+                // Return focus to trigger element
+                const triggerElement = document.querySelector('[data-bs-target="#' + this.id + '"]') || 
+                                     document.querySelector('[href="#' + this.id + '"]');
+                if (triggerElement) {
+                    triggerElement.focus();
+                }
             });
         });
+
+        // Toggle Password Visibility
+        const togglePassword = (inputId, buttonId) => {
+            const input = document.getElementById(inputId);
+            const button = document.getElementById(buttonId);
+            if (!input || !button) return;
+
+            button.addEventListener('click', () => {
+                const type = input.type === 'password' ? 'text' : 'password';
+                input.type = type;
+                const icon = button.querySelector('i');
+                if (icon) {
+                    icon.className = `bi bi-eye${type === 'text' ? '-slash' : ''}`;
+                }
+                button.setAttribute('aria-label', 
+                    `Passwort ${type === 'text' ? 'verbergen' : 'anzeigen'}`
+                );
+            });
+        };
+
+        // Initialize password toggles
+        togglePassword('password', 'togglePassword');
+        togglePassword('registerPassword', 'toggleRegisterPassword');
     </script>
+
+    <style>
+        .workflow-steps .step-number {
+            width: 30px;
+            height: 30px;
+            line-height: 30px;
+            border-radius: 50%;
+            background-color: var(--bs-primary);
+            color: white;
+            font-weight: bold;
+            margin: 0 auto;
+        }
+        
+        .step-card {
+            transition: transform 0.2s ease-in-out;
+        }
+        
+        .step-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        @media (max-width: 768px) {
+            .workflow-steps .col-md-3:not(:last-child) .step-card::after {
+                display: none;
+            }
+        }
+    </style>
 </body>
 </html> 

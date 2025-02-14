@@ -64,11 +64,12 @@ class FirebaseInstance {
             return FirebaseInstance.instance;
         }
         FirebaseInstance.instance = this;
+        this._initialized = false;
         this.initialize();
     }
 
     async initialize() {
-        if (this.app) {
+        if (this._initialized) {
             console.warn('[Firebase] Already initialized');
             return;
         }
@@ -80,17 +81,38 @@ class FirebaseInstance {
             }
 
             // Initialize Firebase
-            this.app = initializeApp(firebaseConfig);
+            this.app = initializeApp(firebaseConfig, 'bewerbungs-app');
             console.log('[Firebase] App initialized');
 
-            // Initialize services
-            this.auth = getAuth(this.app);
-            this.db = getFirestore(this.app);
-            this.rtdb = getDatabase(this.app);
-            this.storage = getStorage(this.app);
+            // Initialize services with error handling
+            try {
+                this.auth = getAuth(this.app);
+                await setPersistence(this.auth, browserLocalPersistence);
+            } catch (error) {
+                console.error('[Firebase] Auth initialization failed:', error);
+                throw new Error('Auth initialization failed');
+            }
 
-            // Set persistence to LOCAL by default
-            await setPersistence(this.auth, browserLocalPersistence);
+            try {
+                this.db = getFirestore(this.app);
+            } catch (error) {
+                console.error('[Firebase] Firestore initialization failed:', error);
+                throw new Error('Firestore initialization failed');
+            }
+
+            try {
+                this.rtdb = getDatabase(this.app);
+            } catch (error) {
+                console.error('[Firebase] Realtime Database initialization failed:', error);
+                throw new Error('Realtime Database initialization failed');
+            }
+
+            try {
+                this.storage = getStorage(this.app);
+            } catch (error) {
+                console.error('[Firebase] Storage initialization failed:', error);
+                throw new Error('Storage initialization failed');
+            }
             
             // Connect emulators in development
             if (window.location.hostname === 'localhost') {
@@ -105,12 +127,13 @@ class FirebaseInstance {
                 }
             }
 
+            this._initialized = true;
             console.log('[Firebase] Services successfully initialized');
             return true;
         } catch (error) {
             console.error('[Firebase] Initialization error:', error);
             this.showError(error);
-            this.cleanup();
+            await this.cleanup();
             return false;
         }
     }
@@ -127,15 +150,21 @@ class FirebaseInstance {
         document.body.appendChild(errorMessage);
     }
 
-    cleanup() {
-        if (this.app) {
-            this.app.delete().catch(console.error);
+    async cleanup() {
+        try {
+            if (this.app) {
+                await this.app.delete();
+            }
+        } catch (error) {
+            console.error('[Firebase] Cleanup error:', error);
+        } finally {
+            this.app = null;
+            this.auth = null;
+            this.db = null;
+            this.rtdb = null;
+            this.storage = null;
+            this._initialized = false;
         }
-        this.app = null;
-        this.auth = null;
-        this.db = null;
-        this.rtdb = null;
-        this.storage = null;
     }
 
     // Auth functions
