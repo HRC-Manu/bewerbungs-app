@@ -131,12 +131,20 @@
                                 <button class="btn btn-sm btn-outline-primary" id="loadExampleBtn">
                                     <i class="bi bi-file-text"></i> Beispiel
                                 </button>
+                                <button class="btn btn-outline-primary ms-2" id="urlLoadBtn">
+                                    <i class="bi bi-globe"></i>
+                                    URL einfügen
+                                </button>
                             </div>
                         </div>
                     </div>
                     <div class="card-body">
-                        <textarea class="form-control" id="jobPosting" rows="12" 
-                            placeholder="Füge hier die Stellenanzeige ein..."></textarea>
+                        <textarea id="jobPosting" class="form-control" rows="8" placeholder="Hier die Stellenanzeige einfügen..."></textarea>
+                        
+                        <div class="mt-3">
+                            <input type="text" id="jobPostingURL" class="form-control" placeholder="https://www.example.com/stelle/12345" />
+                            <small class="text-muted">Geben Sie hier eine URL zur Stellenanzeige an</small>
+                        </div>
                         
                         <div id="jobAnalysis" class="analysis-section mt-4 d-none">
                             <h6 class="analysis-title">
@@ -183,6 +191,31 @@
                             <i class="bi bi-magic me-2"></i>
                             Analysieren und Anschreiben erstellen
                         </button>
+                    </div>
+                </div>
+
+                <!-- Optional: Editor-Sektion für moderne Editierfeatures (z.B. ein WYSIWYG-Editor) -->
+                <div class="card shadow-sm mb-4" id="editorSection">
+                    <div class="card-header bg-white py-3">
+                        <h5 class="card-title mb-0">
+                            <i class="bi bi-pencil-square me-2"></i>
+                            Anschreiben bearbeiten (modern)
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- Einfacher WYSIWYG oder Richtext Editor-Container -->
+                        <div id="coverLetterEditor" contenteditable="true" class="border rounded p-2" style="min-height: 150px;">
+                            <!-- Hier könnte das KI-generierte Anschreiben landen, um es direkt zu bearbeiten -->
+                        </div>
+                        <small class="text-muted">Sie können Text markieren, fett/kursiv gestalten, etc.</small>
+                        <!-- z.B. Buttons für fette/kursive Formatierung -->
+                        <div class="mt-2">
+                            <button class="btn btn-sm btn-outline-secondary" id="boldBtn"><i class="bi bi-type-bold"></i></button>
+                            <button class="btn btn-sm btn-outline-secondary" id="italicBtn"><i class="bi bi-type-italic"></i></button>
+                            <button class="btn btn-sm btn-outline-secondary" id="underlineBtn"><i class="bi bi-type-underline"></i></button>
+                            <button class="btn btn-sm btn-outline-secondary" id="undoBtn"><i class="bi bi-arrow-counterclockwise"></i></button>
+                            <button class="btn btn-sm btn-outline-secondary" id="redoBtn"><i class="bi bi-arrow-clockwise"></i></button>
+                        </div>
                     </div>
                 </div>
 
@@ -256,6 +289,57 @@
                             <i class="bi bi-check-lg me-2"></i>
                             Anschreiben erstellen
                         </button>
+                    </div>
+                </div>
+
+                <!-- Nach dem Editor (WYSIWYG) fügen wir einen Abschnitt "Design-Editor" hinzu -->
+                <div class="card shadow-sm mb-4" id="designEditorSection">
+                    <div class="card-header bg-white py-3">
+                        <h5 class="card-title mb-0">
+                            <i class="bi bi-palette me-2"></i>
+                            Design-Editor
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="colorPicker" class="form-label">Hintergrundfarbe</label>
+                                <input type="color" id="colorPicker" class="form-control form-control-color" value="#ffffff" title="Wähle eine Hintergrundfarbe" />
+                            </div>
+                            <div class="col-md-6">
+                                <label for="fontSelect" class="form-label">Schriftart</label>
+                                <select id="fontSelect" class="form-select">
+                                    <option value="'Segoe UI', sans-serif" selected>Segoe UI (modern)</option>
+                                    <option value="Arial, sans-serif">Arial</option>
+                                    <option value="Georgia, serif">Georgia</option>
+                                    <option value="Courier New, monospace">Courier New</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-check form-switch mt-3">
+                            <input class="form-check-input" type="checkbox" role="switch" id="borderToggle" checked>
+                            <label class="form-check-label" for="borderToggle">Rahmen um das Anschreiben anzeigen</label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Moderner Vorschau-Abschnitt -->
+                <div class="card shadow-sm mb-4" id="modernPreviewSection">
+                    <div class="card-header bg-white py-3 d-flex align-items-center justify-content-between">
+                        <h5 class="card-title mb-0">
+                            <i class="bi bi-window me-2"></i>
+                            Live-Vorschau
+                        </h5>
+                        <button class="btn btn-sm btn-outline-secondary" id="refreshPreviewBtn">
+                            <i class="bi bi-arrow-repeat"></i>
+                            Aktualisieren
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div id="modernPreviewContainer" class="p-3 border" style="min-height: 250px; background-color: #fff;">
+                            <!-- Hier wird das final gerenderte Anschreiben (mit Design-Optionen) live angezeigt -->
+                        </div>
+                        <small class="text-muted">Die Vorschau aktualisiert sich basierend auf den Design-Optionen und dem Anschreibentext</small>
                     </div>
                 </div>
             </div>
@@ -418,12 +502,15 @@
                             <option value="casual">Locker</option>
                             <option value="creative">Kreativ</option>
                         </select>
-                        <small class="text-muted">Wählen Sie einen Anbieter für die Anschreiben-Generierung</small>
+                        <label for="apiKeyInput" class="form-label fw-bold mt-3">API Key (verschlüsselt)</label>
+                        <input type="password" id="apiKeyInput" class="form-control"
+                               placeholder="API Key eingeben" autocomplete="new-password" />
+                        <small class="text-muted">Der Key wird verschlüsselt gespeichert und nicht direkt kopierbar angezeigt.</small>
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Schließen</button>
-                    <button type="button" class="btn btn-primary">Speichern</button>
+                    <button type="button" class="btn btn-primary" id="saveApiSettingsBtn">Speichern</button>
                 </div>
             </div>
         </div>
@@ -443,8 +530,11 @@
 
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/crypto-js@4.2.0/crypto-js.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <script>
+        // PDF.js Worker konfigurieren
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
         // Aktiviere Bootstrap Tooltips und Popovers
         document.addEventListener('DOMContentLoaded', function() {
             var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
@@ -458,6 +548,6 @@
             });
         });
     </script>
-    <script src="js/app.js"></script>
+    <script type="module" src="js/app.js"></script>
 </body>
 </html> 
