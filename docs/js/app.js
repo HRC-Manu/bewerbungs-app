@@ -68,6 +68,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
         
         initializeAutoSync();
+        initializeGitHubIntegration();
         
         console.log('Application initialized successfully');
     } catch (error) {
@@ -1461,4 +1462,68 @@ function initializeAutoSync() {
             }, 2000));
         }
     });
+}
+
+// GitHub Integration
+function initializeGitHubIntegration() {
+    // Toggle Button für Token-Sichtbarkeit
+    const tokenToggle = document.querySelector('.token-toggle');
+    const tokenInput = document.getElementById('githubToken');
+    const statusIndicator = document.querySelector('.github-status');
+    
+    if (tokenToggle && tokenInput) {
+        tokenToggle.addEventListener('click', () => {
+            const type = tokenInput.type === 'password' ? 'text' : 'password';
+            tokenInput.type = type;
+            tokenToggle.querySelector('i').classList.toggle('bi-eye');
+            tokenToggle.querySelector('i').classList.toggle('bi-eye-slash');
+        });
+    }
+
+    // Status-Check
+    async function checkGitHubConnection() {
+        const token = localStorage.getItem('githubToken');
+        if (!token) {
+            updateConnectionStatus(false);
+            return;
+        }
+
+        try {
+            const response = await fetch('https://api.github.com/user', {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Accept': 'application/vnd.github.v3+json'
+                }
+            });
+
+            updateConnectionStatus(response.ok);
+        } catch (error) {
+            console.error('GitHub connection check failed:', error);
+            updateConnectionStatus(false);
+        }
+    }
+
+    function updateConnectionStatus(connected) {
+        if (statusIndicator) {
+            statusIndicator.className = `github-status ${connected ? 'connected' : 'disconnected'}`;
+            statusIndicator.querySelector('span').textContent = 
+                connected ? 'Verbunden' : 'Nicht verbunden';
+        }
+    }
+
+    // Initial Check
+    checkGitHubConnection();
+
+    // Save Handler erweitern
+    const saveBtn = document.getElementById('saveSettingsBtn');
+    if (saveBtn) {
+        saveBtn.addEventListener('click', async () => {
+            const token = tokenInput.value;
+            if (token) {
+                localStorage.setItem('githubToken', token);
+                await checkGitHubConnection();
+                showSuccess('Einstellungen gespeichert');
+            }
+        });
+    }
 }
