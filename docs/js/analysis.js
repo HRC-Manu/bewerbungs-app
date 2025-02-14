@@ -10,13 +10,26 @@ export async function analyzeJobPosting(jobPosting) {
         if (!jobPosting || typeof jobPosting !== 'string') {
             throw new Error('Ungültige Stellenanzeige');
         }
-        const text = jobPosting.toLowerCase();
 
-        const positionInfo = analyzePosition(text);
-        const levelInfo = analyzeLevel(text);
-        const departmentInfo = analyzeDepartment(text);
-        const companyInfo = analyzeCompany(text);
-        const requirements = analyzeRequirements(text);
+        // Sende Text an NLP-Service für detaillierte Analyse
+        const response = await fetch('/api/analyze-job-posting', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: jobPosting })
+        });
+
+        if (!response.ok) {
+            throw new Error('Fehler bei der Analyse');
+        }
+
+        const nlpAnalysis = await response.json();
+
+        // Kombiniere NLP-Analyse mit regelbasierter Analyse
+        const positionInfo = analyzePosition(jobPosting, nlpAnalysis);
+        const levelInfo = analyzeLevel(jobPosting, nlpAnalysis);
+        const departmentInfo = analyzeDepartment(jobPosting, nlpAnalysis);
+        const companyInfo = await analyzeCompany(jobPosting, nlpAnalysis);
+        const requirements = await analyzeRequirements(jobPosting, nlpAnalysis);
 
         return {
             jobTitle: {
@@ -24,28 +37,13 @@ export async function analyzeJobPosting(jobPosting) {
                 level: levelInfo.level,
                 department: departmentInfo.name,
                 context: {
-                    isRemote: checkRemoteWork(text),
-                    location: extractLocation(text),
-                    teamSize: extractTeamSize(text)
+                    isRemote: checkRemoteWork(jobPosting),
+                    location: extractLocation(jobPosting),
+                    teamSize: extractTeamSize(jobPosting)
                 }
             },
-            company: {
-                name: companyInfo.name,
-                industry: companyInfo.industry,
-                culture: companyInfo.culture,
-                benefits: extractBenefits(text),
-                technologies: extractTechnologies(text)
-            },
-            requirements: {
-                essential: requirements.essential,
-                preferred: requirements.preferred,
-                experience: requirements.experience,
-                education: requirements.education,
-                skills: {
-                    technical: requirements.technical,
-                    soft: requirements.soft
-                }
-            }
+            company: companyInfo,
+            requirements: requirements
         };
     } catch (error) {
         console.error('Error in analyzeJobPosting:', error);
@@ -59,44 +57,181 @@ export async function analyzeJobPosting(jobPosting) {
  * @returns {Promise<Object>} Analyseergebnisse
  */
 export async function analyzeResume(resumeText, options = {}) {
-    const analysis = {
-        personalInfo: {
-            name: extractPersonName(resumeText),
-            email: extractEmail(resumeText),
-            phone: extractPhoneNumber(resumeText),
-            currentPosition: extractCurrentPosition(resumeText)
-        },
-        skills: {
-            technical: extractDetailedTechnicalSkills(resumeText),
-            soft: extractDetailedSoftSkills(resumeText),
-            languages: extractLanguageSkills(resumeText)
-        },
-        experience: extractDetailedExperience(resumeText),
-        education: extractDetailedEducation(resumeText),
-        certifications: extractCertifications(resumeText),
-        achievements: extractKeyAchievements(resumeText)
-    };
+    try {
+        // Sende Text an NLP-Service für detaillierte Analyse
+        const response = await fetch('/api/analyze-resume', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: resumeText })
+        });
 
-    return analysis;
+        if (!response.ok) {
+            throw new Error('Fehler bei der Analyse');
+        }
+
+        const nlpAnalysis = await response.json();
+
+        return {
+            personalInfo: extractPersonalInfo(resumeText, nlpAnalysis),
+            skills: await extractSkills(resumeText, nlpAnalysis),
+            experience: await extractExperience(resumeText, nlpAnalysis),
+            education: extractEducation(resumeText, nlpAnalysis),
+            certifications: extractCertifications(resumeText, nlpAnalysis),
+            achievements: extractAchievements(resumeText, nlpAnalysis)
+        };
+    } catch (error) {
+        console.error('Error in analyzeResume:', error);
+        throw error;
+    }
 }
 
-function analyzePosition(text) {
+async function analyzePosition(text, nlpAnalysis) {
+    const { entities, keywords } = nlpAnalysis;
     let title = '';
     let category = '';
     
-    for (const [cat, keywords] of Object.entries(ANALYSIS_SETTINGS.positions)) {
-        if (keywords.some(keyword => text.includes(keyword))) {
-            category = cat;
-            // Extrahiere den genauen Titel aus dem Text
-            const titleMatch = text.match(new RegExp(`(${keywords.join('|')})\\s*(?:als|in|für)?\\s*([\\w\\s]+)`, 'i'));
-            if (titleMatch) {
-                title = titleMatch[0].trim();
+    // Nutze NLP-Entitäten für Jobtitel
+    const jobTitleEntity = entities.find(e => e.type === 'JOB_TITLE');
+    if (jobTitleEntity) {
+        title = jobTitleEntity.text;
+    }
+    
+    // Fallback auf regelbasierte Analyse
+    if (!title) {
+        for (const [cat, keywords] of Object.entries(ANALYSIS_SETTINGS.positions)) {
+            if (keywords.some(keyword => text.toLowerCase().includes(keyword))) {
+                category = cat;
+                const titleMatch = text.match(new RegExp(`(${keywords.join('|')})\\s*(?:als|in|für)?\\s*([\\w\\s]+)`, 'i'));
+                if (titleMatch) {
+                    title = titleMatch[0].trim();
+                }
+                break;
             }
-            break;
         }
     }
     
     return { title, category };
+}
+
+async function analyzeCompany(text, nlpAnalysis) {
+    const { entities } = nlpAnalysis;
+    
+    // Extrahiere Firmeninformationen aus NLP-Analyse
+    const companyEntity = entities.find(e => e.type === 'ORGANIZATION');
+    const companyName = companyEntity ? companyEntity.text : extractCompanyName(text);
+    
+    // Hole zusätzliche Firmeninformationen von externem Service
+    try {
+        const response = await fetch('/api/company-info', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: companyName })
+        });
+        
+        if (response.ok) {
+            const companyInfo = await response.json();
+            return {
+                name: companyName,
+                industry: companyInfo.industry || determineIndustry(text),
+                size: companyInfo.size || determineCompanySize(text),
+                culture: companyInfo.culture || analyzeCultureDetails(text)
+            };
+        }
+    } catch (error) {
+        console.warn('Could not fetch company info:', error);
+    }
+    
+    // Fallback auf lokale Analyse
+    return {
+        name: companyName,
+        industry: determineIndustry(text),
+        size: determineCompanySize(text),
+        culture: analyzeCultureDetails(text)
+    };
+}
+
+async function analyzeRequirements(text, nlpAnalysis) {
+    const { entities, keywords } = nlpAnalysis;
+    
+    // Extrahiere Anforderungen aus NLP-Analyse
+    const requirements = {
+        essential: entities
+            .filter(e => e.type === 'REQUIREMENT' && e.required)
+            .map(e => e.text),
+        preferred: entities
+            .filter(e => e.type === 'REQUIREMENT' && !e.required)
+            .map(e => e.text),
+        experience: entities
+            .filter(e => e.type === 'EXPERIENCE')
+            .map(e => e.text),
+        education: entities
+            .filter(e => e.type === 'EDUCATION')
+            .map(e => e.text),
+        technical: keywords
+            .filter(k => k.category === 'TECHNICAL')
+            .map(k => k.text),
+        soft: keywords
+            .filter(k => k.category === 'SOFT_SKILL')
+            .map(k => k.text)
+    };
+    
+    // Ergänze mit regelbasierter Analyse
+    if (requirements.essential.length === 0) {
+        requirements.essential = extractEssentialRequirements(text);
+    }
+    if (requirements.preferred.length === 0) {
+        requirements.preferred = extractPreferredRequirements(text);
+    }
+    
+    return requirements;
+}
+
+async function extractSkills(text, nlpAnalysis) {
+    const { entities, keywords } = nlpAnalysis;
+    
+    // Extrahiere Skills aus NLP-Analyse
+    const skills = {
+        technical: keywords
+            .filter(k => k.category === 'TECHNICAL')
+            .map(k => ({
+                name: k.text,
+                level: k.level || 'experienced',
+                context: k.context
+            })),
+        soft: keywords
+            .filter(k => k.category === 'SOFT_SKILL')
+            .map(k => ({
+                name: k.text,
+                context: k.context
+            })),
+        languages: entities
+            .filter(e => e.type === 'LANGUAGE')
+            .map(e => ({
+                name: e.text,
+                level: e.level || 'fluent'
+            }))
+    };
+    
+    // Validiere und ergänze Skills
+    return await validateAndEnrichSkills(skills);
+}
+
+async function validateAndEnrichSkills(skills) {
+    try {
+        const response = await fetch('/api/validate-skills', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ skills })
+        });
+        
+        if (response.ok) {
+            return await response.json();
+        }
+    } catch (error) {
+        console.warn('Could not validate skills:', error);
+    }
+    
+    return skills;
 }
 
 function analyzeLevel(text) {
@@ -117,32 +252,12 @@ function analyzeDepartment(text) {
     return { name: 'other' };
 }
 
-function analyzeCompany(text) {
-    return {
-        name: extractCompanyName(text),
-        industry: determineIndustry(text),
-        size: determineCompanySize(text),
-        culture: analyzeCultureDetails(text)
-    };
-}
-
 function analyzeCultureDetails(text) {
     const cultureIndicators = {};
     for (const [style, keywords] of Object.entries(ANALYSIS_SETTINGS.culture)) {
         cultureIndicators[style] = keywords.filter(keyword => text.includes(keyword)).length;
     }
     return cultureIndicators;
-}
-
-function analyzeRequirements(text) {
-    return {
-        essential: extractEssentialRequirements(text),
-        preferred: extractPreferredRequirements(text),
-        experience: extractExperienceRequirements(text),
-        education: extractEducationRequirements(text),
-        technical: extractTechnicalSkills(text),
-        soft: extractSoftSkills(text)
-    };
 }
 
 function extractEssentialRequirements(text) {
@@ -219,29 +334,47 @@ function determineCompanySize(text) {
 
 function checkRemoteWork(text) {
     const remoteIndicators = [
-        'remote', 'homeoffice', 'home office', 'remote-arbeit',
-        'telearbeit', 'von zuhause', 'hybrid'
+        'remote',
+        'home office',
+        'homeoffice',
+        'remote-first',
+        'remote work',
+        'remote-arbeit',
+        'hybrid'
     ];
     
-    return remoteIndicators.some(indicator => text.toLowerCase().includes(indicator));
+    return remoteIndicators.some(indicator => 
+        text.toLowerCase().includes(indicator)
+    );
 }
 
 function extractLocation(text) {
-    const locationPattern = /(?:standort|ort|location|sitz):\s*([^\n.]+)/i;
-    const match = text.match(locationPattern);
-    return match ? match[1].trim() : null;
+    const locationPatterns = [
+        /(?:standort|location|ort):\s*([^,\n]+)/i,
+        /(?:in|at)\s+([^,\n]+?)(?=\s*(?:\(|$))/i
+    ];
+    
+    for (const pattern of locationPatterns) {
+        const match = text.match(pattern);
+        if (match) return match[1].trim();
+    }
+    
+    return null;
 }
 
 function extractTeamSize(text) {
-    const patterns = [
-        /team\s+von\s+(\d+)/i,
-        /(\d+)[\s-]+personen/i,
-        /(\d+)[\s-]+mitarbeiter/i
+    const teamSizePatterns = [
+        /team\s+von\s+(\d+)(?:\s*-\s*(\d+))?\s+/i,
+        /(\d+)(?:\s*-\s*(\d+))?\s+personen/i
     ];
     
-    for (const pattern of patterns) {
+    for (const pattern of teamSizePatterns) {
         const match = text.match(pattern);
-        if (match) return parseInt(match[1]);
+        if (match) {
+            const min = parseInt(match[1]);
+            const max = match[2] ? parseInt(match[2]) : min;
+            return { min, max };
+        }
     }
     
     return null;
