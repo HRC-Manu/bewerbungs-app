@@ -458,7 +458,7 @@ async function handleNextStep() {
                 
             case 2:
                 if (!validateStep2()) return;
-                await analyzeJobPosting();
+                await performJobPostingAnalysis();
                 showStep(3);
                 break;
                 
@@ -545,7 +545,7 @@ function loadSettings() {
     if (settings.letterStyle) elements.letterStyle.value = settings.letterStyle;
 }
 
-async function analyzeJobPosting() {
+async function performJobPostingAnalysis() {
     const { elements } = globalState;
     const jobPosting = elements.jobPosting.value;
     
