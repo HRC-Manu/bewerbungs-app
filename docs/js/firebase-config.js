@@ -6,7 +6,9 @@ import {
     signInWithEmailAndPassword,
     createUserWithEmailAndPassword,
     signOut,
-    onAuthStateChanged
+    onAuthStateChanged,
+    setPersistence,
+    browserLocalPersistence
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { 
     getFirestore, 
@@ -55,89 +57,149 @@ export const firebaseConfig = {
     databaseURL: "https://bewerbungs-app-default-rtdb.europe-west1.firebasedatabase.app"
 };
 
-// Initialisiere Firebase mit Fehlerbehandlung
-let app, auth, db, rtdb, storage;
-
-try {
-    // Prüfe ob notwendige Konfiguration vorhanden
-    if (!firebaseConfig.apiKey) {
-        throw new Error('Firebase API-Key fehlt in der Konfiguration');
+// Singleton-Pattern für Firebase-Instanz
+class FirebaseInstance {
+    constructor() {
+        if (FirebaseInstance.instance) {
+            return FirebaseInstance.instance;
+        }
+        FirebaseInstance.instance = this;
+        this.initialize();
     }
 
-    // Initialisiere Firebase
-    app = initializeApp(firebaseConfig);
-    console.log('Firebase App initialisiert');
+    async initialize() {
+        if (this.app) {
+            console.warn('[Firebase] Already initialized');
+            return;
+        }
 
-    // Initialisiere Services
-    auth = getAuth(app);
-    db = getFirestore(app);
-    rtdb = getDatabase(app);
-    storage = getStorage(app);
-    
-    console.log('Firebase Services erfolgreich initialisiert');
-} catch (error) {
-    console.error('Fehler bei der Firebase-Initialisierung:', error);
-    // Zeige benutzerfreundliche Fehlermeldung
-    const errorMessage = document.createElement('div');
-    errorMessage.style.cssText = 'position:fixed;top:0;left:0;right:0;background:red;color:white;padding:1rem;text-align:center;z-index:9999;';
-    errorMessage.textContent = 'Firebase konnte nicht initialisiert werden. Bitte prüfe die Konsole für Details.';
-    document.body.appendChild(errorMessage);
-    throw error;
-}
+        try {
+            // Validate config
+            if (!firebaseConfig.apiKey || !firebaseConfig.authDomain || !firebaseConfig.projectId) {
+                throw new Error('Invalid Firebase configuration');
+            }
 
-// Entwicklungsmodus für localhost
-if (window.location.hostname === 'localhost') {
-    // Emulator-Verbindungen für lokale Entwicklung
-    connectAuthEmulator(auth, "http://localhost:9099");
-    connectFirestoreEmulator(db, 'localhost', 8080);
-    connectStorageEmulator(storage, "localhost", 9199);
-    connectDatabaseEmulator(rtdb, "localhost", 9000);
-    
-    console.log('Firebase läuft im Entwicklungsmodus');
-}
+            // Initialize Firebase
+            this.app = initializeApp(firebaseConfig);
+            console.log('[Firebase] App initialized');
 
-// Auth-Funktionen
-export async function signIn(email, password) {
-    try {
-        const userCredential = await signInWithEmailAndPassword(auth, email, password);
-        console.log('✓ Anmeldung erfolgreich');
-        return userCredential.user;
-    } catch (error) {
-        console.error('Anmeldefehler:', error);
-        throw error;
+            // Initialize services
+            this.auth = getAuth(this.app);
+            this.db = getFirestore(this.app);
+            this.rtdb = getDatabase(this.app);
+            this.storage = getStorage(this.app);
+
+            // Set persistence to LOCAL by default
+            await setPersistence(this.auth, browserLocalPersistence);
+            
+            // Connect emulators in development
+            if (window.location.hostname === 'localhost') {
+                try {
+                    connectAuthEmulator(this.auth, "http://localhost:9099", { disableWarnings: true });
+                    connectFirestoreEmulator(this.db, 'localhost', 8080);
+                    connectStorageEmulator(this.storage, "localhost", 9199);
+                    connectDatabaseEmulator(this.rtdb, "localhost", 9000);
+                    console.log('[Firebase] Emulators connected');
+                } catch (error) {
+                    console.warn('[Firebase] Emulator connection failed:', error);
+                }
+            }
+
+            console.log('[Firebase] Services successfully initialized');
+            return true;
+        } catch (error) {
+            console.error('[Firebase] Initialization error:', error);
+            this.showError(error);
+            this.cleanup();
+            return false;
+        }
     }
-}
 
-export async function signUp(email, password) {
-    try {
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        console.log('✓ Registrierung erfolgreich');
+    showError(error) {
+        const errorMessage = document.createElement('div');
+        errorMessage.className = 'alert alert-danger position-fixed top-0 start-50 translate-middle-x m-3';
+        errorMessage.style.zIndex = '9999';
+        errorMessage.innerHTML = `
+            <strong>Firebase-Fehler:</strong> 
+            ${error.message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+        document.body.appendChild(errorMessage);
+    }
+
+    cleanup() {
+        if (this.app) {
+            this.app.delete().catch(console.error);
+        }
+        this.app = null;
+        this.auth = null;
+        this.db = null;
+        this.rtdb = null;
+        this.storage = null;
+    }
+
+    // Auth functions
+    async signIn(email, password) {
+        if (!this.auth) throw new Error('Firebase Auth not initialized');
         
-        // Initialisiere Benutzerstruktur in Realtime Database
-        const userId = userCredential.user.uid;
-        const userRef = dbRef(rtdb, `users/${userId}`);
-        await dbSet(userRef, {
-            email: email,
-            createdAt: new Date().toISOString(),
-            applications: {}
-        });
+        try {
+            const userCredential = await signInWithEmailAndPassword(this.auth, email, password);
+            console.log('✓ Login successful');
+            return userCredential.user;
+        } catch (error) {
+            console.error('Login error:', error);
+            throw error;
+        }
+    }
+
+    async signUp(email, password) {
+        if (!this.auth) throw new Error('Firebase Auth not initialized');
         
-        return userCredential.user;
-    } catch (error) {
-        console.error('Registrierungsfehler:', error);
-        throw error;
+        try {
+            const userCredential = await createUserWithEmailAndPassword(this.auth, email, password);
+            console.log('✓ Registration successful');
+            
+            if (this.rtdb) {
+                const userId = userCredential.user.uid;
+                const userRef = dbRef(this.rtdb, `users/${userId}`);
+                await dbSet(userRef, {
+                    email: email,
+                    createdAt: new Date().toISOString(),
+                    applications: {}
+                });
+            }
+            
+            return userCredential.user;
+        } catch (error) {
+            console.error('Registration error:', error);
+            throw error;
+        }
+    }
+
+    async logOut() {
+        if (!this.auth) throw new Error('Firebase Auth not initialized');
+        
+        try {
+            await signOut(this.auth);
+            console.log('✓ Logout successful');
+        } catch (error) {
+            console.error('Logout error:', error);
+            throw error;
+        }
     }
 }
 
-export async function logOut() {
-    try {
-        await signOut(auth);
-        console.log('✓ Abmeldung erfolgreich');
-    } catch (error) {
-        console.error('Abmeldefehler:', error);
-        throw error;
-    }
-}
+// Create and initialize Firebase instance
+const firebaseInstance = new FirebaseInstance();
+
+// Export services and functions
+export const auth = firebaseInstance.auth;
+export const db = firebaseInstance.db;
+export const rtdb = firebaseInstance.rtdb;
+export const storage = firebaseInstance.storage;
+export const signIn = firebaseInstance.signIn.bind(firebaseInstance);
+export const signUp = firebaseInstance.signUp.bind(firebaseInstance);
+export const logOut = firebaseInstance.logOut.bind(firebaseInstance);
 
 // Auth State Observer
 export function initAuthObserver(callback) {
@@ -218,12 +280,3 @@ export async function testFirebaseConnection(testEmail = 'test@example.com', tes
         throw new Error(`Firebase Verbindung fehlgeschlagen: ${error.message}`);
     }
 }
-
-// Exportiere die Services
-export { 
-    app,
-    auth,
-    db,
-    rtdb as database,
-    storage
-};
