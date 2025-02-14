@@ -1,3 +1,5 @@
+"use strict";
+
 import { ANALYSIS_SETTINGS } from './state.js';
 
 /**
@@ -6,6 +8,7 @@ import { ANALYSIS_SETTINGS } from './state.js';
  * @returns {Promise<Object>} Analyseergebnisse
  */
 export async function analyzeJobPosting(jobPosting) {
+    console.debug('[Analysis] Starte Stellenanzeigen-Analyse');
     try {
         if (!jobPosting || typeof jobPosting !== 'string') {
             throw new Error('Ungültige Stellenanzeige');
@@ -46,7 +49,7 @@ export async function analyzeJobPosting(jobPosting) {
             requirements: requirements
         };
     } catch (error) {
-        console.error('Error in analyzeJobPosting:', error);
+        console.error('[Analysis] Job posting error:', error);
         throw error;
     }
 }

@@ -1,3 +1,5 @@
+"use strict";
+
 /**
  * AI Service für die Generierung und Verarbeitung von KI-basierten Inhalten
  */
@@ -12,6 +14,7 @@ export class AIService {
      * @returns {Promise<Array>} Array von Abschnittsvorschlägen
      */
     static async generateCoverLetterSections(jobData, resumeData, config) {
+        console.debug('[AIService] Generiere Anschreiben mit config:', config);
         const prompt = this.createPrompt(jobData, resumeData, config);
         
         try {

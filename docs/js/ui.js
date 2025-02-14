@@ -1,3 +1,5 @@
+"use strict"; // Schleife 1: Strict-Mode
+
 import { globalState } from './state.js';
 import { safeGetElem } from './utils.js';
 
@@ -39,8 +41,14 @@ export function hideLoading(element, originalText = '') {
     }
 }
 
+/**
+ * Zeigt eine Erfolgs-Toast-Nachricht
+ * @param {string} message 
+ * @param {number} duration 
+ */
 export function showSuccess(message, duration = 3000) {
     try {
+        console.info('SUCCESS:', message);
         const toast = globalState?.elements?.messageToast;
         if (!toast) {
             console.log('Success:', message);
@@ -61,7 +69,8 @@ export function showSuccess(message, duration = 3000) {
             bsToast.show();
         }
     } catch (error) {
-        console.log('Success (fallback):', message);
+        console.error('showSuccess fallback:', error);
+        alert(message);
     }
 }
 
@@ -95,7 +104,7 @@ export function showError(message) {
         toastMessage.textContent = message;
         toast.show();
     } catch (error) {
-        console.error('Error in showError:', error);
+        console.error('[UI ERROR]:', message);
         alert(message);
     }
 }

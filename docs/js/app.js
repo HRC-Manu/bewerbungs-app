@@ -1,3 +1,5 @@
+"use strict";
+
 import { globalState } from './state.js';
 import { showError, showSuccess, showLoading, hideLoading, updatePreview } from './ui.js';
 import { handleFileUpload, initializeFileUpload } from './file-handler.js';
@@ -30,6 +32,8 @@ onAuthStateChanged(auth, (user) => {
 });
 
 // Hauptinitialisierung
+console.info('Lade App...');
+
 document.addEventListener('DOMContentLoaded', async function() {
     "use strict";
     
@@ -55,6 +59,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         initializeEventListeners();
         Features.initialize();
         initializeWorkflow();
+        console.debug('Starte Auth-Service-Check...');
         await AuthService.checkAuth();
         
         setInterval(updatePreview, 3000);
@@ -72,8 +77,8 @@ document.addEventListener('DOMContentLoaded', async function() {
         
         console.log('Application initialized successfully');
     } catch (error) {
-        console.error('Error during initialization:', error);
-        showError('Fehler beim Initialisieren der Anwendung: ' + error.message);
+        console.error('[App Init Error]', error);
+        showError('Fehler beim Initialisieren: ' + error.message);
     }
 });
 
@@ -188,7 +193,7 @@ function initializeEventListeners() {
     });
 
     // URL Input Handler
-    elements.jobPostingURL?.addEventListener('input', debounce(handleJobPostingURL, 500));
+    elements.jobPostingURL?.addEventListener('input', debounce(handleJobPostingURL, 400));
 
     // Paste & Example Buttons
     elements.pasteBtn?.addEventListener('click', handlePaste);
@@ -1462,6 +1467,12 @@ function initializeAutoSync() {
             }, 2000));
         }
     });
+
+    const token = localStorage.getItem('githubToken');
+    if (!token) {
+        console.warn('Kein GitHub Token gefunden – AutoSync inaktiv.');
+        return;
+    }
 }
 
 // GitHub Integration

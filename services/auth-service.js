@@ -1,3 +1,5 @@
+"use strict";
+
 import { 
     createUserWithEmailAndPassword,
     signInWithEmailAndPassword,
@@ -10,6 +12,7 @@ import { auth, db } from "../firebase-config";
 class AuthService {
     async register(userData) {
         try {
+            console.debug('[AuthService] Registriere Benutzer:', userData.email);
             // Erstelle Firebase Auth User
             const userCredential = await createUserWithEmailAndPassword(
                 auth,
@@ -27,7 +30,7 @@ class AuthService {
 
             return userCredential.user;
         } catch (error) {
-            console.error("Register error:", error);
+            console.error('[AuthService] Register error:', error);
             throw this._handleError(error);
         }
     }

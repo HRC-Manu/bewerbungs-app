@@ -1,3 +1,5 @@
+"use strict";
+
 import { showError, showSuccess, showLoading, hideLoading } from './ui.js';
 import { formatFileSize } from './utils.js';
 import { globalState } from './state.js';
@@ -6,7 +8,8 @@ import { globalState } from './state.js';
  * Verarbeitet den Upload von PDF-Dateien
  * @param {Event} event - Das Upload-Event
  */
-export async function handleFileUpload(event) {
+export async function handleFileUpload(event, type = 'resume') {
+    console.debug(`[FileHandler] Upload type: ${type}`);
     const file = event.target.files[0];
     if (!file) return;
 
@@ -17,8 +20,8 @@ export async function handleFileUpload(event) {
     const fileName = preview.querySelector('.file-name');
 
     try {
-        if (file.type !== 'application/pdf') {
-            throw new Error('Bitte nur PDF-Dateien hochladen');
+        if (!file.type.includes('pdf') && !file.type.includes('doc')) {
+            throw new Error('Bitte nur PDF/DOC-Dokumente hochladen');
         }
 
         if (file.size > 10 * 1024 * 1024) {
@@ -53,7 +56,7 @@ export async function handleFileUpload(event) {
             checkRequiredUploads();
         }
     } catch (error) {
-        console.error('File upload error:', error);
+        console.error('[FileHandler] Upload error:', error);
         showError(error.message);
     } finally {
         hideLoading(preview);

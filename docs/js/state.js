@@ -1,9 +1,13 @@
+"use strict";
+
 // Global state management
 export const globalState = {
-    elements: null,
-    selectedAIProvider: 'chatgpt',
+    currentStep: 1,
+    resumeAnalysis: null,
+    jobAnalysis: null,
+    selectedAIProvider: 'openai',
     selectedCoverLetterStyle: 'formal',
-    currentStep: 1
+    elements: {}
 };
 
 // Constants

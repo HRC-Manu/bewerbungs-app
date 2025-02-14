@@ -1,3 +1,5 @@
+"use strict";
+
 /**
  * Sicheres Abrufen eines DOM-Elements
  * @param {string} id - Die ID des Elements
@@ -120,4 +122,15 @@ export function generateAlternatives(text, count = 3) {
     }
 
     return alternatives;
+}
+
+/**
+ * Debounce-Funktion, um eine Funktion erst nach einer Wartezeit auszuführen
+ */
+export function debounce(func, wait = 500) {
+    let timeout;
+    return (...args) => {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func(...args), wait);
+    };
 } 

@@ -1,5 +1,7 @@
+"use strict"; // Schleife 1
+
 import { globalState } from './state.js';
-import { updateProgress } from './ui.js';
+import { updateProgress, updateWorkflowNavigation, showWarning } from './ui.js';
 
 /**
  * Zeigt einen bestimmten Schritt im Workflow an
@@ -12,6 +14,7 @@ export function showStep(stepNum) {
         activeStep.classList.remove('d-none');
         globalState.currentStep = stepNum;
         updateProgress();
+        console.debug(`[Workflow] Zeige Schritt ${stepNum} an`);
     }
 }
 
@@ -19,8 +22,9 @@ export function showStep(stepNum) {
  * Geht zum nächsten Schritt im Workflow
  */
 export function nextStep() {
-    if (globalState.currentStep < 4) {
-        showStep(globalState.currentStep + 1);
+    const { currentStep } = globalState;
+    if (currentStep < 4) {
+        showStep(currentStep + 1);
     }
 }
 
@@ -28,8 +32,9 @@ export function nextStep() {
  * Geht zum vorherigen Schritt im Workflow
  */
 export function prevStep() {
-    if (globalState.currentStep > 1) {
-        showStep(globalState.currentStep - 1);
+    const { currentStep } = globalState;
+    if (currentStep > 1) {
+        showStep(currentStep - 1);
     }
 }
 

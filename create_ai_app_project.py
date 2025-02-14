@@ -1,6 +1,11 @@
 import os
+import logging
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 def main():
+    logger.info("Starte Projektstruktur-Erstellung...")
     # Hauptordnername
     project_name = "my-ai-app"
 
@@ -867,6 +872,7 @@ button {
     #     f.write(env_content)
 
     print("Projektstruktur erfolgreich erstellt!")
+    logger.info("Projekt erfolgreich angelegt.")
     print(f"Gehe nun in das Verzeichnis '{project_name}' und führe z.B. 'docker-compose up --build' aus.")
 
 
