@@ -5,9 +5,9 @@ import {
     signInWithEmailAndPassword,
     signOut,
     sendPasswordResetEmail
-} from "firebase/auth";
-import { doc, setDoc } from "firebase/firestore";
-import { auth, db } from "../firebase-config";
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { doc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { auth, db } from "../firebase-config.js";
 
 class AuthService {
     async register(userData) {

@@ -814,20 +814,46 @@
         });
         
         // Play/Pause Funktionalität
-        playBtn?.addEventListener('click', function() {
-            if (video.paused) {
-                video.play();
-                playBtn.querySelector('i').classList.replace('bi-play-fill', 'bi-pause-fill');
-            } else {
-                video.pause();
+        let isPlaying = false;
+        
+        playBtn?.addEventListener('click', async function() {
+            try {
+                if (!isPlaying) {
+                    await video.play();
+                    isPlaying = true;
+                    playBtn.querySelector('i').classList.replace('bi-play-fill', 'bi-pause-fill');
+                } else {
+                    video.pause();
+                    isPlaying = false;
+                    playBtn.querySelector('i').classList.replace('bi-pause-fill', 'bi-play-fill');
+                }
+            } catch (error) {
+                console.log('Video playback error:', error);
+                isPlaying = false;
                 playBtn.querySelector('i').classList.replace('bi-pause-fill', 'bi-play-fill');
             }
         });
         
+        video.addEventListener('pause', () => {
+            isPlaying = false;
+            playBtn.querySelector('i').classList.replace('bi-pause-fill', 'bi-play-fill');
+        });
+        
+        video.addEventListener('play', () => {
+            isPlaying = true;
+            playBtn.querySelector('i').classList.replace('bi-play-fill', 'bi-pause-fill');
+        });
+        
         // Replay Funktionalität
-        replayBtn?.addEventListener('click', function() {
-            video.currentTime = 0;
-            video.play();
+        replayBtn?.addEventListener('click', async function() {
+            try {
+                video.currentTime = 0;
+                await video.play();
+                isPlaying = true;
+                playBtn.querySelector('i').classList.replace('bi-play-fill', 'bi-pause-fill');
+            } catch (error) {
+                console.log('Video replay error:', error);
+            }
         });
         
         // Mute Funktionalität
@@ -840,18 +866,25 @@
         // Automatisches Abspielen nur wenn sichtbar
         const observer = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
-                if (entry.isIntersecting) {
+                if (entry.isIntersecting && !isPlaying) {
                     video.play().catch(() => {
                         // Autoplay wurde blockiert oder Video konnte nicht geladen werden
                         playBtn.style.display = 'block';
+                        isPlaying = false;
                     });
-                } else {
+                } else if (!entry.isIntersecting && isPlaying) {
                     video.pause();
+                    isPlaying = false;
                 }
             });
+        }, {
+            threshold: 0.5
         });
         
         observer.observe(video);
+        
+        // Cleanup
+        return () => observer.disconnect();
     });
     </script>
 </body>
