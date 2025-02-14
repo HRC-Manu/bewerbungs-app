@@ -431,97 +431,40 @@
         </div>
     </div>
 
-    <!-- Progress Bar Container -->
-    <div class="progress-container position-fixed bottom-0 start-0 end-0" aria-live="polite">
-        <div class="progress">
-            <div id="progressBar" 
-                 class="progress-bar" 
-                 role="progressbar"
-                 aria-label="Fortschritt im Bewerbungsprozess"
-                 aria-valuenow="0"
-                 aria-valuemin="0"
-                 aria-valuemax="100"
-                 style="width: 0%;">
-                <span class="visually-hidden">0% abgeschlossen</span>
+    <!-- Admin Modal für Gutscheincodes -->
+    <div class="modal fade" id="adminModal" tabindex="-1" aria-labelledby="adminModalTitle">
+      <div class="modal-dialog modal-md">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="adminModalTitle">Gutscheincodes verwalten</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Schließen"></button>
+          </div>
+          <div class="modal-body">
+            <div id="voucherList" class="mb-3" aria-live="polite">
+              <!-- Dynamische Liste aller existierenden Codes -->
             </div>
-        </div>
-    </div>
-
-    <!-- Feature Buttons -->
-    <div class="feature-buttons d-none">
-        <button id="interviewerName" class="btn btn-outline-secondary"
-                title="Interviewer-Namen eingeben">
-            <i class="bi bi-person" aria-hidden="true"></i>
-            <span>Interviewer</span>
-        </button>
-        
-        <div class="input-group">
-            <label for="remotePdfURL" class="visually-hidden">PDF URL eingeben</label>
-            <input type="url" id="remotePdfURL" class="form-control" 
-                   placeholder="PDF URL eingeben"
-                   title="Geben Sie die URL einer PDF-Datei ein">
-            <button id="loadRemotePdfBtn" class="btn btn-outline-primary"
-                    title="PDF von URL laden">
-                <i class="bi bi-cloud-download" aria-hidden="true"></i>
-                <span>Laden</span>
-            </button>
-        </div>
-        
-        <button id="ttsBtn" class="btn btn-outline-secondary"
-                title="Text vorlesen lassen">
-            <i class="bi bi-volume-up" aria-hidden="true"></i>
-            <span>Vorlesen</span>
-        </button>
-        
-        <button id="similarityBtn" class="btn btn-outline-info"
-                title="Ähnlichkeit mit anderen Dokumenten prüfen">
-            <i class="bi bi-search" aria-hidden="true"></i>
-            <span>Ähnlichkeit prüfen</span>
-        </button>
-        
-        <div class="form-check form-switch">
-            <input type="checkbox" id="multiPageToggle" class="form-check-input"
-                   title="Mehrseitige Ansicht aktivieren">
-            <label class="form-check-label" for="multiPageToggle">Mehrseitige Ansicht</label>
-        </div>
-        
-        <button id="pdfExportBtn" class="btn btn-outline-primary"
-                title="Als PDF-Datei exportieren">
-            <i class="bi bi-file-pdf" aria-hidden="true"></i>
-            <span>Als PDF exportieren</span>
-        </button>
-        
-        <button id="collabConnectBtn" class="btn btn-outline-success"
-                title="Live-Kollaboration starten">
-            <i class="bi bi-people" aria-hidden="true"></i>
-            <span>Live-Kollaboration</span>
-        </button>
-        
-        <button id="archiveBtn" class="btn btn-outline-secondary"
-                title="Dokument archivieren">
-            <i class="bi bi-archive" aria-hidden="true"></i>
-            <span>Archivieren</span>
-        </button>
-    </div>
-
-    <!-- Toast Container -->
-    <div class="toast-container position-fixed bottom-0 end-0 p-3">
-        <div id="messageToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
-            <div class="toast-header">
-                <i class="bi bi-info-circle me-2"></i>
-                <strong class="me-auto" id="toastTitle">Nachricht</strong>
-                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            <div class="input-group">
+              <label for="newVoucherCodeInput" class="visually-hidden">Neuer Gutscheincode</label>
+              <input type="text" class="form-control" id="newVoucherCodeInput" 
+                     placeholder="Neuen Code hinzufügen..."
+                     aria-label="Neuen Gutscheincode eingeben">
+              <button class="btn btn-success" id="addVoucherBtn" 
+                      title="Gutscheincode zur Liste hinzufügen">
+                <i class="bi bi-plus-circle" aria-hidden="true"></i>
+                <span>Hinzufügen</span>
+              </button>
             </div>
-            <div class="toast-body" id="toastMessage"></div>
+          </div>
         </div>
+      </div>
     </div>
 
     <!-- Login Modal -->
-    <div class="modal fade" id="loginModal" tabindex="-1">
+    <div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalTitle">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Anmelden</h5>
+                    <h5 class="modal-title" id="loginModalTitle">Anmelden</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Schließen"></button>
                 </div>
                 <div class="modal-body">
@@ -529,24 +472,30 @@
                         <div class="mb-3">
                             <label class="form-label" for="loginEmail">E-Mail-Adresse</label>
                             <input type="email" class="form-control" id="loginEmail" required
+                                   aria-required="true"
                                    title="E-Mail-Adresse eingeben">
                         </div>
                         <div class="mb-3">
                             <label class="form-label" for="loginPassword">Passwort</label>
                             <div class="input-group">
                                 <input type="password" class="form-control" id="loginPassword" required
+                                       aria-required="true"
                                        title="Passwort eingeben">
-                                <button class="btn btn-outline-secondary toggle-password" type="button" aria-label="Passwort anzeigen/verbergen">
+                                <button class="btn btn-outline-secondary toggle-password" type="button" 
+                                        aria-label="Passwort anzeigen/verbergen"
+                                        title="Passwort anzeigen/verbergen">
                                     <i class="bi bi-eye" aria-hidden="true"></i>
                                 </button>
                             </div>
                         </div>
                         <div class="mb-3 form-check">
-                            <input type="checkbox" class="form-check-input" id="rememberMe">
+                            <input type="checkbox" class="form-check-input" id="rememberMe"
+                                   title="Angemeldet bleiben">
                             <label class="form-check-label" for="rememberMe">Angemeldet bleiben</label>
                         </div>
                         <div class="d-flex justify-content-between align-items-center">
-                            <button type="button" class="btn btn-link p-0" id="forgotPasswordBtn">
+                            <button type="button" class="btn btn-link p-0" id="forgotPasswordBtn"
+                                    title="Passwort zurücksetzen">
                                 Passwort vergessen?
                             </button>
                             <button type="submit" class="btn btn-primary" 
@@ -558,7 +507,8 @@
                     <hr class="my-4">
                     <p class="text-center mb-0">
                         Noch kein Konto? 
-                        <a href="#" id="showRegisterBtn" data-bs-toggle="modal" data-bs-target="#registerModal">
+                        <a href="#" id="showRegisterBtn" data-bs-toggle="modal" data-bs-target="#registerModal"
+                           title="Zum Registrierungsformular">
                             Jetzt registrieren
                         </a>
                     </p>
@@ -676,25 +626,90 @@
         </div>
     </div>
 
-    <!-- NEU: Admin Modal für Gutscheincodes -->
-    <div class="modal fade" id="adminModal" tabindex="-1">
-      <div class="modal-dialog modal-md">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title">Gutscheincodes verwalten</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Schließen"></button>
-          </div>
-          <div class="modal-body">
-            <div id="voucherList" class="mb-3">
-              <!-- Dynamische Liste aller existierenden Codes -->
+    <!-- Toast Container -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+        <div id="messageToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header">
+                <i class="bi bi-info-circle me-2" aria-hidden="true"></i>
+                <strong class="me-auto" id="toastTitle">Nachricht</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" 
+                        aria-label="Nachricht schließen"></button>
             </div>
-            <div class="input-group">
-              <input type="text" class="form-control" id="newVoucherCodeInput" placeholder="Neuen Code hinzufügen...">
-              <button class="btn btn-success" id="addVoucherBtn">Hinzufügen</button>
-            </div>
-          </div>
+            <div class="toast-body" id="toastMessage" role="status"></div>
         </div>
-      </div>
+    </div>
+
+    <!-- Progress Bar Container -->
+    <div class="progress-container position-fixed bottom-0 start-0 end-0" aria-live="polite">
+        <div class="progress">
+            <div id="progressBar" 
+                 class="progress-bar" 
+                 role="progressbar"
+                 aria-label="Fortschritt im Bewerbungsprozess"
+                 aria-valuenow="0"
+                 aria-valuemin="0"
+                 aria-valuemax="100"
+                 style="width: 0%;">
+                <span class="visually-hidden">0% abgeschlossen</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Feature Buttons -->
+    <div class="feature-buttons d-none">
+        <button id="interviewerName" class="btn btn-outline-secondary"
+                title="Interviewer-Namen eingeben">
+            <i class="bi bi-person" aria-hidden="true"></i>
+            <span>Interviewer</span>
+        </button>
+        
+        <div class="input-group">
+            <label for="remotePdfURL" class="visually-hidden">PDF URL eingeben</label>
+            <input type="url" id="remotePdfURL" class="form-control" 
+                   placeholder="PDF URL eingeben"
+                   title="Geben Sie die URL einer PDF-Datei ein">
+            <button id="loadRemotePdfBtn" class="btn btn-outline-primary"
+                    title="PDF von URL laden">
+                <i class="bi bi-cloud-download" aria-hidden="true"></i>
+                <span>Laden</span>
+            </button>
+        </div>
+        
+        <button id="ttsBtn" class="btn btn-outline-secondary"
+                title="Text vorlesen lassen">
+            <i class="bi bi-volume-up" aria-hidden="true"></i>
+            <span>Vorlesen</span>
+        </button>
+        
+        <button id="similarityBtn" class="btn btn-outline-info"
+                title="Ähnlichkeit mit anderen Dokumenten prüfen">
+            <i class="bi bi-search" aria-hidden="true"></i>
+            <span>Ähnlichkeit prüfen</span>
+        </button>
+        
+        <div class="form-check form-switch">
+            <input type="checkbox" id="multiPageToggle" class="form-check-input"
+                   title="Mehrseitige Ansicht aktivieren">
+            <label class="form-check-label" for="multiPageToggle">Mehrseitige Ansicht</label>
+        </div>
+        
+        <button id="pdfExportBtn" class="btn btn-outline-primary"
+                title="Als PDF-Datei exportieren">
+            <i class="bi bi-file-pdf" aria-hidden="true"></i>
+            <span>Als PDF exportieren</span>
+        </button>
+        
+        <button id="collabConnectBtn" class="btn btn-outline-success"
+                title="Live-Kollaboration starten">
+            <i class="bi bi-people" aria-hidden="true"></i>
+            <span>Live-Kollaboration</span>
+        </button>
+        
+        <button id="archiveBtn" class="btn btn-outline-secondary"
+                title="Dokument archivieren">
+            <i class="bi bi-archive" aria-hidden="true"></i>
+            <span>Archivieren</span>
+        </button>
     </div>
 
     <!-- Bootstrap Bundle with Popper -->
