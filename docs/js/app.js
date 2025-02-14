@@ -51,7 +51,28 @@ function initializeElements() {
         modernPreviewContainer: safeGetElem('modernPreviewContainer'),
         suggestionsModal: new bootstrap.Modal(document.getElementById('suggestionsModal')),
         helpModal: new bootstrap.Modal(document.getElementById('helpModal')),
-        messageToast: new bootstrap.Toast(document.getElementById('messageToast'))
+        messageToast: new bootstrap.Toast(document.getElementById('messageToast')),
+        startBtn: safeGetElem('startBtn'),
+        uploadResumeBtn: safeGetElem('uploadResumeBtn'),
+        createResumeBtn: safeGetElem('createResumeBtn'),
+        uploadCoverLetterBtn: safeGetElem('uploadCoverLetterBtn'),
+        settingsBtn: safeGetElem('settingsBtn'),
+        prevStepBtn: safeGetElem('prevStepBtn'),
+        nextStepBtn: safeGetElem('nextStepBtn'),
+        workflowSteps: {
+            step1: safeGetElem('step1'),
+            step2: safeGetElem('step2'),
+            step3: safeGetElem('step3'),
+            step4: safeGetElem('step4'),
+            step5: safeGetElem('step5')
+        },
+        resumeAnalysis: safeGetElem('resumeAnalysis'),
+        jobAnalysis: safeGetElem('jobAnalysis'),
+        matchingResults: safeGetElem('matchingResults'),
+        resumeBuilder: safeGetElem('resumeBuilder'),
+        settingsForm: safeGetElem('settingsForm'),
+        aiProvider: safeGetElem('aiProvider'),
+        letterStyle: safeGetElem('letterStyle')
     };
 }
 
@@ -141,6 +162,21 @@ function initializeEventListeners() {
     // Initialize other features
     initializeFileUpload();
     initializeTextareaListeners();
+
+    // Hauptbuttons
+    elements.startBtn?.addEventListener('click', startWorkflow);
+    elements.uploadResumeBtn?.addEventListener('click', () => handleResumeUpload());
+    elements.createResumeBtn?.addEventListener('click', () => elements.resumeCreatorModal.show());
+    elements.uploadCoverLetterBtn?.addEventListener('click', () => handleCoverLetterUpload());
+    elements.settingsBtn?.addEventListener('click', () => elements.settingsModal.show());
+    elements.helpBtn?.addEventListener('click', () => elements.helpModal.show());
+    
+    // Workflow Navigation
+    elements.prevStepBtn?.addEventListener('click', () => prevStep());
+    elements.nextStepBtn?.addEventListener('click', () => handleNextStep());
+    
+    // Settings
+    elements.settingsForm?.addEventListener('submit', handleSettingsSave);
 }
 
 function initializeTextareaListeners() {
@@ -273,4 +309,322 @@ function isValidURL(string) {
 
 function checkRequiredUploads() {
     // Implementation of checkRequiredUploads function
+}
+
+async function startWorkflow() {
+    const { elements } = globalState;
+    
+    if (!validateWorkflowStart()) {
+        showError('Bitte laden Sie zuerst einen Lebenslauf hoch oder erstellen Sie einen neuen.');
+        return;
+    }
+    
+    try {
+        elements.workflowModal.show();
+        await initializeWorkflow();
+        showStep(1);
+        await analyzeResume();
+    } catch (error) {
+        console.error('Error starting workflow:', error);
+        showError('Fehler beim Starten des Workflows');
+    }
+}
+
+async function handleNextStep() {
+    const { currentStep } = globalState;
+    
+    try {
+        switch (currentStep) {
+            case 1:
+                if (!validateStep1()) return;
+                showStep(2);
+                break;
+                
+            case 2:
+                if (!validateStep2()) return;
+                await analyzeJobPosting();
+                showStep(3);
+                break;
+                
+            case 3:
+                if (!validateStep3()) return;
+                await generateCoverLetter();
+                showStep(4);
+                break;
+                
+            case 4:
+                if (!validateStep4()) return;
+                showStep(5);
+                break;
+                
+            case 5:
+                finishWorkflow();
+                break;
+        }
+    } catch (error) {
+        console.error('Error in workflow:', error);
+        showError('Fehler im Workflow');
+    }
+}
+
+function validateWorkflowStart() {
+    return globalState.resumeData || globalState.elements.resumeBuilder?.value;
+}
+
+function validateStep1() {
+    return globalState.resumeAnalysis && Object.keys(globalState.resumeAnalysis).length > 0;
+}
+
+function validateStep2() {
+    const jobPosting = globalState.elements.jobPosting?.value.trim();
+    return jobPosting && jobPosting.length >= 50;
+}
+
+function validateStep3() {
+    return globalState.matchingResults && Object.keys(globalState.matchingResults).length > 0;
+}
+
+function validateStep4() {
+    const editor = globalState.elements.coverLetterEditor;
+    return editor && editor.innerHTML.trim().length > 100;
+}
+
+async function handleResumeUpload() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.pdf,.doc,.docx';
+    input.onchange = (e) => handleFileUpload(e, 'resume');
+    input.click();
+}
+
+async function handleCoverLetterUpload() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.pdf,.doc,.docx';
+    input.onchange = (e) => handleFileUpload(e, 'coverLetter');
+    input.click();
+}
+
+function handleSettingsSave(e) {
+    e.preventDefault();
+    const { elements } = globalState;
+    
+    const settings = {
+        aiProvider: elements.aiProvider.value,
+        apiKey: elements.apiKeyInput.value,
+        letterStyle: elements.letterStyle.value
+    };
+    
+    localStorage.setItem('appSettings', JSON.stringify(settings));
+    showSuccess('Einstellungen gespeichert');
+    elements.settingsModal.hide();
+}
+
+function loadSettings() {
+    const settings = JSON.parse(localStorage.getItem('appSettings') || '{}');
+    const { elements } = globalState;
+    
+    if (settings.aiProvider) elements.aiProvider.value = settings.aiProvider;
+    if (settings.apiKey) elements.apiKeyInput.value = settings.apiKey;
+    if (settings.letterStyle) elements.letterStyle.value = settings.letterStyle;
+}
+
+async function analyzeResume() {
+    const { elements } = globalState;
+    
+    try {
+        showLoading(elements.resumeAnalysis, 'Analysiere Lebenslauf...');
+        const analysis = await analyzeResume(globalState.resumeData);
+        displayResumeAnalysis(analysis);
+    } catch (error) {
+        console.error('Resume analysis error:', error);
+        showError('Fehler bei der Lebenslauf-Analyse');
+    } finally {
+        hideLoading(elements.resumeAnalysis);
+    }
+}
+
+async function analyzeJobPosting() {
+    const { elements } = globalState;
+    const jobPosting = elements.jobPosting.value;
+    
+    try {
+        showLoading(elements.jobAnalysis, 'Analysiere Stellenanzeige...');
+        const analysis = await analyzeJobPosting(jobPosting);
+        displayJobAnalysis(analysis);
+    } catch (error) {
+        console.error('Job posting analysis error:', error);
+        showError('Fehler bei der Stellenanzeigen-Analyse');
+    } finally {
+        hideLoading(elements.jobAnalysis);
+    }
+}
+
+async function generateCoverLetter() {
+    const { elements } = globalState;
+    
+    try {
+        showLoading(elements.coverLetterEditor, 'Generiere Anschreiben...');
+        const coverLetter = await AIService.generateCoverLetterSections(
+            globalState.jobAnalysis,
+            globalState.resumeAnalysis,
+            {
+                provider: elements.aiProvider.value,
+                style: elements.letterStyle.value
+            }
+        );
+        displayCoverLetter(coverLetter);
+    } catch (error) {
+        console.error('Cover letter generation error:', error);
+        showError('Fehler bei der Anschreiben-Generierung');
+    } finally {
+        hideLoading(elements.coverLetterEditor);
+    }
+}
+
+function displayResumeAnalysis(analysis) {
+    const { elements } = globalState;
+    globalState.resumeAnalysis = analysis;
+    
+    // Implementiere die Anzeige der Analyse-Ergebnisse
+    elements.resumeAnalysis.innerHTML = `
+        <div class="analysis-section">
+            <h5>Erkannte Qualifikationen</h5>
+            <div class="skills-grid">
+                ${renderSkills(analysis.skills)}
+            </div>
+            
+            <h5 class="mt-4">Berufserfahrung</h5>
+            <div class="experience-timeline">
+                ${renderExperience(analysis.experience)}
+            </div>
+            
+            <h5 class="mt-4">Ausbildung</h5>
+            <div class="education-list">
+                ${renderEducation(analysis.education)}
+            </div>
+        </div>
+    `;
+}
+
+function displayJobAnalysis(analysis) {
+    const { elements } = globalState;
+    globalState.jobAnalysis = analysis;
+    
+    elements.jobAnalysis.classList.remove('d-none');
+    elements.jobAnalysis.innerHTML = `
+        <div class="analysis-section">
+            <h5>Position</h5>
+            <p>${analysis.jobTitle.position} (${analysis.jobTitle.level})</p>
+            
+            <h5 class="mt-4">Anforderungen</h5>
+            <div class="requirements-grid">
+                ${renderRequirements(analysis.requirements)}
+            </div>
+            
+            <h5 class="mt-4">Unternehmen</h5>
+            <div class="company-info">
+                ${renderCompanyInfo(analysis.company)}
+            </div>
+        </div>
+    `;
+}
+
+function displayCoverLetter(sections) {
+    const { elements } = globalState;
+    
+    elements.coverLetterEditor.innerHTML = sections.map(section => `
+        <div class="cover-letter-section" data-section="${section.type}">
+            ${section.content}
+        </div>
+    `).join('');
+}
+
+// Hilfsfunktionen für das Rendering
+function renderSkills(skills) {
+    return `
+        <div class="row">
+            <div class="col-md-6">
+                <h6>Technische Fähigkeiten</h6>
+                <ul class="skill-list">
+                    ${skills.technical.map(skill => `
+                        <li>
+                            <span class="skill-name">${skill.name}</span>
+                            <span class="skill-level">${skill.level}</span>
+                        </li>
+                    `).join('')}
+                </ul>
+            </div>
+            <div class="col-md-6">
+                <h6>Soft Skills</h6>
+                <ul class="skill-list">
+                    ${skills.soft.map(skill => `
+                        <li>${skill.name}</li>
+                    `).join('')}
+                </ul>
+            </div>
+        </div>
+    `;
+}
+
+function renderExperience(experience) {
+    return experience.map(exp => `
+        <div class="experience-item">
+            <div class="timeline-dot"></div>
+            <div class="experience-content">
+                <div class="experience-header">
+                    <h6>${exp.title}</h6>
+                    <span class="experience-date">${exp.period.from} - ${exp.period.to}</span>
+                </div>
+                <p>${exp.description}</p>
+            </div>
+        </div>
+    `).join('');
+}
+
+function renderEducation(education) {
+    return education.map(edu => `
+        <div class="education-item">
+            <h6>${edu.degree}</h6>
+            <p>${edu.institution}, ${edu.period.from} - ${edu.period.to}</p>
+            ${edu.description ? `<p>${edu.description}</p>` : ''}
+        </div>
+    `).join('');
+}
+
+function renderRequirements(requirements) {
+    return `
+        <div class="row">
+            <div class="col-md-6">
+                <h6>Muss-Anforderungen</h6>
+                <ul class="requirement-list">
+                    ${requirements.essential.map(req => `
+                        <li>${req}</li>
+                    `).join('')}
+                </ul>
+            </div>
+            <div class="col-md-6">
+                <h6>Wünschenswert</h6>
+                <ul class="requirement-list">
+                    ${requirements.preferred.map(req => `
+                        <li>${req}</li>
+                    `).join('')}
+                </ul>
+            </div>
+        </div>
+    `;
+}
+
+function renderCompanyInfo(company) {
+    return `
+        <div class="company-details">
+            <p><strong>Name:</strong> ${company.name}</p>
+            <p><strong>Branche:</strong> ${company.industry}</p>
+            <p><strong>Größe:</strong> ${company.size}</p>
+            <p><strong>Kultur:</strong> ${Object.entries(company.culture)
+                .filter(([_, value]) => value > 0)
+                .map(([key, _]) => key)
+                .join(', ')}</p>
+        </div>
+    `;
 }
