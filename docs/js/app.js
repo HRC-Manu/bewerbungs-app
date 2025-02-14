@@ -318,70 +318,70 @@ function initializeTextareaListeners() {
     });
 }
 
-async function handleAnalyze() {
+    async function handleAnalyze() {
     const { elements } = globalState;
     
-    try {
-        if (!validateInputs()) return;
+        try {
+            if (!validateInputs()) return;
         
-        showLoading(elements.analyzeBtn, 'Analysiere...');
-        
+            showLoading(elements.analyzeBtn, 'Analysiere...');
+            
         const jobAnalysis = await analyzeJobPosting(elements.jobPosting.value);
-        const resumeAnalysis = await analyzeResume(window.resumeText);
+            const resumeAnalysis = await analyzeResume(window.resumeText);
 
-        const suggestions = await AIService.generateCoverLetterSections(
-            jobAnalysis,
-            resumeAnalysis,
-            { 
+            const suggestions = await AIService.generateCoverLetterSections(
+                jobAnalysis,
+                resumeAnalysis,
+                { 
                 provider: globalState.selectedAIProvider, 
                 style: globalState.selectedCoverLetterStyle 
+                }
+            );
+
+            if (suggestions?.length) {
+                applySuggestions(suggestions);
+                updatePreview();
+                showSuccess('Analyse erfolgreich abgeschlossen');
+                nextStep();
+            } else {
+                console.warn('Keine Vorschläge generiert, verwende Fallback.');
+                applySuggestions([
+                    { section: 'recipient', text: 'Sehr geehrte Damen und Herren,' },
+                    { section: 'main', text: 'Fallback-Anschreiben...' }
+                ]);
             }
-        );
-
-        if (suggestions?.length) {
-            applySuggestions(suggestions);
-            updatePreview();
-            showSuccess('Analyse erfolgreich abgeschlossen');
-            nextStep();
-        } else {
-            console.warn('Keine Vorschläge generiert, verwende Fallback.');
-            applySuggestions([
-                { section: 'recipient', text: 'Sehr geehrte Damen und Herren,' },
-                { section: 'main', text: 'Fallback-Anschreiben...' }
-            ]);
+        } catch (error) {
+            console.error('Analysis error:', error);
+            showError(error.message || 'Fehler bei der Analyse');
+        } finally {
+            hideLoading(elements.analyzeBtn, 'Analysieren und Anschreiben erstellen');
         }
-    } catch (error) {
-        console.error('Analysis error:', error);
-        showError(error.message || 'Fehler bei der Analyse');
-    } finally {
-        hideLoading(elements.analyzeBtn, 'Analysieren und Anschreiben erstellen');
     }
-}
 
-function validateInputs() {
+    function validateInputs() {
     const { elements } = globalState;
-    const jobPosting = elements.jobPosting.value.trim();
-    const resumeUploaded = window.resumeText !== undefined && window.resumeText !== null;
-    
-    elements.analyzeBtn.disabled = !jobPosting || !resumeUploaded;
-    
-    if (!jobPosting) {
-        showError('Bitte fügen Sie eine Stellenanzeige ein');
-        return false;
+        const jobPosting = elements.jobPosting.value.trim();
+        const resumeUploaded = window.resumeText !== undefined && window.resumeText !== null;
+        
+        elements.analyzeBtn.disabled = !jobPosting || !resumeUploaded;
+        
+        if (!jobPosting) {
+            showError('Bitte fügen Sie eine Stellenanzeige ein');
+            return false;
+        }
+        
+        if (jobPosting.length < 50) {
+            showError('Die Stellenanzeige scheint zu kurz zu sein. Bitte fügen Sie den vollständigen Text ein.');
+            return false;
+        }
+        
+        if (!resumeUploaded) {
+            showError('Bitte laden Sie Ihren Lebenslauf hoch');
+            return false;
+        }
+        
+        return true;
     }
-    
-    if (jobPosting.length < 50) {
-        showError('Die Stellenanzeige scheint zu kurz zu sein. Bitte fügen Sie den vollständigen Text ein.');
-        return false;
-    }
-    
-    if (!resumeUploaded) {
-        showError('Bitte laden Sie Ihren Lebenslauf hoch');
-        return false;
-    }
-    
-    return true;
-}
 
 function applySuggestions(suggestions) {
     const { elements } = globalState;
@@ -421,9 +421,9 @@ function isValidURL(string) {
     } catch (_) {
         return false;
     }
-}
+    }
 
-function checkRequiredUploads() {
+    function checkRequiredUploads() {
     // Implementation of checkRequiredUploads function
 }
 
@@ -440,7 +440,7 @@ async function startWorkflow() {
         await initializeWorkflow();
         showStep(1);
         await analyzeResume();
-    } catch (error) {
+        } catch (error) {
         console.error('Error starting workflow:', error);
         showError('Fehler beim Starten des Workflows');
     }
@@ -475,9 +475,9 @@ async function handleNextStep() {
                 
             case 5:
                 finishWorkflow();
-                break;
-        }
-    } catch (error) {
+                    break;
+                }
+        } catch (error) {
         console.error('Error in workflow:', error);
         showError('Fehler im Workflow');
     }
@@ -552,7 +552,7 @@ async function analyzeResume() {
         showLoading(elements.resumeAnalysis, 'Analysiere Lebenslauf...');
         const analysis = await analyzeResume(globalState.resumeData);
         displayResumeAnalysis(analysis);
-    } catch (error) {
+        } catch (error) {
         console.error('Resume analysis error:', error);
         showError('Fehler bei der Lebenslauf-Analyse');
     } finally {
@@ -568,7 +568,7 @@ async function analyzeJobPosting() {
         showLoading(elements.jobAnalysis, 'Analysiere Stellenanzeige...');
         const analysis = await analyzeJobPosting(jobPosting);
         displayJobAnalysis(analysis);
-    } catch (error) {
+        } catch (error) {
         console.error('Job posting analysis error:', error);
         showError('Fehler bei der Stellenanzeigen-Analyse');
     } finally {
@@ -590,7 +590,7 @@ async function generateCoverLetter() {
             }
         );
         displayCoverLetter(coverLetter);
-    } catch (error) {
+        } catch (error) {
         console.error('Cover letter generation error:', error);
         showError('Fehler bei der Anschreiben-Generierung');
     } finally {
@@ -678,9 +678,9 @@ function renderSkills(skills) {
                         <li>${skill.name}</li>
                     `).join('')}
                 </ul>
-            </div>
-        </div>
-    `;
+                            </div>
+                        </div>
+                    `;
 }
 
 function renderExperience(experience) {
@@ -800,8 +800,8 @@ async function handlePaste() {
         if (elements.jobPosting) {
             elements.jobPosting.value = text;
             showSuccess('Text aus Zwischenablage eingefügt');
-        }
-    } catch (err) {
+                }
+            } catch (err) {
         showError('Fehler beim Einfügen aus der Zwischenablage');
     }
 }
@@ -830,8 +830,8 @@ function handleLoadExample() {
             - Moderne Technologie-Stack und innovative Projekte
             - Regelmäßige Weiterbildungen
             - Attraktives Gehalt und zusätzliche Benefits
-        `;
-        elements.jobPosting.value = exampleText;
+            `;
+            elements.jobPosting.value = exampleText;
         showSuccess('Beispiel-Stellenanzeige wurde eingefügt');
     }
 }
@@ -1275,16 +1275,15 @@ function initializeMainButtons() {
     
     // Start Button
     elements.startBtn?.addEventListener('click', async () => {
+        console.log('Start button clicked');
         if (!AuthService.currentUser) {
             showError('Bitte melden Sie sich zuerst an');
-            const loginModal = new bootstrap.Modal(document.getElementById('loginModal'));
-            loginModal.show();
+            elements.loginModal.show();
             return;
         }
         
         try {
-            const workflowModal = new bootstrap.Modal(document.getElementById('workflowModal'));
-            workflowModal.show();
+            elements.workflowModal.show();
             await initializeWorkflow();
             showStep(1);
         } catch (error) {
@@ -1293,38 +1292,46 @@ function initializeMainButtons() {
     });
     
     // Resume Buttons
-    elements.uploadResumeBtn?.addEventListener('click', () => handleResumeUpload());
+    elements.uploadResumeBtn?.addEventListener('click', () => {
+        console.log('Upload resume button clicked');
+        handleResumeUpload();
+    });
     elements.createResumeBtn?.addEventListener('click', () => {
-        const modal = new bootstrap.Modal(document.getElementById('resumeCreatorModal'));
+        console.log('Create resume button clicked');
         initializeResumeBuilder();
-        modal.show();
+        elements.resumeCreatorModal.show();
     });
     
     // Cover Letter Buttons
     elements.createCoverLetterBtn?.addEventListener('click', () => {
+        console.log('Create cover letter button clicked');
         if (!globalState.resumeData) {
             showError('Bitte laden Sie zuerst einen Lebenslauf hoch');
             return;
         }
-        const workflowModal = new bootstrap.Modal(document.getElementById('workflowModal'));
-        workflowModal.show();
+        elements.workflowModal.show();
         showStep(2);
     });
     
-    elements.uploadCoverLetterBtn?.addEventListener('click', () => handleCoverLetterUpload());
+    elements.uploadCoverLetterBtn?.addEventListener('click', () => {
+        console.log('Upload cover letter button clicked');
+        handleCoverLetterUpload();
+    });
     
     // Settings Button
     elements.settingsBtn?.addEventListener('click', () => {
-        const settingsModal = new bootstrap.Modal(document.getElementById('settingsModal'));
+        console.log('Settings button clicked');
         loadSettings();
-        settingsModal.show();
+        elements.settingsModal.show();
     });
     
     // Help Button
     elements.helpBtn?.addEventListener('click', () => {
-        const helpModal = new bootstrap.Modal(document.getElementById('helpModal'));
-        helpModal.show();
+        console.log('Help button clicked');
+        elements.helpModal.show();
     });
+    
+    console.log('Main buttons initialized');
 }
 
 // UI Updates nach Login/Logout
