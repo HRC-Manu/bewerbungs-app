@@ -3,6 +3,195 @@
 import { globalState } from './state.js';
 import { safeGetElem } from './utils.js';
 
+// UI-Funktionen und Toast-Manager
+export class ToastManager {
+    constructor() {
+        this.queue = [];
+        this.isProcessing = false;
+        this.container = this.createContainer();
+    }
+
+    createContainer() {
+        const container = document.createElement('div');
+        container.id = 'toast-container';
+        container.className = 'toast-container position-fixed bottom-0 end-0 p-3';
+        document.body.appendChild(container);
+        return container;
+    }
+
+    async showToast(message, type = 'info', duration = 3000) {
+        this.queue.push({ message, type, duration });
+        if (!this.isProcessing) {
+            this.processQueue();
+        }
+    }
+
+    async processQueue() {
+        if (this.queue.length === 0) {
+            this.isProcessing = false;
+            return;
+        }
+
+        this.isProcessing = true;
+        const { message, type, duration } = this.queue.shift();
+
+        const toast = document.createElement('div');
+        toast.className = `toast align-items-center text-white bg-${type} border-0`;
+        toast.setAttribute('role', 'alert');
+        toast.setAttribute('aria-live', 'assertive');
+        toast.setAttribute('aria-atomic', 'true');
+
+        toast.innerHTML = `
+            <div class="d-flex">
+                <div class="toast-body">${message}</div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        `;
+
+        this.container.appendChild(toast);
+        const bsToast = new bootstrap.Toast(toast, { delay: duration });
+        bsToast.show();
+
+        await new Promise(resolve => {
+            toast.addEventListener('hidden.bs.toast', () => {
+                toast.remove();
+                resolve();
+            });
+        });
+
+        this.processQueue();
+    }
+}
+
+// Singleton-Instanz für globale Verwendung
+export const toastManager = new ToastManager();
+
+// Convenience-Funktionen
+export function showSuccess(message, duration = 3000) {
+    toastManager.showToast(message, 'success', duration);
+}
+
+export function showError(message, duration = 5000) {
+    toastManager.showToast(message, 'danger', duration);
+}
+
+export function showWarning(message, duration = 4000) {
+    toastManager.showToast(message, 'warning', duration);
+}
+
+export function showInfo(message, duration = 3000) {
+    toastManager.showToast(message, 'info', duration);
+}
+
+// Loading-Manager
+export class LoadingManager {
+    constructor() {
+        this.loadingStates = new Map();
+    }
+
+    showLoading(element, text) {
+        if (!element) return;
+        
+        const state = {
+            originalText: element.innerHTML,
+            originalDisabled: element.disabled
+        };
+        this.loadingStates.set(element, state);
+
+        element.disabled = true;
+        element.innerHTML = `
+            <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+            ${text}
+        `;
+    }
+
+    hideLoading(element) {
+        if (!element) return;
+        
+        const state = this.loadingStates.get(element);
+        if (state) {
+            element.disabled = state.originalDisabled;
+            element.innerHTML = state.originalText;
+            this.loadingStates.delete(element);
+        }
+    }
+
+    isLoading(element) {
+        return this.loadingStates.has(element);
+    }
+}
+
+// Singleton-Instanz für globale Verwendung
+export const loadingManager = new LoadingManager();
+
+// UI-Hilfsfunktionen
+export function updatePreview() {
+    const coverLetterPreview = document.getElementById('coverLetterPreview');
+    if (!coverLetterPreview) return;
+    
+    const sections = {
+        recipient: document.getElementById('coverLetterRecipient')?.value || '',
+        subject: document.getElementById('coverLetterSubject')?.value || '',
+        introduction: document.getElementById('coverLetterIntro')?.value || '',
+        main: document.getElementById('coverLetterMain')?.value || '',
+        closing: document.getElementById('coverLetterClosing')?.value || ''
+    };
+    
+    let preview = '';
+    
+    if (sections.recipient) {
+        preview += `<p>${sections.recipient}</p>`;
+    }
+    
+    if (sections.subject) {
+        preview += `<p><strong>${sections.subject}</strong></p>`;
+    }
+    
+    if (sections.introduction) {
+        preview += `<p>${sections.introduction}</p>`;
+    }
+    
+    if (sections.main) {
+        preview += `<p>${sections.main}</p>`;
+    }
+    
+    if (sections.closing) {
+        preview += `<p>${sections.closing}</p>`;
+    }
+    
+    coverLetterPreview.innerHTML = preview || '<p class="text-muted">Vorschau wird hier angezeigt...</p>';
+}
+
+export function updateProgress(progress) {
+    const progressBar = document.getElementById('progressBar');
+    if (progressBar) {
+        progressBar.style.width = `${progress}%`;
+        progressBar.setAttribute('aria-valuenow', progress);
+        progressBar.querySelector('.visually-hidden').textContent = `${progress}% abgeschlossen`;
+    }
+}
+
+export function safeGetElem(id) {
+    const el = document.getElementById(id);
+    if (!el) console.warn(`Element #${id} nicht gefunden`);
+    return el;
+}
+
+// Export alle UI-Funktionen
+export const UI = {
+    ToastManager,
+    LoadingManager,
+    toastManager,
+    loadingManager,
+    showSuccess,
+    showError,
+    showWarning,
+    showInfo,
+    updatePreview,
+    updateProgress,
+    safeGetElem
+};
+
 export function showLoading(element, text = 'Lädt...') {
     if (!element) return;
     
