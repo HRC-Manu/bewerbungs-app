@@ -67,6 +67,8 @@ document.addEventListener('DOMContentLoaded', async function() {
             console.warn('Firebase-Verbindung konnte nicht getestet werden');
         }
         
+        initializeAutoSync();
+        
         console.log('Application initialized successfully');
     } catch (error) {
         console.error('Error during initialization:', error);
@@ -1368,4 +1370,89 @@ if (location.hostname === "localhost") {
     initButton.textContent = "Initialize Database";
     initButton.onclick = initializeDatabase;
     document.body.appendChild(initButton);
+}
+
+// GitHub Sync Funktionen
+async function syncToGitHub(filePath, content) {
+    const GITHUB_TOKEN = localStorage.getItem('githubToken');
+    const REPO_OWNER = 'weaweawe'; // Dein GitHub Username
+    const REPO_NAME = 'bewerbung'; // Dein Repository Name
+    
+    try {
+        // Erst aktuellen SHA des Files holen
+        const response = await fetch(
+            `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${filePath}`,
+            {
+                headers: {
+                    'Authorization': `Bearer ${GITHUB_TOKEN}`,
+                    'Accept': 'application/vnd.github.v3+json'
+                }
+            }
+        );
+        
+        const fileInfo = await response.json();
+        
+        // File updaten
+        const updateResponse = await fetch(
+            `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${filePath}`,
+            {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${GITHUB_TOKEN}`,
+                    'Accept': 'application/vnd.github.v3+json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    message: 'Update via Web Editor',
+                    content: btoa(content), // Base64 encode
+                    sha: fileInfo.sha
+                })
+            }
+        );
+
+        if (updateResponse.ok) {
+            showSuccess('Änderungen gespeichert');
+        } else {
+            throw new Error('Fehler beim Speichern');
+        }
+    } catch (error) {
+        console.error('Sync error:', error);
+        showError('Fehler beim Synchronisieren mit GitHub');
+    }
+}
+
+// Automatische Speicherung bei Änderungen
+function initializeAutoSync() {
+    // Token-Input im Settings-Modal
+    const tokenInput = document.createElement('div');
+    tokenInput.className = 'mb-3';
+    tokenInput.innerHTML = `
+        <h5 class="mt-4">GitHub Integration</h5>
+        <div class="form-group">
+            <label class="form-label">GitHub Token</label>
+            <input type="password" class="form-control" id="githubToken" 
+                   value="${localStorage.getItem('githubToken') || ''}">
+            <small class="form-text text-muted">Dein GitHub Personal Access Token für die automatische Synchronisation</small>
+        </div>
+    `;
+    
+    // Füge es vor dem ersten Element im Settings-Form ein
+    const settingsForm = document.querySelector('#settingsForm');
+    settingsForm.insertBefore(tokenInput, settingsForm.firstChild);
+
+    // Auto-Save für wichtige Elemente
+    const elementsToWatch = [
+        'jobPosting',
+        'coverLetterEditor'
+    ];
+
+    elementsToWatch.forEach(id => {
+        const element = document.getElementById(id);
+        if (element) {
+            element.addEventListener('input', debounce(async () => {
+                const filePath = `docs/js/${id}.js`;
+                await syncToGitHub(filePath, element.value);
+            }, 2000));
+        }
+    });
 }
