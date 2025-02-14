@@ -2,6 +2,8 @@
  * AI Service für die Generierung und Verarbeitung von KI-basierten Inhalten
  */
 export class AIService {
+    static API_ENDPOINT = '/api/ai';
+
     /**
      * Generiert Abschnitte für das Anschreiben basierend auf Job- und Lebenslaufdaten
      * @param {Object} jobData - Analysierte Jobdaten
@@ -10,36 +12,81 @@ export class AIService {
      * @returns {Promise<Array>} Array von Abschnittsvorschlägen
      */
     static async generateCoverLetterSections(jobData, resumeData, config) {
-        const bestPracticePrompt = `
-            Erstelle ein professionelles Bewerbungsschreiben im perfekten Deutsch,
-            beachte gängige Best Practices: 
-            - Höfliche Anrede, 
-            - Klare Motivation, 
-            - Relevante Fähigkeiten,
-            - Abschließende Grußformel.
-            Tone: ${config.style || 'formal'}.
-        `;
-
+        const prompt = this.createPrompt(jobData, resumeData, config);
+        
         try {
-            // Hier würde die tatsächliche API-Anfrage erfolgen
-            return [
-                {
-                    section: 'recipient',
-                    text: 'Sehr geehrte Damen und Herren,'
+            const response = await fetch(`${this.API_ENDPOINT}/generate`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-API-Key': localStorage.getItem('myEncryptedApiKey')
                 },
-                {
-                    section: 'subject',
-                    text: `Bewerbung als ${jobData.jobTitle.position}`
-                },
-                {
-                    section: 'main',
-                    text: this.generateMainContent(jobData, resumeData, config)
-                }
-            ];
+                body: JSON.stringify({
+                    prompt,
+                    jobData,
+                    resumeData,
+                    config
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error('Fehler bei der KI-Generierung');
+            }
+
+            const data = await response.json();
+            return this.formatAIResponse(data.sections);
         } catch (error) {
             console.error('Error in generateCoverLetterSections:', error);
             throw error;
         }
+    }
+
+    /**
+     * Erstellt den Prompt für die KI
+     * @private
+     */
+    static createPrompt(jobData, resumeData, config) {
+        const { style = 'formal' } = config;
+        return `
+            Erstelle ein professionelles Bewerbungsanschreiben im perfekten Deutsch.
+            
+            Stellenanzeige:
+            - Position: ${jobData.jobTitle.position}
+            - Unternehmen: ${jobData.company.name}
+            - Branche: ${jobData.company.industry}
+            - Anforderungen: ${JSON.stringify(jobData.requirements)}
+            
+            Bewerber:
+            - Fähigkeiten: ${JSON.stringify(resumeData.skills)}
+            - Erfahrung: ${JSON.stringify(resumeData.experience)}
+            - Ausbildung: ${JSON.stringify(resumeData.education)}
+            
+            Stil: ${style}
+            
+            Bitte erstelle ein überzeugendes Anschreiben mit:
+            1. Passender Anrede
+            2. Einleitung mit Bezug zur Stelle
+            3. Hauptteil mit relevanten Qualifikationen
+            4. Motivation für die Bewerbung
+            5. Professioneller Abschluss
+            
+            Wichtig:
+            - Natürlicher, flüssiger Schreibstil
+            - Konkrete Beispiele aus dem Lebenslauf
+            - Bezug zu den Anforderungen
+            - ${style === 'formal' ? 'Formelle Sprache' : 'Moderne, direkte Ansprache'}
+        `;
+    }
+
+    /**
+     * Formatiert die KI-Antwort in Abschnitte
+     * @private
+     */
+    static formatAIResponse(sections) {
+        return sections.map(section => ({
+            section: section.type,
+            text: section.content.trim()
+        }));
     }
 
     /**
@@ -49,17 +96,29 @@ export class AIService {
      * @returns {Promise<Object>} Verbessertes Anschreiben
      */
     static async refineCoverLetter(coverLetter, feedback) {
-        return new Promise((resolve) => {
-            setTimeout(() => {
-                const updatedLetter = {
-                    ...coverLetter,
-                    text: coverLetter.text
-                        .replace(/too_long/gi, '')
-                        .replace(/too_passive/gi, '')
-                };
-                resolve(updatedLetter);
-            }, 1000);
-        });
+        try {
+            const response = await fetch(`${this.API_ENDPOINT}/refine`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-API-Key': localStorage.getItem('myEncryptedApiKey')
+                },
+                body: JSON.stringify({
+                    coverLetter,
+                    feedback
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error('Fehler bei der Verbesserung');
+            }
+
+            const data = await response.json();
+            return data.improvedLetter;
+        } catch (error) {
+            console.error('Error in refineCoverLetter:', error);
+            throw error;
+        }
     }
 
     /**
