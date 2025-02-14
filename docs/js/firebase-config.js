@@ -1,9 +1,29 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, connectAuthEmulator } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { getFirestore, connectFirestoreEmulator, collection, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-import { getStorage, connectStorageEmulator, ref, uploadString } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
-import { getDatabase, connectDatabaseEmulator } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+import { 
+    getFirestore, 
+    connectFirestoreEmulator, 
+    collection, 
+    doc, 
+    setDoc,
+    getDocs,
+    query,
+    limit 
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { 
+    getStorage, 
+    connectStorageEmulator, 
+    ref, 
+    uploadString,
+    deleteObject 
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
+import { 
+    getDatabase, 
+    connectDatabaseEmulator,
+    ref as dbRef,
+    set as dbSet
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -83,6 +103,10 @@ export async function testFirebaseConnection() {
             timestamp: new Date().toISOString(),
             status: 'ok'
         });
+
+        // Test query
+        const testQuery = query(testCollection, limit(1));
+        await getDocs(testQuery);
         console.log('✓ Firestore Verbindung OK');
 
         // Test Storage
@@ -91,8 +115,8 @@ export async function testFirebaseConnection() {
         console.log('✓ Storage Verbindung OK');
 
         // Test Realtime Database
-        const testRef2 = rtdb.ref('test/connection');
-        await testRef2.set({
+        const testDbRef = dbRef(rtdb, 'test/connection');
+        await dbSet(testDbRef, {
             timestamp: new Date().toISOString(),
             status: 'ok'
         });
@@ -102,6 +126,14 @@ export async function testFirebaseConnection() {
     } catch (error) {
         console.error('Firebase Verbindungsfehler:', error);
         throw new Error('Firebase Verbindung fehlgeschlagen: ' + error.message);
+    } finally {
+        // Cleanup test data
+        try {
+            const testRef = ref(storage, 'test/connection.txt');
+            await deleteObject(testRef).catch(() => {});
+        } catch (error) {
+            console.warn('Cleanup warning:', error);
+        }
     }
 }
 
