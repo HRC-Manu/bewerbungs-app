@@ -10,6 +10,8 @@ import AuthService from './services/auth-service.js';
 import DocumentService from './services/document-service.js';
 import { auth } from './firebase-config.js';
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { ref, set } from "firebase/database";
+import { db } from './firebase-config.js';
 
 // Auth Service
 const AuthService = {
@@ -1448,4 +1450,36 @@ async function handleRegisterSubmit(e) {
     } finally {
         hideLoading(form.querySelector('button[type="submit"]'), 'Registrieren');
     }
+}
+
+// Funktion zum Initialisieren der Datenbankstruktur
+async function initializeDatabase() {
+    try {
+        const initialData = {
+            users: {
+                test_user: {
+                    profile: {
+                        firstName: "Test",
+                        lastName: "User",
+                        email: "test@example.com",
+                        createdAt: new Date().toISOString()
+                    },
+                    applications: {}
+                }
+            }
+        };
+
+        await set(ref(db), initialData);
+        console.log("Database initialized");
+    } catch (error) {
+        console.error("Error initializing database:", error);
+    }
+}
+
+// Füge einen Button zum Initialisieren hinzu
+if (location.hostname === "localhost") {
+    const initButton = document.createElement('button');
+    initButton.textContent = "Initialize Database";
+    initButton.onclick = initializeDatabase;
+    document.body.appendChild(initButton);
 }
