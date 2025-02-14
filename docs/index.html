@@ -273,6 +273,42 @@
         </div>
     </div>
 
+    <!-- Preview Modal -->
+    <div class="modal fade" id="previewModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Vorschau</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Schließen"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Design Controls -->
+                    <div class="mb-3 d-flex gap-2 align-items-center">
+                        <input type="color" id="colorPicker" class="form-control form-control-color" 
+                               title="Wählen Sie eine Farbe">
+                        <select id="fontSelect" class="form-select w-auto">
+                            <option value="Arial">Arial</option>
+                            <option value="Times New Roman">Times New Roman</option>
+                            <option value="Calibri">Calibri</option>
+                        </select>
+                        <div class="form-check">
+                            <input type="checkbox" id="borderToggle" class="form-check-input">
+                            <label class="form-check-label" for="borderToggle">Rahmen anzeigen</label>
+                        </div>
+                        <button id="refreshPreviewBtn" class="btn btn-outline-primary">
+                            <i class="bi bi-arrow-clockwise"></i>
+                        </button>
+                    </div>
+                    
+                    <!-- Preview Container -->
+                    <div id="modernPreviewContainer" class="preview-container p-4 border rounded">
+                        <!-- Content will be inserted here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Help Modal -->
     <div class="modal fade" id="helpModal" tabindex="-1">
         <div class="modal-dialog">
@@ -306,6 +342,53 @@
                 </div>
             </div>
         </div>
+    </div>
+
+    <!-- Progress Bar Container -->
+    <div class="progress-container position-fixed bottom-0 start-0 end-0">
+        <div class="progress">
+            <div id="progressBar" class="progress-bar" role="progressbar" style="width: 0%"></div>
+        </div>
+    </div>
+
+    <!-- Feature Buttons -->
+    <div class="feature-buttons d-none">
+        <button id="interviewerName" class="btn btn-outline-secondary">
+            <i class="bi bi-person"></i> Interviewer
+        </button>
+        
+        <div class="input-group">
+            <input type="url" id="remotePdfURL" class="form-control" 
+                   placeholder="PDF URL eingeben">
+            <button id="loadRemotePdfBtn" class="btn btn-outline-primary">
+                <i class="bi bi-cloud-download"></i> Laden
+            </button>
+        </div>
+        
+        <button id="ttsBtn" class="btn btn-outline-secondary">
+            <i class="bi bi-volume-up"></i> Vorlesen
+        </button>
+        
+        <button id="similarityBtn" class="btn btn-outline-info">
+            <i class="bi bi-search"></i> Ähnlichkeit prüfen
+        </button>
+        
+        <div class="form-check form-switch">
+            <input type="checkbox" id="multiPageToggle" class="form-check-input">
+            <label class="form-check-label" for="multiPageToggle">Mehrseitige Ansicht</label>
+        </div>
+        
+        <button id="pdfExportBtn" class="btn btn-outline-primary">
+            <i class="bi bi-file-pdf"></i> Als PDF exportieren
+        </button>
+        
+        <button id="collabConnectBtn" class="btn btn-outline-success">
+            <i class="bi bi-people"></i> Live-Kollaboration
+        </button>
+        
+        <button id="archiveBtn" class="btn btn-outline-secondary">
+            <i class="bi bi-archive"></i> Archivieren
+        </button>
     </div>
 
     <!-- Toast Container -->
