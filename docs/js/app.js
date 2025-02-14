@@ -1135,20 +1135,74 @@ function initializeAuthHandlers() {
     const forgotPasswordBtn = document.getElementById('forgotPasswordBtn');
     const showRegisterBtn = document.getElementById('showRegisterBtn');
     
-    // Login
+    // Login Button
     loginBtn?.addEventListener('click', () => {
         console.log('Login button clicked');
         globalState.elements.loginModal.show();
     });
     
-    // Register Link im Login Modal
+    // Login Form Submit
+    document.getElementById('loginForm')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        console.log('Login form submitted');
+        
+        const email = document.getElementById('loginEmail').value;
+        const password = document.getElementById('loginPassword').value;
+        const remember = document.getElementById('rememberMe').checked;
+        
+        try {
+            showLoading(e.target, 'Anmeldung...');
+            await AuthService.login(email, password, remember);
+            globalState.elements.loginModal.hide();
+            showSuccess('Erfolgreich angemeldet');
+            updateUIAfterLogin();
+        } catch (error) {
+            showError('Anmeldung fehlgeschlagen');
+        } finally {
+            hideLoading(e.target);
+        }
+    });
+    
+    // Register Link
     showRegisterBtn?.addEventListener('click', () => {
         console.log('Show register button clicked');
         globalState.elements.loginModal.hide();
         globalState.elements.registerModal.show();
     });
     
-    // Logout
+    // Register Form Submit
+    document.getElementById('registerForm')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        console.log('Register form submitted');
+        
+        const userData = {
+            firstName: document.getElementById('registerFirstName').value,
+            lastName: document.getElementById('registerLastName').value,
+            email: document.getElementById('registerEmail').value,
+            password: document.getElementById('registerPassword').value
+        };
+        
+        const passwordConfirm = document.getElementById('registerPasswordConfirm').value;
+        
+        if (userData.password !== passwordConfirm) {
+            showError('Passwörter stimmen nicht überein');
+            return;
+        }
+        
+        try {
+            showLoading(e.target, 'Registrierung...');
+            await AuthService.register(userData);
+            globalState.elements.registerModal.hide();
+            showSuccess('Registrierung erfolgreich');
+            globalState.elements.loginModal.show();
+        } catch (error) {
+            showError('Registrierung fehlgeschlagen');
+        } finally {
+            hideLoading(e.target);
+        }
+    });
+    
+    // Logout Button
     logoutBtn?.addEventListener('click', () => {
         console.log('Logout button clicked');
         AuthService.logout();
@@ -1156,11 +1210,30 @@ function initializeAuthHandlers() {
         updateUIAfterLogout();
     });
     
-    // Password Reset
+    // Password Reset Button
     forgotPasswordBtn?.addEventListener('click', () => {
         console.log('Forgot password button clicked');
         globalState.elements.loginModal.hide();
         globalState.elements.passwordResetModal.show();
+    });
+    
+    // Password Reset Form Submit
+    document.getElementById('passwordResetForm')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        console.log('Password reset form submitted');
+        
+        const email = document.getElementById('resetEmail').value;
+        
+        try {
+            showLoading(e.target, 'Sende Link...');
+            await AuthService.resetPassword(email);
+            globalState.elements.passwordResetModal.hide();
+            showSuccess('Password-Reset-Link wurde gesendet');
+        } catch (error) {
+            showError('Fehler beim Senden des Reset-Links');
+        } finally {
+            hideLoading(e.target);
+        }
     });
     
     // Password Visibility Toggle
@@ -1182,6 +1255,8 @@ function initializeAuthHandlers() {
         indicator.className = 'password-strength mt-2';
         if (strength > 0) indicator.classList.add(strength === 1 ? 'weak' : strength === 2 ? 'medium' : 'strong');
     });
+    
+    console.log('Auth handlers initialized');
 }
 
 function checkPasswordStrength(password) {
