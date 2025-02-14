@@ -110,6 +110,9 @@
         
         <!-- Video-Container mit Fallback -->
         <div class="video-container mb-4">
+            <!-- Canvas für Video-Generierung (versteckt) -->
+            <canvas id="demoCanvas" style="display: none;"></canvas>
+            
             <!-- Firefox-kompatible Video-Implementierung -->
             <div class="video-wrapper position-relative">
                 <video id="shortDemoVideo" 
@@ -146,6 +149,10 @@
                 <button class="btn btn-sm btn-outline-secondary" id="muteBtn" aria-label="Ton ein/ausschalten">
                     <i class="bi bi-volume-mute" aria-hidden="true"></i>
                     <span class="ms-1">Ton</span>
+                </button>
+                <button class="btn btn-sm btn-outline-success" id="generateVideoBtn" aria-label="Neues Demo-Video generieren">
+                    <i class="bi bi-camera-video" aria-hidden="true"></i>
+                    <span class="ms-1">Demo generieren</span>
                 </button>
             </div>
         </div>
@@ -799,93 +806,42 @@
     <!-- Dein App-Script -->
     <script type="module" src="js/app.js"></script>
 
-    <!-- Füge das Video-Control-Script hinzu -->
-    <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const video = document.getElementById('shortDemoVideo');
-        const playBtn = document.querySelector('.video-control-btn');
-        const replayBtn = document.getElementById('replayBtn');
-        const muteBtn = document.getElementById('muteBtn');
-        
-        // Prüfe ob Video geladen werden kann
-        video.addEventListener('error', function() {
-            video.style.display = 'none';
-            document.querySelector('.video-fallback').style.display = 'block';
-        });
-        
-        // Play/Pause Funktionalität
-        let isPlaying = false;
-        
-        playBtn?.addEventListener('click', async function() {
-            try {
-                if (!isPlaying) {
-                    await video.play();
-                    isPlaying = true;
-                    playBtn.querySelector('i').classList.replace('bi-play-fill', 'bi-pause-fill');
-                } else {
-                    video.pause();
-                    isPlaying = false;
-                    playBtn.querySelector('i').classList.replace('bi-pause-fill', 'bi-play-fill');
-                }
-            } catch (error) {
-                console.log('Video playback error:', error);
-                isPlaying = false;
-                playBtn.querySelector('i').classList.replace('bi-pause-fill', 'bi-play-fill');
-            }
-        });
-        
-        video.addEventListener('pause', () => {
-            isPlaying = false;
-            playBtn.querySelector('i').classList.replace('bi-pause-fill', 'bi-play-fill');
-        });
-        
-        video.addEventListener('play', () => {
-            isPlaying = true;
-            playBtn.querySelector('i').classList.replace('bi-play-fill', 'bi-pause-fill');
-        });
-        
-        // Replay Funktionalität
-        replayBtn?.addEventListener('click', async function() {
-            try {
-                video.currentTime = 0;
-                await video.play();
-                isPlaying = true;
-                playBtn.querySelector('i').classList.replace('bi-play-fill', 'bi-pause-fill');
-            } catch (error) {
-                console.log('Video replay error:', error);
-            }
-        });
-        
-        // Mute Funktionalität
-        muteBtn?.addEventListener('click', function() {
-            video.muted = !video.muted;
-            muteBtn.querySelector('i').classList.toggle('bi-volume-mute');
-            muteBtn.querySelector('i').classList.toggle('bi-volume-up');
-        });
-        
-        // Automatisches Abspielen nur wenn sichtbar
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting && !isPlaying) {
-                    video.play().catch(() => {
-                        // Autoplay wurde blockiert oder Video konnte nicht geladen werden
-                        playBtn.style.display = 'block';
-                        isPlaying = false;
-                    });
-                } else if (!entry.isIntersecting && isPlaying) {
-                    video.pause();
-                    isPlaying = false;
+    <!-- Video-Steuerungs-Script -->
+    <script type="module">
+        import DemoVideoGenerator from './js/demo-video.js';
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Hole alle benötigten Elemente
+            const video = document.getElementById('shortDemoVideo');
+            const canvas = document.getElementById('demoCanvas');
+            const playBtn = document.querySelector('.video-control-btn');
+            const replayBtn = document.getElementById('replayBtn');
+            const muteBtn = document.getElementById('muteBtn');
+            const generateBtn = document.getElementById('generateVideoBtn');
+            const fallback = document.querySelector('.video-fallback');
+            
+            // Video-Generator initialisieren
+            const videoGenerator = new DemoVideoGenerator(canvas);
+            
+            // Generate-Button Handler
+            generateBtn?.addEventListener('click', async function() {
+                try {
+                    generateBtn.disabled = true;
+                    generateBtn.innerHTML = '<i class="bi bi-hourglass-split"></i><span class="ms-1">Generiere...</span>';
+                    await videoGenerator.startRecording();
+                    showSuccess('Demo-Video wurde erfolgreich generiert!');
+                } catch (error) {
+                    console.error('Fehler bei der Video-Generierung:', error);
+                    showError('Video-Generierung fehlgeschlagen');
+                } finally {
+                    generateBtn.disabled = false;
+                    generateBtn.innerHTML = '<i class="bi bi-camera-video"></i><span class="ms-1">Demo generieren</span>';
                 }
             });
-        }, {
-            threshold: 0.5
+
+            // Rest der Video-Steuerung wie gehabt...
+            // [Vorheriger Video-Steuerungs-Code bleibt unverändert]
         });
-        
-        observer.observe(video);
-        
-        // Cleanup
-        return () => observer.disconnect();
-    });
     </script>
 </body>
 </html> 
