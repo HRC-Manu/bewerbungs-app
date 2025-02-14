@@ -680,4 +680,77 @@ body {
     min-height: 297mm;
     margin: 0 auto;
     padding: 20mm;
+}
+
+/* GitHub Integration Styles */
+.github-integration {
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+}
+
+.github-integration h5 {
+    color: var(--primary);
+    margin-bottom: 1rem;
+}
+
+.github-integration .form-group {
+    position: relative;
+}
+
+.github-integration .form-control {
+    padding-right: 2.5rem;
+}
+
+/* Token Input Styling */
+#githubToken {
+    font-family: monospace;
+    letter-spacing: 0.1em;
+}
+
+#githubToken:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+/* Token Input Container */
+.token-input-container {
+    position: relative;
+}
+
+/* Show/Hide Password Button */
+.token-toggle {
+    position: absolute;
+    right: 0.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: var(--gray);
+    cursor: pointer;
+    padding: 0.25rem;
+}
+
+.token-toggle:hover {
+    color: var(--primary);
+}
+
+/* Status Indicator */
+.github-status {
+    display: inline-flex;
+    align-items: center;
+    font-size: 0.875rem;
+    margin-top: 0.5rem;
+}
+
+.github-status.connected {
+    color: var(--success);
+}
+
+.github-status.disconnected {
+    color: var(--danger);
+}
+
+.github-status i {
+    margin-right: 0.5rem;
 } 
