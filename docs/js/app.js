@@ -1096,16 +1096,18 @@ ${data.skills.join(', ')}
 // Event-Handler für Auth-Funktionen
 function initializeAuthHandlers() {
     const loginBtn = document.getElementById('loginBtn');
-    const registerBtn = document.getElementById('registerBtn');
     const logoutBtn = document.getElementById('logoutBtn');
     const forgotPasswordBtn = document.getElementById('forgotPasswordBtn');
+    const showRegisterBtn = document.getElementById('showRegisterBtn');
     
     const loginModal = new bootstrap.Modal(document.getElementById('loginModal'));
     const registerModal = new bootstrap.Modal(document.getElementById('registerModal'));
     const passwordResetModal = new bootstrap.Modal(document.getElementById('passwordResetModal'));
     
     // Login
-    loginBtn?.addEventListener('click', () => loginModal.show());
+    loginBtn?.addEventListener('click', () => {
+        loginModal.show();
+    });
     
     document.getElementById('loginForm')?.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -1119,6 +1121,7 @@ function initializeAuthHandlers() {
             await AuthService.login(email, password, remember);
             loginModal.hide();
             showSuccess('Erfolgreich angemeldet');
+            updateUIAfterLogin();
         } catch (error) {
             showError('Anmeldung fehlgeschlagen');
         } finally {
@@ -1127,7 +1130,10 @@ function initializeAuthHandlers() {
     });
     
     // Register
-    registerBtn?.addEventListener('click', () => registerModal.show());
+    showRegisterBtn?.addEventListener('click', () => {
+        loginModal.hide();
+        registerModal.show();
+    });
     
     document.getElementById('registerForm')?.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -1163,6 +1169,7 @@ function initializeAuthHandlers() {
     logoutBtn?.addEventListener('click', () => {
         AuthService.logout();
         showSuccess('Erfolgreich abgemeldet');
+        updateUIAfterLogout();
     });
     
     // Password Reset
@@ -1217,4 +1224,89 @@ function checkPasswordStrength(password) {
     if (/[0-9]/.test(password) && /[^A-Za-z0-9]/.test(password)) strength++;
     
     return strength;
+}
+
+// Hauptbuttons und Workflow
+function initializeMainButtons() {
+    const { elements } = globalState;
+    
+    // Start Button
+    elements.startBtn?.addEventListener('click', async () => {
+        if (!AuthService.currentUser) {
+            showError('Bitte melden Sie sich zuerst an');
+            const loginModal = new bootstrap.Modal(document.getElementById('loginModal'));
+            loginModal.show();
+            return;
+        }
+        
+        try {
+            const workflowModal = new bootstrap.Modal(document.getElementById('workflowModal'));
+            workflowModal.show();
+            await initializeWorkflow();
+            showStep(1);
+        } catch (error) {
+            showError('Fehler beim Starten des Workflows');
+        }
+    });
+    
+    // Resume Buttons
+    elements.uploadResumeBtn?.addEventListener('click', () => handleResumeUpload());
+    elements.createResumeBtn?.addEventListener('click', () => {
+        const modal = new bootstrap.Modal(document.getElementById('resumeCreatorModal'));
+        initializeResumeBuilder();
+        modal.show();
+    });
+    
+    // Cover Letter Buttons
+    elements.createCoverLetterBtn?.addEventListener('click', () => {
+        if (!globalState.resumeData) {
+            showError('Bitte laden Sie zuerst einen Lebenslauf hoch');
+            return;
+        }
+        const workflowModal = new bootstrap.Modal(document.getElementById('workflowModal'));
+        workflowModal.show();
+        showStep(2);
+    });
+    
+    elements.uploadCoverLetterBtn?.addEventListener('click', () => handleCoverLetterUpload());
+    
+    // Settings Button
+    elements.settingsBtn?.addEventListener('click', () => {
+        const settingsModal = new bootstrap.Modal(document.getElementById('settingsModal'));
+        loadSettings();
+        settingsModal.show();
+    });
+    
+    // Help Button
+    elements.helpBtn?.addEventListener('click', () => {
+        const helpModal = new bootstrap.Modal(document.getElementById('helpModal'));
+        helpModal.show();
+    });
+}
+
+// UI Updates nach Login/Logout
+function updateUIAfterLogin() {
+    const authButtons = document.getElementById('authButtons');
+    const userMenu = document.getElementById('userMenu');
+    const userDisplayName = document.getElementById('userDisplayName');
+    
+    if (AuthService.currentUser) {
+        authButtons.classList.add('d-none');
+        userMenu.classList.remove('d-none');
+        userDisplayName.textContent = `${AuthService.currentUser.firstName} ${AuthService.currentUser.lastName}`;
+    }
+}
+
+function updateUIAfterLogout() {
+    const authButtons = document.getElementById('authButtons');
+    const userMenu = document.getElementById('userMenu');
+    
+    authButtons.classList.remove('d-none');
+    userMenu.classList.add('d-none');
+    
+    // Optional: Redirect zur Startseite oder Modal schließen
+    const workflowModal = bootstrap.Modal.getInstance(document.getElementById('workflowModal'));
+    if (workflowModal) {
+        workflowModal.hide();
+    }
 }
