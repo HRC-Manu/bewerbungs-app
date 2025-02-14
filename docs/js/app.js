@@ -545,21 +545,6 @@ function loadSettings() {
     if (settings.letterStyle) elements.letterStyle.value = settings.letterStyle;
 }
 
-async function analyzeResume() {
-    const { elements } = globalState;
-    
-    try {
-        showLoading(elements.resumeAnalysis, 'Analysiere Lebenslauf...');
-        const analysis = await analyzeResume(globalState.resumeData);
-        displayResumeAnalysis(analysis);
-        } catch (error) {
-        console.error('Resume analysis error:', error);
-        showError('Fehler bei der Lebenslauf-Analyse');
-    } finally {
-        hideLoading(elements.resumeAnalysis);
-    }
-}
-
 async function analyzeJobPosting() {
     const { elements } = globalState;
     const jobPosting = elements.jobPosting.value;
@@ -568,7 +553,7 @@ async function analyzeJobPosting() {
         showLoading(elements.jobAnalysis, 'Analysiere Stellenanzeige...');
         const analysis = await analyzeJobPosting(jobPosting);
         displayJobAnalysis(analysis);
-        } catch (error) {
+    } catch (error) {
         console.error('Job posting analysis error:', error);
         showError('Fehler bei der Stellenanzeigen-Analyse');
     } finally {
@@ -1275,12 +1260,11 @@ function initializeMainButtons() {
     
     // Start Button
     elements.startBtn?.addEventListener('click', async () => {
-        console.log('DEBUG: Start button clicked');
-        // Unverändert:
+        console.log('Start button clicked');
         if (!AuthService.currentUser) {
             showError('Bitte melden Sie sich zuerst an');
             elements.loginModal.show();
-            return;
+          return;
         }
         
         try {
@@ -1294,18 +1278,18 @@ function initializeMainButtons() {
     
     // Resume Buttons
     elements.uploadResumeBtn?.addEventListener('click', () => {
-        console.log('DEBUG: Upload resume button clicked');
+        console.log('Upload resume button clicked');
         handleResumeUpload();
     });
     elements.createResumeBtn?.addEventListener('click', () => {
-        console.log('DEBUG: Create resume button clicked');
+        console.log('Create resume button clicked');
         initializeResumeBuilder();
         elements.resumeCreatorModal.show();
     });
     
     // Cover Letter Buttons
     elements.createCoverLetterBtn?.addEventListener('click', () => {
-        console.log('DEBUG: Create cover letter button clicked');
+        console.log('Create cover letter button clicked');
         if (!globalState.resumeData) {
             showError('Bitte laden Sie zuerst einen Lebenslauf hoch');
             return;
@@ -1315,24 +1299,24 @@ function initializeMainButtons() {
     });
     
     elements.uploadCoverLetterBtn?.addEventListener('click', () => {
-        console.log('DEBUG: Upload cover letter button clicked');
+        console.log('Upload cover letter button clicked');
         handleCoverLetterUpload();
     });
     
     // Settings Button
     elements.settingsBtn?.addEventListener('click', () => {
-        console.log('DEBUG: Settings button clicked');
+        console.log('Settings button clicked');
         loadSettings();
         elements.settingsModal.show();
     });
     
     // Help Button
     elements.helpBtn?.addEventListener('click', () => {
-        console.log('DEBUG: Help button clicked');
+        console.log('Help button clicked');
         elements.helpModal.show();
     });
     
-    console.log('initializeMainButtons() fertig initialisiert.');
+    console.log('Main buttons initialized');
 }
 
 // UI Updates nach Login/Logout
