@@ -128,21 +128,43 @@ const AuthService = {
     }
 };
 
+// Hauptinitialisierung
 document.addEventListener('DOMContentLoaded', function() {
     "use strict";
     
-    initializeApp();
-    initializeAuthHandlers();
-    AuthService.checkAuth();
+    try {
+        console.log('Initializing application...');
+        
+        // Initialisiere Basis-Elemente
+        initializeElements();
+        
+        // Initialisiere Auth-Handler
+        initializeAuthHandlers();
+        
+        // Initialisiere Haupt-Buttons
+        initializeMainButtons();
+        
+        // Initialisiere Event-Listener
+        initializeEventListeners();
+        
+        // Initialisiere Features
+        Features.initialize();
+        
+        // Initialisiere Workflow
+        initializeWorkflow();
+        
+        // Prüfe Auth-Status
+        AuthService.checkAuth();
+        
+        // Starte Preview-Update-Intervall
+        setInterval(updatePreview, 3000);
+        
+        console.log('Application initialized successfully');
+    } catch (error) {
+        console.error('Error during initialization:', error);
+        showError('Fehler beim Initialisieren der Anwendung');
+    }
 });
-
-function initializeApp() {
-    initializeElements();
-    initializeEventListeners();
-    Features.initialize();
-    initializeWorkflow();
-    setInterval(updatePreview, 3000);
-}
 
 function initializeElements() {
     globalState.elements = {
@@ -195,8 +217,19 @@ function initializeElements() {
         resumeBuilder: safeGetElem('resumeBuilder'),
         settingsForm: safeGetElem('settingsForm'),
         aiProvider: safeGetElem('aiProvider'),
-        letterStyle: safeGetElem('letterStyle')
+        letterStyle: safeGetElem('letterStyle'),
+        
+        // Modals
+        loginModal: new bootstrap.Modal(document.getElementById('loginModal')),
+        registerModal: new bootstrap.Modal(document.getElementById('registerModal')),
+        passwordResetModal: new bootstrap.Modal(document.getElementById('passwordResetModal')),
+        workflowModal: new bootstrap.Modal(document.getElementById('workflowModal')),
+        settingsModal: new bootstrap.Modal(document.getElementById('settingsModal')),
+        helpModal: new bootstrap.Modal(document.getElementById('helpModal')),
     };
+    
+    // Debug-Log für Initialisierung
+    console.log('Elements initialized:', Object.keys(globalState.elements));
 }
 
 function initializeEventListeners() {
@@ -1095,78 +1128,29 @@ ${data.skills.join(', ')}
 
 // Event-Handler für Auth-Funktionen
 function initializeAuthHandlers() {
+    console.log('Initializing auth handlers...');
+    
     const loginBtn = document.getElementById('loginBtn');
     const logoutBtn = document.getElementById('logoutBtn');
     const forgotPasswordBtn = document.getElementById('forgotPasswordBtn');
     const showRegisterBtn = document.getElementById('showRegisterBtn');
     
-    const loginModal = new bootstrap.Modal(document.getElementById('loginModal'));
-    const registerModal = new bootstrap.Modal(document.getElementById('registerModal'));
-    const passwordResetModal = new bootstrap.Modal(document.getElementById('passwordResetModal'));
-    
     // Login
     loginBtn?.addEventListener('click', () => {
-        loginModal.show();
+        console.log('Login button clicked');
+        globalState.elements.loginModal.show();
     });
     
-    document.getElementById('loginForm')?.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        
-        const email = document.getElementById('loginEmail').value;
-        const password = document.getElementById('loginPassword').value;
-        const remember = document.getElementById('rememberMe').checked;
-        
-        try {
-            showLoading(e.target, 'Anmeldung...');
-            await AuthService.login(email, password, remember);
-            loginModal.hide();
-            showSuccess('Erfolgreich angemeldet');
-            updateUIAfterLogin();
-        } catch (error) {
-            showError('Anmeldung fehlgeschlagen');
-        } finally {
-            hideLoading(e.target);
-        }
-    });
-    
-    // Register
+    // Register Link im Login Modal
     showRegisterBtn?.addEventListener('click', () => {
-        loginModal.hide();
-        registerModal.show();
-    });
-    
-    document.getElementById('registerForm')?.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        
-        const userData = {
-            firstName: document.getElementById('registerFirstName').value,
-            lastName: document.getElementById('registerLastName').value,
-            email: document.getElementById('registerEmail').value,
-            password: document.getElementById('registerPassword').value
-        };
-        
-        const passwordConfirm = document.getElementById('registerPasswordConfirm').value;
-        
-        if (userData.password !== passwordConfirm) {
-            showError('Passwörter stimmen nicht überein');
-            return;
-        }
-        
-        try {
-            showLoading(e.target, 'Registrierung...');
-            await AuthService.register(userData);
-            registerModal.hide();
-            showSuccess('Registrierung erfolgreich');
-            loginModal.show();
-        } catch (error) {
-            showError('Registrierung fehlgeschlagen');
-        } finally {
-            hideLoading(e.target);
-        }
+        console.log('Show register button clicked');
+        globalState.elements.loginModal.hide();
+        globalState.elements.registerModal.show();
     });
     
     // Logout
     logoutBtn?.addEventListener('click', () => {
+        console.log('Logout button clicked');
         AuthService.logout();
         showSuccess('Erfolgreich abgemeldet');
         updateUIAfterLogout();
@@ -1174,25 +1158,9 @@ function initializeAuthHandlers() {
     
     // Password Reset
     forgotPasswordBtn?.addEventListener('click', () => {
-        loginModal.hide();
-        passwordResetModal.show();
-    });
-    
-    document.getElementById('passwordResetForm')?.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        
-        const email = document.getElementById('resetEmail').value;
-        
-        try {
-            showLoading(e.target, 'Sende Link...');
-            await AuthService.resetPassword(email);
-            passwordResetModal.hide();
-            showSuccess('Password-Reset-Link wurde gesendet');
-        } catch (error) {
-            showError('Fehler beim Senden des Reset-Links');
-        } finally {
-            hideLoading(e.target);
-        }
+        console.log('Forgot password button clicked');
+        globalState.elements.loginModal.hide();
+        globalState.elements.passwordResetModal.show();
     });
     
     // Password Visibility Toggle
