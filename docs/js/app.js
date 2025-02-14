@@ -1275,11 +1275,12 @@ function initializeMainButtons() {
     
     // Start Button
     elements.startBtn?.addEventListener('click', async () => {
-        console.log('Start button clicked');
+        console.log('DEBUG: Start button clicked');
+        // Unverändert:
         if (!AuthService.currentUser) {
             showError('Bitte melden Sie sich zuerst an');
             elements.loginModal.show();
-          return;
+            return;
         }
         
         try {
@@ -1293,18 +1294,18 @@ function initializeMainButtons() {
     
     // Resume Buttons
     elements.uploadResumeBtn?.addEventListener('click', () => {
-        console.log('Upload resume button clicked');
+        console.log('DEBUG: Upload resume button clicked');
         handleResumeUpload();
     });
     elements.createResumeBtn?.addEventListener('click', () => {
-        console.log('Create resume button clicked');
+        console.log('DEBUG: Create resume button clicked');
         initializeResumeBuilder();
         elements.resumeCreatorModal.show();
     });
     
     // Cover Letter Buttons
     elements.createCoverLetterBtn?.addEventListener('click', () => {
-        console.log('Create cover letter button clicked');
+        console.log('DEBUG: Create cover letter button clicked');
         if (!globalState.resumeData) {
             showError('Bitte laden Sie zuerst einen Lebenslauf hoch');
             return;
@@ -1314,24 +1315,24 @@ function initializeMainButtons() {
     });
     
     elements.uploadCoverLetterBtn?.addEventListener('click', () => {
-        console.log('Upload cover letter button clicked');
+        console.log('DEBUG: Upload cover letter button clicked');
         handleCoverLetterUpload();
     });
     
     // Settings Button
     elements.settingsBtn?.addEventListener('click', () => {
-        console.log('Settings button clicked');
+        console.log('DEBUG: Settings button clicked');
         loadSettings();
         elements.settingsModal.show();
     });
     
     // Help Button
     elements.helpBtn?.addEventListener('click', () => {
-        console.log('Help button clicked');
+        console.log('DEBUG: Help button clicked');
         elements.helpModal.show();
     });
     
-    console.log('Main buttons initialized');
+    console.log('initializeMainButtons() fertig initialisiert.');
 }
 
 // UI Updates nach Login/Logout
