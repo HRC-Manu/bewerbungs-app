@@ -5,7 +5,7 @@ import { analyzeJobPosting, analyzeResume } from './analysis.js';
 import { AIService } from './ai-service.js';
 import { Features } from './features.js';
 import { initializeWorkflow, showStep, nextStep, prevStep } from './workflow.js';
-import { safeGetElem } from './utils.js';
+import { safeGetElem, extractJobAdText } from './utils.js';
 
 document.addEventListener('DOMContentLoaded', function() {
     "use strict";
@@ -24,6 +24,7 @@ function initializeApp() {
 function initializeElements() {
     globalState.elements = {
         jobPosting: document.getElementById('jobPosting'),
+        jobPostingURL: document.getElementById('jobPostingURL'),
         resumeUpload: document.getElementById('resumeUpload'),
         coverLetterUpload: document.getElementById('coverLetterUpload'),
         analyzeBtn: document.getElementById('analyzeBtn'),
@@ -60,6 +61,27 @@ function initializeEventListeners() {
     // Help Button
     document.getElementById('helpBtn')?.addEventListener('click', () => {
         elements.helpModal.show();
+    });
+
+    // URL Input Handler
+    elements.jobPostingURL?.addEventListener('input', async function() {
+        const url = this.value.trim();
+        if (url && isValidURL(url)) {
+            try {
+                showLoading(elements.analyzeBtn, 'Lade Stellenanzeige...');
+                const jobText = await fetchJobPosting(url);
+                if (jobText) {
+                    elements.jobPosting.value = jobText;
+                    showSuccess('Stellenanzeige erfolgreich geladen');
+                    checkRequiredUploads();
+                }
+            } catch (error) {
+                showError('Fehler beim Laden der Stellenanzeige');
+                console.error('URL fetch error:', error);
+            } finally {
+                hideLoading(elements.analyzeBtn, 'Analysieren');
+            }
+        }
     });
 
     // Analyze Button
@@ -218,4 +240,37 @@ function applySuggestions(suggestions) {
         }
     });
     updatePreview();
+}
+
+async function fetchJobPosting(url) {
+    try {
+        const response = await fetch('/api/fetch-job-posting', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url })
+        });
+
+        if (!response.ok) {
+            throw new Error('Fehler beim Laden der Stellenanzeige');
+        }
+
+        const data = await response.json();
+        return data.jobText;
+    } catch (error) {
+        console.error('Error fetching job posting:', error);
+        throw error;
+    }
+}
+
+function isValidURL(string) {
+    try {
+        new URL(string);
+        return true;
+    } catch (_) {
+        return false;
+    }
+}
+
+function checkRequiredUploads() {
+    // Implementation of checkRequiredUploads function
 }
