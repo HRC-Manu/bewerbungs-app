@@ -168,7 +168,8 @@
             try {
                 const userCredential = await signInWithEmailAndPassword(auth, email, password);
                 showToast('Erfolgreich angemeldet', 'success');
-                // Hier später: Weiterleitung zum Dashboard
+                // Weiterleitung zum Dashboard
+                window.location.href = 'dashboard.html';
             } catch (error) {
                 showToast(getErrorMessage(error.code), 'error');
             }
@@ -183,7 +184,8 @@
             try {
                 const userCredential = await createUserWithEmailAndPassword(auth, email, password);
                 showToast('Registrierung erfolgreich', 'success');
-                // Hier später: Weiterleitung zum Dashboard
+                // Weiterleitung zum Dashboard
+                window.location.href = 'dashboard.html';
             } catch (error) {
                 showToast(getErrorMessage(error.code), 'error');
             }
