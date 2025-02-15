@@ -21,21 +21,14 @@
                 <i class="bi bi-file-text me-2" aria-hidden="true"></i>
                 Bewerbungsassistent
             </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" 
-                    data-bs-target="#navbarContent" 
-                    title="Menü öffnen"
-                    aria-label="Menü öffnen"
-                    aria-expanded="false"
-                    aria-controls="navbarContent">
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarContent">
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item">
-                        <button class="btn btn-outline-light" id="loginNavBtn" 
-                                title="Anmelden oder Registrieren" 
-                                aria-label="Anmelden oder Registrieren">
-                            <i class="bi bi-person-circle me-2" aria-hidden="true"></i>Anmelden
+                        <button class="btn btn-outline-light" id="loginNavBtn">
+                            <i class="bi bi-person-circle me-2"></i>Anmelden
                         </button>
                     </li>
                 </ul>
@@ -97,10 +90,8 @@
                         <i class="bi bi-file-person display-4 text-primary mb-3"></i>
                         <h2 class="h4 card-title">Lebenslauf hochladen</h2>
                         <p class="card-text mb-4">Laden Sie Ihren bestehenden Lebenslauf hoch und lassen Sie ihn von unserer KI analysieren und optimieren.</p>
-                        <button class="btn btn-primary" onclick="checkAuth('resume')"
-                                title="Lebenslauf hochladen" 
-                                aria-label="Lebenslauf hochladen">
-                            <i class="bi bi-upload me-2" aria-hidden="true"></i>Lebenslauf hochladen
+                        <button class="btn btn-primary" onclick="checkAuth('resume')">
+                            <i class="bi bi-upload me-2"></i>Lebenslauf hochladen
                         </button>
                     </div>
                 </div>
@@ -111,10 +102,8 @@
                         <i class="bi bi-file-text display-4 text-primary mb-3"></i>
                         <h2 class="h4 card-title">Anschreiben erstellen</h2>
                         <p class="card-text mb-4">Generieren Sie ein maßgeschneidertes Anschreiben basierend auf Ihrem Lebenslauf und der Stellenanzeige.</p>
-                        <button class="btn btn-primary" onclick="checkAuth('cover')"
-                                title="Anschreiben erstellen" 
-                                aria-label="Anschreiben erstellen">
-                            <i class="bi bi-pencil me-2" aria-hidden="true"></i>Anschreiben erstellen
+                        <button class="btn btn-primary" onclick="checkAuth('cover')">
+                            <i class="bi bi-pencil me-2"></i>Anschreiben erstellen
                         </button>
                     </div>
                 </div>
@@ -171,46 +160,30 @@
                         <form id="loginForm" autocomplete="on">
                             <div class="mb-3">
                                 <label for="email" class="form-label">E-Mail</label>
-                                <input type="email" class="form-control" id="email" 
-                                       required autocomplete="email" 
-                                       aria-required="true"
-                                       aria-label="E-Mail-Adresse für Login">
+                                <input type="email" class="form-control" id="email" required autocomplete="email">
                             </div>
                             <div class="mb-3">
                                 <label for="password" class="form-label">Passwort</label>
                                 <div class="input-group">
-                                    <input type="password" class="form-control" id="password" 
-                                           required autocomplete="current-password" 
-                                           aria-required="true"
-                                           aria-label="Passwort für Login">
-                                    <button class="btn btn-outline-secondary" type="button" id="togglePassword"
-                                            title="Passwort anzeigen/verbergen" 
-                                            aria-label="Passwort anzeigen/verbergen">
-                                        <i class="bi bi-eye" aria-hidden="true"></i>
+                                    <input type="password" class="form-control" id="password" required autocomplete="current-password">
+                                    <button class="btn btn-outline-secondary" type="button" id="togglePassword">
+                                        <i class="bi bi-eye"></i>
                                     </button>
                                 </div>
                             </div>
                             <div class="mb-3 form-check">
-                                <input type="checkbox" class="form-check-input" id="rememberMe" 
-                                       autocomplete="off"
-                                       aria-label="Angemeldet bleiben">
+                                <input type="checkbox" class="form-check-input" id="rememberMe">
                                 <label class="form-check-label" for="rememberMe">Angemeldet bleiben</label>
                             </div>
                             <div class="d-grid">
-                                <button type="submit" class="btn btn-primary" 
-                                        title="Anmelden"
-                                        aria-label="Anmelden">Anmelden</button>
+                                <button type="submit" class="btn btn-primary">Anmelden</button>
                             </div>
                         </form>
                         <div class="text-center mt-3">
-                            <button type="button" class="btn btn-link" id="showRegisterBtn"
-                                    title="Zur Registrierung wechseln" 
-                                    aria-label="Zur Registrierung wechseln">
+                            <button type="button" class="btn btn-link" id="showRegisterBtn">
                                 Noch kein Konto? Registrieren
                             </button>
-                            <button type="button" class="btn btn-link text-muted" id="forgotPasswordBtn"
-                                    title="Passwort vergessen" 
-                                    aria-label="Passwort vergessen">
+                            <button type="button" class="btn btn-link text-muted" id="forgotPasswordBtn">
                                 Passwort vergessen?
                             </button>
                         </div>
@@ -231,51 +204,34 @@
                         <form id="registerForm" autocomplete="on">
                             <div class="mb-3">
                                 <label for="registerName" class="form-label">Name</label>
-                                <input type="text" class="form-control" id="registerName" 
-                                       required autocomplete="name" 
-                                       aria-required="true"
-                                       aria-label="Name für Registrierung">
+                                <input type="text" class="form-control" id="registerName" required autocomplete="name">
                             </div>
                             <div class="mb-3">
                                 <label for="registerEmail" class="form-label">E-Mail</label>
-                                <input type="email" class="form-control" id="registerEmail" 
-                                       required autocomplete="email" 
-                                       aria-required="true"
-                                       aria-label="E-Mail-Adresse für Registrierung">
+                                <input type="email" class="form-control" id="registerEmail" required autocomplete="email">
                             </div>
                             <div class="mb-3">
                                 <label for="registerPassword" class="form-label">Passwort</label>
                                 <div class="input-group">
-                                    <input type="password" class="form-control" id="registerPassword" 
-                                           required autocomplete="new-password" 
-                                           aria-required="true"
-                                           aria-label="Passwort für Registrierung">
-                                    <button class="btn btn-outline-secondary" type="button" id="toggleRegisterPassword"
-                                            title="Passwort anzeigen/verbergen" 
-                                            aria-label="Passwort anzeigen/verbergen">
-                                        <i class="bi bi-eye" aria-hidden="true"></i>
+                                    <input type="password" class="form-control" id="registerPassword" required autocomplete="new-password">
+                                    <button class="btn btn-outline-secondary" type="button" id="toggleRegisterPassword">
+                                        <i class="bi bi-eye"></i>
                                     </button>
                                 </div>
                                 <div class="password-strength mt-2"></div>
                             </div>
                             <div class="mb-3 form-check">
-                                <input type="checkbox" class="form-check-input" id="terms" 
-                                       required aria-required="true"
-                                       aria-label="Nutzungsbedingungen akzeptieren">
+                                <input type="checkbox" class="form-check-input" id="terms" required>
                                 <label class="form-check-label" for="terms">
                                     Ich akzeptiere die <a href="#" class="text-decoration-none">Nutzungsbedingungen</a>
                                 </label>
                             </div>
                             <div class="d-grid">
-                                <button type="submit" class="btn btn-primary"
-                                        title="Registrieren" 
-                                        aria-label="Registrieren">Registrieren</button>
+                                <button type="submit" class="btn btn-primary">Registrieren</button>
                             </div>
                         </form>
                         <div class="text-center mt-3">
-                            <button type="button" class="btn btn-link" id="showLoginBtn"
-                                    title="Zurück zur Anmeldung" 
-                                    aria-label="Zurück zur Anmeldung">
+                            <button type="button" class="btn btn-link" id="showLoginBtn">
                                 Zurück zur Anmeldung
                             </button>
                         </div>
@@ -301,18 +257,13 @@
                     <form id="passwordResetForm">
                         <div class="mb-3">
                             <label for="resetEmail" class="form-label">E-Mail-Adresse</label>
-                            <input type="email" class="form-control" id="resetEmail" 
-                                   required autocomplete="email" 
-                                   aria-required="true"
-                                   aria-label="E-Mail-Adresse für Passwort-Reset">
+                            <input type="email" class="form-control" id="resetEmail" required>
                             <div class="form-text">
                                 Sie erhalten einen Link zum Zurücksetzen Ihres Passworts.
                             </div>
                         </div>
                         <div class="d-grid">
-                            <button type="submit" class="btn btn-primary"
-                                    title="Link zum Zurücksetzen senden" 
-                                    aria-label="Link zum Zurücksetzen senden">Link senden</button>
+                            <button type="submit" class="btn btn-primary">Link senden</button>
                         </div>
                     </form>
                 </div>
@@ -352,11 +303,7 @@
         const auth = getAuth(app);
 
         // UI Elements
-        const authModal = new bootstrap.Modal(document.getElementById('authModal'), {
-            keyboard: true,
-            focus: true,
-            backdrop: true
-        });
+        const authModal = new bootstrap.Modal(document.getElementById('authModal'));
         const loginView = document.getElementById('loginView');
         const registerView = document.getElementById('registerView');
         const loginNavBtn = document.getElementById('loginNavBtn');
@@ -383,13 +330,11 @@
         document.getElementById('showRegisterBtn').addEventListener('click', () => {
             loginView.classList.add('d-none');
             registerView.classList.remove('d-none');
-            document.getElementById('registerName')?.focus();
         });
 
         document.getElementById('showLoginBtn').addEventListener('click', () => {
             registerView.classList.add('d-none');
             loginView.classList.remove('d-none');
-            document.getElementById('email')?.focus();
         });
 
         // Auth Forms
@@ -434,15 +379,11 @@
         });
 
         // Password Reset
-        const passwordResetModal = new bootstrap.Modal(document.getElementById('passwordResetModal'), {
-            keyboard: true,
-            focus: true
-        });
+        const passwordResetModal = new bootstrap.Modal(document.getElementById('passwordResetModal'));
         
         document.getElementById('forgotPasswordBtn').addEventListener('click', () => {
             authModal.hide();
             passwordResetModal.show();
-            document.getElementById('resetEmail')?.focus();
         });
 
         document.getElementById('passwordResetForm').addEventListener('submit', async (e) => {

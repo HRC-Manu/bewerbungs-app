@@ -1,3 +1,8 @@
+/**
+ * Firebase Konfiguration v1.0.1
+ * Letzte Aktualisierung: 2024
+ */
+
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { 
@@ -22,10 +27,10 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { 
     getStorage, 
-    connectStorageEmulator, 
-    ref, 
-    uploadString,
-    deleteObject 
+    connectStorageEmulator,
+    ref,
+    uploadBytes,
+    getDownloadURL
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 import { 
     getDatabase, 
@@ -47,14 +52,14 @@ import {
  * 6. Kopiere die Konfigurationsdaten hier rein
  */
 export const firebaseConfig = {
-    apiKey: "AIzaSyDfwqJUkCQNXafFRB7hVXupPh0XBoHbdQg",
-    authDomain: "bewerbungs-app.firebaseapp.com",
-    projectId: "bewerbungs-app",
-    storageBucket: "bewerbungs-app.appspot.com",
-    messagingSenderId: "540459849039",
-    appId: "1:540459849039:web:9eda29b3e754d48472613a",
-    measurementId: "G-5QHBC1W4J3",
-    databaseURL: "https://bewerbungs-app-default-rtdb.europe-west1.firebasedatabase.app"
+    apiKey: process.env.FIREBASE_API_KEY || "AIzaSyDfwqJUkCQNXafFRB7hVXupPh0XBoHbdQg",
+    authDomain: process.env.FIREBASE_AUTH_DOMAIN || "bewerbungs-app.firebaseapp.com",
+    projectId: process.env.FIREBASE_PROJECT_ID || "bewerbungs-app",
+    storageBucket: process.env.FIREBASE_STORAGE_BUCKET || "bewerbungs-app.appspot.com",
+    messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID || "540459849039",
+    appId: process.env.FIREBASE_APP_ID || "1:540459849039:web:9eda29b3e754d48472613a",
+    measurementId: process.env.FIREBASE_MEASUREMENT_ID || "G-5QHBC1W4J3",
+    databaseURL: process.env.FIREBASE_DATABASE_URL || "https://bewerbungs-app-default-rtdb.europe-west1.firebasedatabase.app"
 };
 
 // Singleton-Pattern für Firebase-Instanz
@@ -76,55 +81,18 @@ class FirebaseInstance {
 
         try {
             // Validate config
-            if (!firebaseConfig.apiKey || !firebaseConfig.authDomain || !firebaseConfig.projectId) {
-                throw new Error('Invalid Firebase configuration');
-            }
+            this.validateConfig(firebaseConfig);
 
             // Initialize Firebase
             this.app = initializeApp(firebaseConfig, 'bewerbungs-app');
             console.log('[Firebase] App initialized');
 
             // Initialize services with error handling
-            try {
-                this.auth = getAuth(this.app);
-                await setPersistence(this.auth, browserLocalPersistence);
-            } catch (error) {
-                console.error('[Firebase] Auth initialization failed:', error);
-                throw new Error('Auth initialization failed');
-            }
+            await this.initializeServices();
 
-            try {
-                this.db = getFirestore(this.app);
-            } catch (error) {
-                console.error('[Firebase] Firestore initialization failed:', error);
-                throw new Error('Firestore initialization failed');
-            }
-
-            try {
-                this.rtdb = getDatabase(this.app);
-            } catch (error) {
-                console.error('[Firebase] Realtime Database initialization failed:', error);
-                throw new Error('Realtime Database initialization failed');
-            }
-
-            try {
-                this.storage = getStorage(this.app);
-            } catch (error) {
-                console.error('[Firebase] Storage initialization failed:', error);
-                throw new Error('Storage initialization failed');
-            }
-            
             // Connect emulators in development
             if (window.location.hostname === 'localhost') {
-                try {
-                    connectAuthEmulator(this.auth, "http://localhost:9099", { disableWarnings: true });
-                    connectFirestoreEmulator(this.db, 'localhost', 8080);
-                    connectStorageEmulator(this.storage, "localhost", 9199);
-                    connectDatabaseEmulator(this.rtdb, "localhost", 9000);
-                    console.log('[Firebase] Emulators connected');
-                } catch (error) {
-                    console.warn('[Firebase] Emulator connection failed:', error);
-                }
+                await this.connectEmulators();
             }
 
             this._initialized = true;
@@ -135,6 +103,50 @@ class FirebaseInstance {
             this.showError(error);
             await this.cleanup();
             return false;
+        }
+    }
+
+    validateConfig(config) {
+        const requiredFields = ['apiKey', 'authDomain', 'projectId', 'storageBucket'];
+        const missingFields = requiredFields.filter(field => !config[field]);
+        
+        if (missingFields.length > 0) {
+            throw new Error(`Missing required Firebase config fields: ${missingFields.join(', ')}`);
+        }
+    }
+
+    async initializeServices() {
+        try {
+            this.auth = getAuth(this.app);
+            await setPersistence(this.auth, browserLocalPersistence);
+            console.log('[Firebase] Auth initialized');
+        } catch (error) {
+            throw new Error(`Auth initialization failed: ${error.message}`);
+        }
+
+        try {
+            this.db = getFirestore(this.app);
+            console.log('[Firebase] Firestore initialized');
+        } catch (error) {
+            throw new Error(`Firestore initialization failed: ${error.message}`);
+        }
+
+        try {
+            this.storage = getStorage(this.app);
+            console.log('[Firebase] Storage initialized');
+        } catch (error) {
+            throw new Error(`Storage initialization failed: ${error.message}`);
+        }
+    }
+
+    async connectEmulators() {
+        try {
+            connectAuthEmulator(this.auth, "http://localhost:9099", { disableWarnings: true });
+            connectFirestoreEmulator(this.db, 'localhost', 8080);
+            connectStorageEmulator(this.storage, "localhost", 9199);
+            console.log('[Firebase] Emulators connected');
+        } catch (error) {
+            console.warn('[Firebase] Emulator connection failed:', error);
         }
     }
 
@@ -161,59 +173,8 @@ class FirebaseInstance {
             this.app = null;
             this.auth = null;
             this.db = null;
-            this.rtdb = null;
             this.storage = null;
             this._initialized = false;
-        }
-    }
-
-    // Auth functions
-    async signIn(email, password) {
-        if (!this.auth) throw new Error('Firebase Auth not initialized');
-        
-        try {
-            const userCredential = await signInWithEmailAndPassword(this.auth, email, password);
-            console.log('✓ Login successful');
-            return userCredential.user;
-        } catch (error) {
-            console.error('Login error:', error);
-            throw error;
-        }
-    }
-
-    async signUp(email, password) {
-        if (!this.auth) throw new Error('Firebase Auth not initialized');
-        
-        try {
-            const userCredential = await createUserWithEmailAndPassword(this.auth, email, password);
-            console.log('✓ Registration successful');
-            
-            if (this.rtdb) {
-                const userId = userCredential.user.uid;
-                const userRef = dbRef(this.rtdb, `users/${userId}`);
-                await dbSet(userRef, {
-                    email: email,
-                    createdAt: new Date().toISOString(),
-                    applications: {}
-                });
-            }
-            
-            return userCredential.user;
-        } catch (error) {
-            console.error('Registration error:', error);
-            throw error;
-        }
-    }
-
-    async logOut() {
-        if (!this.auth) throw new Error('Firebase Auth not initialized');
-        
-        try {
-            await signOut(this.auth);
-            console.log('✓ Logout successful');
-        } catch (error) {
-            console.error('Logout error:', error);
-            throw error;
         }
     }
 }
@@ -224,11 +185,57 @@ const firebaseInstance = new FirebaseInstance();
 // Export services and functions
 export const auth = firebaseInstance.auth;
 export const db = firebaseInstance.db;
-export const rtdb = firebaseInstance.rtdb;
 export const storage = firebaseInstance.storage;
-export const signIn = firebaseInstance.signIn.bind(firebaseInstance);
-export const signUp = firebaseInstance.signUp.bind(firebaseInstance);
-export const logOut = firebaseInstance.logOut.bind(firebaseInstance);
+
+// Auth functions
+export async function signIn(email, password) {
+    if (!auth) throw new Error('Firebase Auth not initialized');
+    
+    try {
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        console.log('✓ Login successful');
+        return userCredential.user;
+    } catch (error) {
+        console.error('Login error:', error);
+        throw error;
+    }
+}
+
+export async function signUp(email, password) {
+    if (!auth) throw new Error('Firebase Auth not initialized');
+    
+    try {
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        console.log('✓ Registration successful');
+        
+        if (db) {
+            const userId = userCredential.user.uid;
+            const userRef = dbRef(db, `users/${userId}`);
+            await dbSet(userRef, {
+                email: email,
+                createdAt: new Date().toISOString(),
+                applications: {}
+            });
+        }
+        
+        return userCredential.user;
+    } catch (error) {
+        console.error('Registration error:', error);
+        throw error;
+    }
+}
+
+export async function logOut() {
+    if (!auth) throw new Error('Firebase Auth not initialized');
+    
+    try {
+        await signOut(auth);
+        console.log('✓ Logout successful');
+    } catch (error) {
+        console.error('Logout error:', error);
+        throw error;
+    }
+}
 
 // Auth State Observer
 export function initAuthObserver(callback) {
@@ -283,7 +290,7 @@ export async function testFirebaseConnection(testEmail = 'test@example.com', tes
         if (auth.currentUser) {
             try {
                 const userId = auth.currentUser.uid;
-                const testDbRef = dbRef(rtdb, `users/${userId}/test`);
+                const testDbRef = dbRef(db, `users/${userId}/test`);
                 await dbSet(testDbRef, {
                     timestamp: new Date().toISOString(),
                     status: 'ok'
@@ -309,3 +316,12 @@ export async function testFirebaseConnection(testEmail = 'test@example.com', tes
         throw new Error(`Firebase Verbindung fehlgeschlagen: ${error.message}`);
     }
 }
+
+// Exportiere die Services
+export { 
+    app,
+    auth,
+    db,
+    db as database,
+    storage
+};
