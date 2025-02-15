@@ -53,13 +53,13 @@ import {
  */
 export const firebaseConfig = {
     apiKey: process.env.FIREBASE_API_KEY || "AIzaSyDfwqJUkCQNXafFRB7hVXupPh0XBoHbdQg",
-    authDomain: process.env.FIREBASE_AUTH_DOMAIN || "bewerbungs-app.firebaseapp.com",
-    projectId: process.env.FIREBASE_PROJECT_ID || "bewerbungs-app",
-    storageBucket: process.env.FIREBASE_STORAGE_BUCKET || "bewerbungs-app.appspot.com",
-    messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID || "540459849039",
+    authDomain: "bewerbungs-app.firebaseapp.com",
+    projectId: "bewerbungs-app",
+    storageBucket: "bewerbungs-app.appspot.com",
+    messagingSenderId: "540459849039",
     appId: process.env.FIREBASE_APP_ID || "1:540459849039:web:9eda29b3e754d48472613a",
     measurementId: process.env.FIREBASE_MEASUREMENT_ID || "G-5QHBC1W4J3",
-    databaseURL: process.env.FIREBASE_DATABASE_URL || "https://bewerbungs-app-default-rtdb.europe-west1.firebasedatabase.app"
+    databaseURL: "https://bewerbungs-app-default-rtdb.europe-west1.firebasedatabase.app"
 };
 
 // Singleton-Pattern für Firebase-Instanz

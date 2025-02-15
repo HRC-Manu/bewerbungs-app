@@ -3,8 +3,26 @@ import openai
 import docx
 import pypdf
 from my_ai_services import AiCoverLetterService  # <-- Fiktiver Service für ChatGPT-Calls, separat implementieren
+from tests.auto_test_service import AutoTestService
 
 openai.api_key = "your_openai_api_key"
+
+class BewerbungsApp:
+    def __init__(self):
+        self.setup_services()
+        self.test_service = AutoTestService()
+        
+    def setup_services(self):
+        # Existierende Service-Initialisierung
+        pass
+        
+    async def run_tests(self):
+        """Führt automatische Tests aus"""
+        try:
+            await self.test_service.start_test_run()
+            return {"status": "success", "message": "Tests wurden erfolgreich ausgeführt"}
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
 
 def main():
     """
