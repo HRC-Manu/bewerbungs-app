@@ -1,0 +1,6 @@
+2025/02/15-02:14:53.926 7608 Reusing MANIFEST C:\Temp\easy-app\bewerbungs-app\tests\browser_data\edge-data\Default\EdgeCoupons/coupons_data.db/MANIFEST-000001
+2025/02/15-02:14:53.927 7608 Recovering log #10
+2025/02/15-02:14:53.927 7608 Reusing old log C:\Temp\easy-app\bewerbungs-app\tests\browser_data\edge-data\Default\EdgeCoupons/coupons_data.db/000010.log 
+2025/02/15-02:14:53.975 6734 Level-0 table #14: started
+2025/02/15-02:14:53.981 6734 Level-0 table #14: 668272 bytes OK
+2025/02/15-02:14:53.986 6734 Delete type=0 #10

@@ -182,146 +182,18 @@ class FirebaseInstance {
 // Create and initialize Firebase instance
 const firebaseInstance = new FirebaseInstance();
 
-// Export services and functions
-export const auth = firebaseInstance.auth;
-export const db = firebaseInstance.db;
-export const storage = firebaseInstance.storage;
-
-// Auth functions
-export async function signIn(email, password) {
-    if (!auth) throw new Error('Firebase Auth not initialized');
-    
-    try {
-        const userCredential = await signInWithEmailAndPassword(auth, email, password);
-        console.log('✓ Login successful');
-        return userCredential.user;
-    } catch (error) {
-        console.error('Login error:', error);
-        throw error;
-    }
-}
-
-export async function signUp(email, password) {
-    if (!auth) throw new Error('Firebase Auth not initialized');
-    
-    try {
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        console.log('✓ Registration successful');
-        
-        if (db) {
-            const userId = userCredential.user.uid;
-            const userRef = dbRef(db, `users/${userId}`);
-            await dbSet(userRef, {
-                email: email,
-                createdAt: new Date().toISOString(),
-                applications: {}
-            });
-        }
-        
-        return userCredential.user;
-    } catch (error) {
-        console.error('Registration error:', error);
-        throw error;
-    }
-}
-
-export async function logOut() {
-    if (!auth) throw new Error('Firebase Auth not initialized');
-    
-    try {
-        await signOut(auth);
-        console.log('✓ Logout successful');
-    } catch (error) {
-        console.error('Logout error:', error);
-        throw error;
-    }
-}
-
-// Auth State Observer
-export function initAuthObserver(callback) {
-    return onAuthStateChanged(auth, (user) => {
-        if (user) {
-            console.log('Benutzer ist angemeldet:', user.email);
-        } else {
-            console.log('Benutzer ist abgemeldet');
-        }
-        if (callback) callback(user);
-    });
-}
-
-// Erweiterte Test-Funktion mit automatischer Anmeldung
-export async function testFirebaseConnection(testEmail = 'test@example.com', testPassword = 'testPassword123') {
-    try {
-        // Test Auth mit Anmeldung
-        try {
-            await auth._getRecaptchaConfig();
-            console.log('✓ Firebase Auth Verbindung OK');
-        } catch (error) {
-            throw new Error('Firebase Auth nicht verfügbar. Bitte prüfen Sie, ob Authentication in der Firebase Console aktiviert ist.');
-        }
-
-        // Versuche Anmeldung oder Registrierung
-        let user;
-        try {
-            user = await signIn(testEmail, testPassword);
-            console.log('✓ Anmeldung erfolgreich');
-        } catch (error) {
-            if (error.code === 'auth/user-not-found') {
-                try {
-                    user = await signUp(testEmail, testPassword);
-                    console.log('✓ Registrierung erfolgreich');
-                } catch (signUpError) {
-                    if (signUpError.code === 'auth/email-already-in-use') {
-                        throw new Error('E-Mail bereits registriert, aber Anmeldung fehlgeschlagen. Bitte anderes Testkonto verwenden.');
-                    } else if (signUpError.code === 'auth/operation-not-allowed') {
-                        throw new Error('Email/Password-Anmeldung ist nicht aktiviert. Bitte in der Firebase Console unter Authentication aktivieren.');
-                    } else {
-                        throw signUpError;
-                    }
-                }
-            } else if (error.code === 'auth/operation-not-allowed') {
-                throw new Error('Email/Password-Anmeldung ist nicht aktiviert. Bitte in der Firebase Console unter Authentication aktivieren.');
-            } else {
-                throw error;
-            }
-        }
-
-        // Test Realtime Database - Angepasst an die Regeln
-        if (auth.currentUser) {
-            try {
-                const userId = auth.currentUser.uid;
-                const testDbRef = dbRef(db, `users/${userId}/test`);
-                await dbSet(testDbRef, {
-                    timestamp: new Date().toISOString(),
-                    status: 'ok'
-                });
-                console.log('✓ Realtime Database Verbindung OK');
-                
-                // Cleanup
-                await dbSet(testDbRef, null);
-            } catch (error) {
-                if (error.code === 'PERMISSION_DENIED') {
-                    throw new Error('Realtime Database Zugriff verweigert. Bitte prüfen Sie die Datenbank-Regeln in der Firebase Console.');
-                } else {
-                    throw error;
-                }
-            }
-        } else {
-            console.log('⚠️ Realtime Database Test übersprungen - Benutzer nicht angemeldet');
-        }
-
-        return true;
-    } catch (error) {
-        console.error('Firebase Verbindungsfehler:', error);
-        throw new Error(`Firebase Verbindung fehlgeschlagen: ${error.message}`);
-    }
-}
-
-// Exportiere die Services
-export { 
-    app,
+// Export services
+export const {
     auth,
     db,
-    db as database,
     storage
+} = firebaseInstance;
+
+// Export helper functions
+export {
+    signIn,
+    signUp,
+    logOut,
+    initAuthObserver,
+    testFirebaseConnection
 };
