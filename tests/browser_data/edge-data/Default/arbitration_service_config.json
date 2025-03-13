@@ -6,6 +6,9 @@
       },
       "bc25fcef-8964-4e72-8287-23e2b496c128.68b8a884-6e08-46e6-8a3b-7e06ffe48ecf.AutoOpen": {
          "notification_max_quick_dismiss_count": 3
+      },
+      "cd4688a9-e888-48ea-ad81-76193d56b1be.e06e75c1-a59a-4ab6-8361-e8b038e00a8c.AutoOpen": {
+         "notification_max_quick_dismiss_count": 1
       }
    },
    "DynamicSuppressionBypass": {
@@ -151,6 +154,7 @@
          "cd4688a9-e888-48ea-ad81-76193d56b1be.AutoOpen.PDF": 1,
          "cd4688a9-e888-48ea-ad81-76193d56b1be.AutoOpen.PersistentChat": 1,
          "cd4688a9-e888-48ea-ad81-76193d56b1be.Bubble": 1,
+         "cd4688a9-e888-48ea-ad81-76193d56b1be.IsKnowledgeCardQuery.Bubble": 1,
          "cd4688a9-e888-48ea-ad81-76193d56b1be.IsMsnArticleUrlFromNtpP1P2.Bubble": 1,
          "cd4688a9-e888-48ea-ad81-76193d56b1be.IsTextPage.Bubble": 1,
          "cd4688a9-e888-48ea-ad81-76193d56b1be.IsTwitchNonStreamPage.Bubble": 1,
@@ -178,8 +182,8 @@
    },
    "ScenarioSuppressLists": {
    },
-   "SuppressedExperiences": [ "E-tree.Bubble", "Nurturing.Global.Bing_BingGrowthToastNotification", "Nurturing.Global.EdgeEDU_BrowserFocusedTranslateNudge", "Nurturing.Global.EdgeMobile_MobileUpsell_ChatGpt_Flyout", "Nurturing.Global.EdgeVpn_VpnPublicWifiInBackground", "Nurturing.Global.Identity_ReauthNotification", "Nurturing.Global.Identity_ReauthNotification_2", "Nurturing.Global.Identity_ReauthNotification_3", "Nurturing.Global.OnRamp_RetriggerFRECodexCoPilotAutoAprd", "Nurturing.Global.OnRamp_ReTriggerOnWinUpgrade", "Outlook.Bubble", "ShorelinePrivilegedExperienceID", "Teams.Bubble", "Nurturing.Global.PWA_SidebarSearchPromotion" ],
+   "SuppressedExperiences": [ "E-tree.Bubble", "Nurturing.Global.Bing_BingGrowthToastNotification", "Nurturing.Global.EdgeEDU_BrowserFocusedTranslateNudge", "Nurturing.Global.EdgeMobile_MobileUpsell_ChatGpt_Flyout", "Nurturing.Global.EdgeVpn_VpnPublicWifiInBackground", "Nurturing.Global.Identity_ReauthNotification", "Nurturing.Global.Identity_ReauthNotification_2", "Nurturing.Global.Identity_ReauthNotification_3", "Nurturing.Global.OnRamp_RetriggerFRECodexCoPilotAutoAprd", "Nurturing.Global.OnRamp_ReTriggerOnWinUpgrade", "Outlook.Bubble", "ShorelinePrivilegedExperienceID", "Teams.Bubble", "Nurturing.Global.PWA_SidebarSearchPromotion", "AUTOFILL_PASSWORD_NON_FUNCTIONAL_FLYOUTS", "Nurturing.Global.ThirdPartySearchConsent" ],
    "TimeDelta": 5000000,
-   "baseConfigVersion": "24.0.1",
-   "configVersion": "24.0.1"
+   "baseConfigVersion": "25.0.3",
+   "configVersion": "25.0.3"
 }

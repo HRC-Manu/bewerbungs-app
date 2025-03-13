@@ -51,7 +51,7 @@ import {
  * 5. Registriere die App falls nötig
  * 6. Kopiere die Konfigurationsdaten hier rein
  */
-const firebaseConfig = {
+export const firebaseConfig = {
     apiKey: "AIzaSyDfwqJUkCQNXafFRB7hVXupPh0XBoHbdQg",
     authDomain: "bewerbungs-app.firebaseapp.com",
     projectId: "bewerbungs-app",

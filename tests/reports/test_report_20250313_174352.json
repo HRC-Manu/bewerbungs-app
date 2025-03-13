@@ -1,0 +1,27 @@
+{
+  "timestamp": "2025-03-13T17:43:52.700966",
+  "test_environment": {
+    "python_version": "3.12.8 (tags/v3.12.8:2dc476b, Dec  3 2024, 19:30:04) [MSC v.1942 64 bit (AMD64)]",
+    "selenium_version": "4.15.2",
+    "edge_path": "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe",
+    "test_directories": {
+      "data": "c:\\Temp\\easy-app\\bewerbungs-app\\tests\\data",
+      "reports": "c:\\Temp\\easy-app\\bewerbungs-app\\tests\\reports",
+      "browser_data": "c:\\Temp\\easy-app\\bewerbungs-app\\tests\\browser_data"
+    }
+  },
+  "test_execution": {
+    "iterations_completed": 0,
+    "max_iterations": 5,
+    "tests_run": [
+      "login_test",
+      "navigation_test",
+      "responsive_test"
+    ]
+  },
+  "test_results": {
+    "issues_found": [],
+    "improvements_made": [],
+    "status": "success"
+  }
+}
