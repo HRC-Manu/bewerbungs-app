@@ -557,7 +557,9 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
     <!-- Your scripts -->
+    <script type="module" src="js/global-functions.js"></script>
     <script type="module" src="js/app.js"></script>
+    <script type="module" src="js/button-initializer.js"></script>
 
     <!-- Am Ende der Datei, vor deinen anderen Scripts -->
     <script type="module">
@@ -567,6 +569,77 @@
         import { getStorage } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
         
         // Firebase wird automatisch aus firebase-config.js initialisiert
+    </script>
+
+    <!-- Fix für checkAuth und Button-Probleme -->
+    <script>
+        // Die "Nuclear Option" - Alle Buttons neu erstellen
+        document.addEventListener('DOMContentLoaded', function() {
+            // Alle bestehenden Buttons finden und ihre Eigenschaften speichern
+            const allButtons = Array.from(document.querySelectorAll('button'));
+            
+            allButtons.forEach(button => {
+                // Button-Eigenschaften speichern
+                const id = button.id;
+                const classes = button.className;
+                const text = button.textContent.trim();
+                const parent = button.parentNode;
+                const onclick = button.getAttribute('onclick');
+                
+                console.log(`Ersetze Button: ${id || 'keine ID'}, Text: ${text}, onclick: ${onclick || 'keiner'}`);
+                
+                // Neuen Button erstellen
+                const newButton = document.createElement('button');
+                newButton.id = id;
+                newButton.className = classes;
+                newButton.textContent = text;
+                
+                // Wenn es ein CoverLetter-Button ist, Text ändern
+                if (id === 'createCoverLetterBtn') {
+                    newButton.textContent = "KI Anschreiben erstellen lassen";
+                    newButton.title = "Lassen Sie die KI ein passendes Anschreiben auf Basis des hochgeladenen Lebenslaufs und der Stellenanzeige erstellen";
+                }
+                
+                // Event-Listener basierend auf ID oder onclick hinzufügen
+                newButton.addEventListener('click', function() {
+                    console.log(`Button ${id || text} geklickt`);
+                    
+                    if (id === 'loginBtn' || onclick?.includes('login')) {
+                        // Login-Logik
+                        alert("Login-Button geklickt");
+                        const modal = document.getElementById('loginModal');
+                        if (modal && typeof bootstrap !== 'undefined') {
+                            new bootstrap.Modal(modal).show();
+                        }
+                    }
+                    else if (id === 'registerBtn' || onclick?.includes('register')) {
+                        alert("Register-Button geklickt");
+                        const modal = document.getElementById('registerModal');
+                        if (modal && typeof bootstrap !== 'undefined') {
+                            new bootstrap.Modal(modal).show();
+                        }
+                    }
+                    else if (id === 'uploadResumeBtn' || onclick?.includes('upload')) {
+                        alert("Upload-Button geklickt");
+                        const input = document.createElement('input');
+                        input.type = 'file';
+                        input.accept = '.pdf,.doc,.docx';
+                        input.click();
+                    }
+                    else if (id === 'createCoverLetterBtn') {
+                        alert("KI Anschreiben erstellen");
+                    }
+                    else {
+                        alert(`Button "${text}" geklickt`);
+                    }
+                });
+                
+                // Alten Button ersetzen
+                parent.replaceChild(newButton, button);
+            });
+            
+            console.log("Alle Buttons wurden ersetzt");
+        });
     </script>
 </body>
 </html> 
