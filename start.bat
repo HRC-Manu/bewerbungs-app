@@ -641,5 +641,28 @@
             console.log("Alle Buttons wurden ersetzt");
         });
     </script>
+
+    <!-- Als allererster Eintrag im body-Tag -->
+    <script>
+        // Globale checkAuth-Funktion sofort definieren
+        window.checkAuth = function() {
+            console.log("Global checkAuth aufgerufen");
+            setTimeout(function() {
+                try {
+                    const modal = document.getElementById('loginModal');
+                    if (modal && window.bootstrap) {
+                        const bsModal = new window.bootstrap.Modal(modal);
+                        bsModal.show();
+                    } else {
+                        alert("Bitte anmelden");
+                    }
+                } catch (e) {
+                    console.error("Modal error:", e);
+                    alert("Bitte anmelden");
+                }
+            }, 100);
+            return false;
+        };
+    </script>
 </body>
 </html> 
