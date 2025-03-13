@@ -194,6 +194,13 @@ export {
     signIn,
     signUp,
     logOut,
-    initAuthObserver,
     testFirebaseConnection
 };
+
+export function initAuthObserver(callback) {
+    onAuthStateChanged(auth, (user) => {
+        if (callback && typeof callback === 'function') {
+            callback(user);
+        }
+    });
+}

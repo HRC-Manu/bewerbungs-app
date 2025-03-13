@@ -1694,3 +1694,32 @@ function initializeExplanationButtons() {
         });
     }
 }
+
+// Debug-Helper für die Konsole
+window.debugApp = {
+    state: globalState,
+    testEventListener: function(elementId) {
+        const element = document.getElementById(elementId);
+        if (element) {
+            console.log(`Element ${elementId} gefunden`);
+            element.style.border = '2px solid red';
+            alert(`Element ${elementId} wurde markiert`);
+        } else {
+            console.error(`Element ${elementId} nicht gefunden`);
+            alert(`Element ${elementId} nicht gefunden`);
+        }
+    },
+    checkElementExists: function(elementId) {
+        return !!document.getElementById(elementId);
+    },
+    listAllButtons: function() {
+        const buttons = document.querySelectorAll('button');
+        console.log(`${buttons.length} Buttons gefunden:`);
+        buttons.forEach((btn, i) => {
+            console.log(`${i+1}. ID: ${btn.id || 'keine ID'}, Text: ${btn.textContent.trim()}`);
+        });
+        return buttons.length;
+    }
+};
+
+console.log("Debug-Tools verfügbar via window.debugApp");
