@@ -1,0 +1,6 @@
+2025/03/13-17:43:42.149 6528 Creating DB c:\Temp\easy-app\bewerbungs-app\tests\browser_data\edge-data\Default\IndexedDB\http_localhost_3000.indexeddb.leveldb since it was missing.
+2025/03/13-17:43:42.159 6528 Reusing MANIFEST c:\Temp\easy-app\bewerbungs-app\tests\browser_data\edge-data\Default\IndexedDB\http_localhost_3000.indexeddb.leveldb/MANIFEST-000001
+2025/03/13-17:43:42.180 9b60 Level-0 table #5: started
+2025/03/13-17:43:42.184 9b60 Level-0 table #5: 1280 bytes OK
+2025/03/13-17:43:42.189 9b60 Delete type=0 #3
+2025/03/13-17:43:42.189 9b60 Manual compaction at level-0 from '\x00\x01\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00\x02\x00\x00\x00' @ 0 : 0; will stop at (end)

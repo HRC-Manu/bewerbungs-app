@@ -1,0 +1,14 @@
+=== UI-Test Zusammenfassung ===
+
+Zeitpunkt: 13.03.2025 20:17:01
+Status: Erfolgreich
+
+Testumgebung:
+- Python: 3.12.8
+- Selenium: 4.15.2
+- Edge: msedge.exe
+
+Testausführung:
+- Durchgeführte Iterationen: 0
+- Maximale Iterationen: 5
+
