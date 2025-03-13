@@ -24,9 +24,9 @@ class AutoTestService:
         
     def setup_github(self):
         """Initialisiert GitHub"""
-        github_token = os.getenv('GITHUB_TOKEN')
+        github_token = os.getenv('GITHUB_TOKEN', 'ghp_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')
         self.github = Github(github_token)
-        self.repo = self.github.get_repo('username/bewerbungs-app')
+        self.repo = self.github.get_repo('HRC-Manu/bewerbungs-app')
         
     async def start_test_run(self):
         """Startet einen Testlauf"""
