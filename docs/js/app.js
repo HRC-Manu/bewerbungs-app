@@ -43,13 +43,14 @@ document.addEventListener('DOMContentLoaded', async function() {
         
         // Warte bis Bootstrap verfügbar ist
         if (typeof bootstrap === 'undefined') {
+            console.error('Bootstrap not loaded');
             throw new Error('Bootstrap not loaded');
         }
         
         // Initialisiere global state
         window.globalState = window.globalState || {};
         
-        // Initialisiere Elemente
+        // Initialisiere Elemente - wichtig: Vor den Event-Listenern!
         if (!initializeElements()) {
             throw new Error('Element initialization failed');
         }
@@ -57,7 +58,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         // Rest der Initialisierung
         initializeAuthHandlers();
         initializeMainButtons();
-        initializeEventListeners();
+        initializeEventListeners();  // Nach den anderen Initialisierungsfunktionen
         Features.initialize();
         initializeWorkflow();
         console.debug('Starte Auth-Service-Check...');
@@ -180,8 +181,18 @@ function initializeElements() {
                 new bootstrap.Modal(document.getElementById('settingsModal')) : null,
         };
         
-        // Debug-Log für Initialisierung
-        console.log('Elements initialized:', Object.keys(globalState.elements));
+        // Debug-Ausgabe für Diagnose
+        console.log('Elements initialized:', Object.keys(globalState.elements).length, 'elements found');
+        
+        // Prüfe einige wichtige Elemente
+        const criticalElements = ['analyzeBtn', 'jobPosting', 'generateSuggestionsBtn'];
+        criticalElements.forEach(id => {
+            if (!globalState.elements[id]) {
+                console.warn(`Critical element not found: ${id}`);
+            } else {
+                console.log(`Found critical element: ${id}`);
+            }
+        });
     } catch (error) {
         console.error('Error initializing elements:', error);
         // Verhindere, dass der Fehler weiter nach oben propagiert
@@ -193,20 +204,50 @@ function initializeElements() {
 function initializeEventListeners() {
     const { elements } = globalState;
     
+    if (!elements) {
+        console.error('Cannot initialize event listeners: globalState.elements is not defined');
+        return;
+    }
+    
     // Help Button
-    document.getElementById('helpBtn')?.addEventListener('click', () => {
-        elements.helpModal.show();
-    });
+    const helpBtn = document.getElementById('helpBtn');
+    if (helpBtn) {
+        helpBtn.addEventListener('click', () => {
+            if (elements.helpModal) {
+                elements.helpModal.show();
+            } else {
+                console.error('helpModal not found');
+            }
+        });
+        console.log('Help button event listener added');
+    } else {
+        console.warn('Help button not found');
+    }
 
     // URL Input Handler
-    elements.jobPostingURL?.addEventListener('input', debounce(handleJobPostingURL, 400));
+    if (elements.jobPostingURL) {
+        elements.jobPostingURL.addEventListener('input', debounce(handleJobPostingURL, 400));
+        console.log('Job posting URL event listener added');
+    }
 
     // Paste & Example Buttons
-    elements.pasteBtn?.addEventListener('click', handlePaste);
-    elements.loadExampleBtn?.addEventListener('click', handleLoadExample);
+    if (elements.pasteBtn) {
+        elements.pasteBtn.addEventListener('click', handlePaste);
+        console.log('Paste button event listener added');
+    }
+    
+    if (elements.loadExampleBtn) {
+        elements.loadExampleBtn.addEventListener('click', handleLoadExample);
+        console.log('Load example button event listener added');
+    }
 
     // Analyze Button
-    elements.analyzeBtn?.addEventListener('click', handleAnalyze);
+    if (elements.analyzeBtn) {
+        elements.analyzeBtn.addEventListener('click', handleAnalyze);
+        console.log('Analyze button event listener added');
+    } else {
+        console.warn('Analyze button not found');
+    }
     
     // API Settings
     if (elements.saveApiSettingsBtn) {
