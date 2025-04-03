@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KI-Bewerbungsmanager</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="icon" href="assets/favicon.ico">
+    <meta name="description" content="KI-gestützter Bewerbungsmanager - Optimieren Sie Ihren Lebenslauf und verbessern Sie Ihre Chancen auf dem Arbeitsmarkt.">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="index.html">
+                <i class="bi bi-file-earmark-text me-2"></i>
+                KI-Bewerbungsmanager
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarMain">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="index.html">Startseite</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="resume-analysis.html">Lebenslaufanalyse</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="job-matching.html">Job-Matching</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="cover-letter.html">Anschreiben</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="dashboard.html">Dashboard</a>
+                    </li>
+                </ul>
+                <div class="d-flex">
+                    <button id="darkModeToggle" class="btn btn-outline-light me-2">
+                        <i class="bi bi-moon-stars"></i>
+                    </button>
+                    <div class="auth-buttons">
+                        <button id="loginBtn" class="btn btn-outline-light me-2">Anmelden</button>
+                        <button id="registerBtn" class="btn btn-light">Registrieren</button>
+                    </div>
+                    <div class="user-profile d-none">
+                        <div class="dropdown">
+                            <button class="btn btn-outline-light dropdown-toggle" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="bi bi-person-circle me-1"></i>
+                                <span id="userName">Benutzer</span>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                                <li><a class="dropdown-item" href="profile.html">Profil</a></li>
+                                <li><a class="dropdown-item" href="dashboard.html">Meine Bewerbungen</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="#" id="logoutBtn">Abmelden</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero-Bereich -->
+    <section class="py-5 text-center container hero-section">
+        <div class="row py-lg-5">
+            <div class="col-lg-6 col-md-8 mx-auto">
+                <h1 class="fw-bold">KI-gestützte Bewerbungsoptimierung</h1>
+                <p class="lead">Verbessern Sie Ihre Bewerbungschancen mit unserem KI-Bewerbungsmanager. Analysieren Sie Ihren Lebenslauf, finden Sie passende Jobs und erstellen Sie überzeugende Anschreiben.</p>
+                <div class="d-grid gap-2 d-sm-flex justify-content-sm-center">
+                    <a href="resume-analysis.html" class="btn btn-primary btn-lg px-4 gap-3">Lebenslauf analysieren</a>
+                    <a href="job-matching.html" class="btn btn-outline-secondary btn-lg px-4">Passenden Job finden</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Funktionen -->
+    <section class="py-5 bg-light">
+        <div class="container">
+            <h2 class="text-center mb-5">Unsere Funktionen</h2>
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body text-center">
+                            <i class="bi bi-file-earmark-text feature-icon"></i>
+                            <h3 class="card-title">Lebenslaufanalyse</h3>
+                            <p class="card-text">Analysieren Sie Ihren Lebenslauf mit KI und erhalten Sie Verbesserungsvorschläge, um Ihre Bewerbung zu optimieren.</p>
+                            <a href="resume-analysis.html" class="btn btn-primary">Jetzt analysieren</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body text-center">
+                            <i class="bi bi-building feature-icon"></i>
+                            <h3 class="card-title">Job-Matching</h3>
+                            <p class="card-text">Laden Sie eine Stellenanzeige hoch und finden Sie heraus, wie gut Ihr Profil zu den Anforderungen passt.</p>
+                            <a href="job-matching.html" class="btn btn-primary">Jetzt vergleichen</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body text-center">
+                            <i class="bi bi-envelope feature-icon"></i>
+                            <h3 class="card-title">Anschreiben-Generator</h3>
+                            <p class="card-text">Erstellen Sie mit wenigen Klicks ein personalisiertes Anschreiben, das perfekt zu Ihrem Profil und der Stelle passt.</p>
+                            <a href="cover-letter.html" class="btn btn-primary">Anschreiben erstellen</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- So funktioniert's -->
+    <section class="py-5">
+        <div class="container">
+            <h2 class="text-center mb-5">So funktioniert's</h2>
+            <div class="steps">
+                <div class="row g-4">
+                    <div class="col-md-6 offset-md-3">
+                        <div class="step">
+                            <div class="step-number">1</div>
+                            <div class="step-content">
+                                <h4>Lebenslauf hochladen</h4>
+                                <p>Laden Sie Ihren Lebenslauf hoch (PDF, Word oder Text). Unsere KI extrahiert und analysiert alle relevanten Informationen.</p>
+                            </div>
+                        </div>
+                        <div class="step">
+                            <div class="step-number">2</div>
+                            <div class="step-content">
+                                <h4>Stellenanzeige hinzufügen</h4>
+                                <p>Fügen Sie eine Stellenanzeige hinzu, um sie mit Ihrem Profil zu vergleichen und die Übereinstimmung zu bewerten.</p>
+                            </div>
+                        </div>
+                        <div class="step">
+                            <div class="step-number">3</div>
+                            <div class="step-content">
+                                <h4>Ergebnisse erhalten</h4>
+                                <p>Erhalten Sie detaillierte Analysen, Verbesserungsvorschläge und ein personalisiertes Anschreiben für Ihre Bewerbung.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="text-center mt-5">
+                <a href="resume-analysis.html" class="btn btn-primary btn-lg">Jetzt starten</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA-Bereich -->
+    <section class="py-5 cta-section">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-8 mx-auto text-center">
+                    <h2>Bereit, Ihre Bewerbungschancen zu verbessern?</h2>
+                    <p class="lead mb-4">Erstellen Sie ein Konto, um Ihre Analysen zu speichern und auf alle Funktionen zuzugreifen.</p>
+                    <button id="registerCTA" class="btn btn-primary btn-lg px-5">Jetzt registrieren</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="py-4 bg-dark text-white">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <h5>KI-Bewerbungsmanager</h5>
+                    <p>Optimieren Sie Ihre Bewerbungen mit KI-Unterstützung.</p>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <h5>Links</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="index.html" class="text-white">Startseite</a></li>
+                        <li><a href="resume-analysis.html" class="text-white">Lebenslaufanalyse</a></li>
+                        <li><a href="job-matching.html" class="text-white">Job-Matching</a></li>
+                        <li><a href="cover-letter.html" class="text-white">Anschreiben</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <h5>Kontakt</h5>
+                    <ul class="list-unstyled">
+                        <li><i class="bi bi-envelope me-2"></i> info@ki-bewerbungsmanager.de</li>
+                        <li><i class="bi bi-shield-lock me-2"></i> <a href="#" class="text-white">Datenschutz</a></li>
+                        <li><i class="bi bi-info-circle me-2"></i> <a href="#" class="text-white">Impressum</a></li>
+                    </ul>
+                </div>
+            </div>
+            <hr>
+            <div class="text-center">
+                <p class="mb-0">&copy; 2023 KI-Bewerbungsmanager. Alle Rechte vorbehalten.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Login Modal -->
+    <div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="loginModalLabel">Anmelden</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Schließen"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="loginForm">
+                        <div class="mb-3">
+                            <label for="loginEmail" class="form-label">E-Mail-Adresse</label>
+                            <input type="email" class="form-control" id="loginEmail" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="loginPassword" class="form-label">Passwort</label>
+                            <input type="password" class="form-control" id="loginPassword" required>
+                        </div>
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="rememberMe">
+                            <label class="form-check-label" for="rememberMe">Angemeldet bleiben</label>
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">Anmelden</button>
+                        </div>
+                    </form>
+                    <hr>
+                    <div class="text-center">
+                        <p>Oder melden Sie sich an mit:</p>
+                        <button class="btn btn-outline-dark me-2" id="googleLoginBtn">
+                            <i class="bi bi-google"></i> Google
+                        </button>
+                        <button class="btn btn-outline-primary" id="microsoftLoginBtn">
+                            <i class="bi bi-microsoft"></i> Microsoft
+                        </button>
+                    </div>
+                    <hr>
+                    <div class="text-center">
+                        <p>Noch kein Konto? <a href="#" id="showRegisterModal">Registrieren</a></p>
+                        <p><a href="#" id="forgotPassword">Passwort vergessen?</a></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="registerModal" tabindex="-1" aria-labelledby="registerModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="registerModalLabel">Registrieren</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Schließen"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="registerForm">
+                        <div class="mb-3">
+                            <label for="registerName" class="form-label">Name</label>
+                            <input type="text" class="form-control" id="registerName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="registerEmail" class="form-label">E-Mail-Adresse</label>
+                            <input type="email" class="form-control" id="registerEmail" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="registerPassword" class="form-label">Passwort</label>
+                            <input type="password" class="form-control" id="registerPassword" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="registerPasswordConfirm" class="form-label">Passwort bestätigen</label>
+                            <input type="password" class="form-control" id="registerPasswordConfirm" required>
+                        </div>
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="agreeTerms" required>
+                            <label class="form-check-label" for="agreeTerms">Ich stimme den <a href="#">Nutzungsbedingungen</a> und der <a href="#">Datenschutzerklärung</a> zu</label>
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">Registrieren</button>
+                        </div>
+                    </form>
+                    <hr>
+                    <div class="text-center">
+                        <p>Oder registrieren Sie sich mit:</p>
+                        <button class="btn btn-outline-dark me-2" id="googleRegisterBtn">
+                            <i class="bi bi-google"></i> Google
+                        </button>
+                        <button class="btn btn-outline-primary" id="microsoftRegisterBtn">
+                            <i class="bi bi-microsoft"></i> Microsoft
+                        </button>
+                    </div>
+                    <hr>
+                    <div class="text-center">
+                        <p>Bereits ein Konto? <a href="#" id="showLoginModal">Anmelden</a></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast für Benachrichtigungen -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+        <div id="toastNotification" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header">
+                <strong class="me-auto" id="toastTitle">Benachrichtigung</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body" id="toastMessage">
+                Hello, world! This is a toast message.
+            </div>
+        </div>
+    </div>
+
+    <!-- Skripte -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Firebase App (die Kern-Firebase JS SDK) wird immer benötigt und muss als erstes geladen werden -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-storage-compat.js"></script>
+    
+    <script src="js/app.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/utils.js"></script>
+</body>
+</html> 
