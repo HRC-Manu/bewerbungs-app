@@ -1,1 +1,79 @@
- 
+/* Dark Mode Styles */
+body.dark-mode {
+    background-color: #121212;
+    color: #e0e0e0;
+}
+
+body.dark-mode .card {
+    background-color: #1e1e1e;
+    border-color: #333;
+}
+
+body.dark-mode .card-header {
+    background-color: #252525;
+    border-color: #333;
+}
+
+body.dark-mode .text-muted {
+    color: #aaaaaa !important;
+}
+
+body.dark-mode .btn-light,
+body.dark-mode .btn-secondary {
+    background-color: #2d2d2d;
+    border-color: #444;
+    color: #e0e0e0;
+}
+
+body.dark-mode .btn-light:hover,
+body.dark-mode .btn-secondary:hover {
+    background-color: #3d3d3d;
+    border-color: #555;
+}
+
+body.dark-mode input,
+body.dark-mode textarea,
+body.dark-mode select {
+    background-color: #2d2d2d !important;
+    border-color: #444 !important;
+    color: #e0e0e0 !important;
+}
+
+body.dark-mode .upload-area {
+    border-color: #444;
+    background-color: #1e1e1e;
+}
+
+body.dark-mode .upload-area:hover,
+body.dark-mode .upload-area.dragover {
+    background-color: #252525;
+    border-color: var(--primary-color);
+}
+
+body.dark-mode .modal-content {
+    background-color: #1e1e1e;
+    border-color: #333;
+}
+
+body.dark-mode .modal-header,
+body.dark-mode .modal-footer {
+    border-color: #333;
+}
+
+body.dark-mode .alert-success {
+    background-color: #133d2d;
+    border-color: #1d5038;
+    color: #e0e0e0;
+}
+
+body.dark-mode .alert-warning {
+    background-color: #482f01;
+    border-color: #5f3f02;
+    color: #e0e0e0;
+}
+
+body.dark-mode .alert-light {
+    background-color: #2d2d2d;
+    border-color: #444;
+    color: #e0e0e0;
+} 

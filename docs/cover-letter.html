@@ -1,1 +1,616 @@
- 
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KI-Anschreiben - KI-Bewerbungsmanager</title>
+    
+    <!-- Stylesheets -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="css/style.css" rel="stylesheet">
+    <link href="css/future-design.css" rel="stylesheet">
+    <link href="css/bootstrap-override.css" rel="stylesheet">
+    <link href="css/dark-mode.css" rel="stylesheet">
+    
+    <style>
+        .cover-letter {
+            font-size: 1.1rem;
+            line-height: 1.6;
+        }
+        
+        .cover-letter p {
+            margin-bottom: 1.2rem;
+        }
+        
+        .style-option {
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        .style-option:hover {
+            transform: translateY(-5px);
+        }
+        
+        .style-option.active {
+            border: 2px solid var(--primary-color);
+        }
+        
+        .letter-preview {
+            min-height: 400px;
+            padding: 30px;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 5px;
+        }
+        
+        body.dark-mode .letter-preview {
+            background-color: #2d2d2d;
+            color: #e0e0e0;
+        }
+        
+        .light-badge {
+            background-color: rgba(13, 110, 253, 0.1);
+            color: var(--primary-color);
+            font-weight: 500;
+        }
+        
+        .strength-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            margin-right: 3px;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+        }
+        
+        .strength-dot.active {
+            background-color: var(--primary-color);
+        }
+        
+        .strength-dot.inactive {
+            background-color: #e9ecef;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="index.html">
+                <i class="bi bi-file-earmark-text me-2"></i>
+                KI-Bewerbungsmanager
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="index.html">Startseite</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="resume-analysis.html">Lebenslaufanalyse</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#">Anschreiben</a>
+                    </li>
+                </ul>
+                <button class="btn btn-outline-light btn-sm" id="darkModeToggle">
+                    <i class="bi bi-moon-stars"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Main Content -->
+    <div class="container py-5">
+        <div class="row">
+            <!-- Linke Spalte: Einstellungen -->
+            <div class="col-lg-4 mb-4 mb-lg-0">
+                <div class="glass-card mb-4">
+                    <div class="card-body">
+                        <h3 class="card-title mb-4">Anschreiben erstellen</h3>
+                        
+                        <div class="alert alert-info" id="aiInfoBox">
+                            <i class="bi bi-info-circle-fill me-2"></i>
+                            <span id="aiInfoText">Basierend auf Ihrem Lebenslauf und der Stellenanzeige wird ein optimales Anschreiben erstellt.</span>
+                        </div>
+                        
+                        <h5 class="mb-3">Stil auswählen</h5>
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-4">
+                                <div class="style-option p-3 text-center active" data-style="professional">
+                                    <div class="rounded-circle bg-primary text-white d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+                                        <i class="bi bi-briefcase fs-4"></i>
+                                    </div>
+                                    <h5>Professionell</h5>
+                                    <p class="small text-muted mb-0">Formell und strukturiert</p>
+                                    <div class="mt-2">
+                                        <span class="strength-dot active"></span>
+                                        <span class="strength-dot active"></span>
+                                        <span class="strength-dot active"></span>
+                                        <span class="strength-dot active"></span>
+                                        <span class="strength-dot active"></span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="style-option p-3 text-center" data-style="modern">
+                                    <div class="rounded-circle bg-success text-white d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+                                        <i class="bi bi-lightbulb fs-4"></i>
+                                    </div>
+                                    <h5>Modern</h5>
+                                    <p class="small text-muted mb-0">Kreativ und persönlich</p>
+                                    <div class="mt-2">
+                                        <span class="strength-dot active"></span>
+                                        <span class="strength-dot active"></span>
+                                        <span class="strength-dot active"></span>
+                                        <span class="strength-dot active"></span>
+                                        <span class="strength-dot inactive"></span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="style-option p-3 text-center" data-style="concise">
+                                    <div class="rounded-circle bg-warning text-white d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+                                        <i class="bi bi-file-earmark-text fs-4"></i>
+                                    </div>
+                                    <h5>Prägnant</h5>
+                                    <p class="small text-muted mb-0">Kurz und auf den Punkt</p>
+                                    <div class="mt-2">
+                                        <span class="strength-dot active"></span>
+                                        <span class="strength-dot active"></span>
+                                        <span class="strength-dot active"></span>
+                                        <span class="strength-dot inactive"></span>
+                                        <span class="strength-dot inactive"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <hr class="my-4">
+                        
+                        <h5 class="mb-3">Betonung auf Schlüsselqualifikationen</h5>
+                        <div class="mb-4">
+                            <div class="row g-2" id="skillsEmphasis">
+                                <div class="col-auto">
+                                    <span class="badge light-badge py-2 px-3">JavaScript <i class="bi bi-x ms-1"></i></span>
+                                </div>
+                                <div class="col-auto">
+                                    <span class="badge light-badge py-2 px-3">React <i class="bi bi-x ms-1"></i></span>
+                                </div>
+                                <div class="col-auto">
+                                    <span class="badge light-badge py-2 px-3">Node.js <i class="bi bi-x ms-1"></i></span>
+                                </div>
+                                <div class="col-auto">
+                                    <span class="badge light-badge py-2 px-3">Teamarbeit <i class="bi bi-x ms-1"></i></span>
+                                </div>
+                                <div class="col-auto">
+                                    <span class="badge light-badge py-2 px-3">Agile <i class="bi bi-x ms-1"></i></span>
+                                </div>
+                                <div class="col-auto">
+                                    <button class="btn btn-sm btn-outline-primary" id="addSkillBtn">
+                                        <i class="bi bi-plus-lg me-1"></i>Hinzufügen
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid">
+                            <button class="btn btn-future btn-primary-gradient" id="generateLetterBtn">
+                                <i class="bi bi-magic me-2"></i>
+                                Anschreiben generieren
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Daten-Zusammenfassung -->
+                <div class="glass-card">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3">Ihre Daten</h5>
+                        
+                        <div class="mb-3">
+                            <p class="text-muted mb-1 small">Lebenslauf</p>
+                            <p class="mb-0" id="resumeFileNameDisplay">Lebenslauf_Max_Mustermann.pdf</p>
+                        </div>
+                        
+                        <div>
+                            <p class="text-muted mb-1 small">Stellenanzeige</p>
+                            <p class="mb-0 text-truncate" id="jobTitleDisplay">Fullstack-Entwickler (m/w/d) - React und Node.js</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Rechte Spalte: Anschreiben -->
+            <div class="col-lg-8">
+                <!-- Anschreiben Vorschau -->
+                <div class="glass-card mb-4 d-none" id="generatedLetter">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h3 class="card-title mb-0">Ihr generiertes Anschreiben</h3>
+                            <div>
+                                <button class="btn btn-sm btn-outline-primary me-2" id="editLetterBtn">
+                                    <i class="bi bi-pencil me-1"></i>Bearbeiten
+                                </button>
+                                <button class="btn btn-sm btn-outline-secondary" id="regenerateLetterBtn">
+                                    <i class="bi bi-arrow-repeat me-1"></i>Neu generieren
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="letter-preview cover-letter">
+                            <p><strong>[Ihr Name]</strong><br>
+                            [Ihre Adresse]<br>
+                            [Ihre Stadt, PLZ]<br>
+                            [Ihre E-Mail]<br>
+                            [Ihre Telefonnummer]</p>
+                            
+                            <p>[Datum]</p>
+                            
+                            <p><strong>[Name des Empfängers]</strong><br>
+                            [Position des Empfängers]<br>
+                            [Unternehmen]<br>
+                            [Unternehmensadresse]<br>
+                            [Stadt, PLZ]</p>
+                            
+                            <p><strong>Betreff: Bewerbung als Fullstack-Entwickler (m/w/d) - React und Node.js</strong></p>
+                            
+                            <p>Sehr geehrte Damen und Herren,</p>
+                            
+                            <p>mit großem Interesse habe ich Ihre Stellenausschreibung für die Position als Fullstack-Entwickler auf Ihrer Webseite entdeckt. Als leidenschaftlicher Webentwickler mit mehr als 4 Jahren Berufserfahrung in der Entwicklung moderner Webanwendungen mit React und Node.js bin ich überzeugt, dass meine Fähigkeiten und Erfahrungen ideal zu Ihren Anforderungen passen.</p>
+                            
+                            <p>In meiner aktuellen Position bei [Aktueller Arbeitgeber] war ich maßgeblich an der Entwicklung einer komplexen E-Commerce-Plattform beteiligt. Dabei habe ich nicht nur meine Frontend-Kenntnisse in React vertieft, sondern auch im Backend mit Node.js microservicebasierte Architekturen implementiert. Besonders stolz bin ich auf die Optimierung der Seitenladezeit um 45% durch moderne Frontend-Techniken und die Reduzierung der Serverkosten um 30% durch eine effizientere Backend-Architektur.</p>
+                            
+                            <p>Die agile Arbeitsweise in Ihrem Unternehmen entspricht genau meinen Erfahrungen und Vorlieben. In meinem aktuellen Team arbeiten wir nach Scrum und ich übernehme regelmäßig die Rolle des technischen Mentors für Junior-Entwickler.</p>
+                            
+                            <p>Ich freue mich auf die Möglichkeit, mein technisches Know-how und meine Teamfähigkeit in Ihrem innovativen Unternehmen einzubringen und gemeinsam an spannenden Projekten zu arbeiten.</p>
+                            
+                            <p>Über eine Einladung zu einem persönlichen Gespräch würde ich mich sehr freuen.</p>
+                            
+                            <p>Mit freundlichen Grüßen,</p>
+                            
+                            <p>[Ihr Name]</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Aktionskarten wenn kein Anschreiben generiert -->
+                <div id="actionCards">
+                    <div class="row mb-4">
+                        <div class="col-md-6 mb-4 mb-md-0">
+                            <div class="glass-card h-100 action-card">
+                                <div class="card-body d-flex flex-column align-items-center justify-content-center text-center p-4">
+                                    <div class="icon-circle bg-primary-light text-primary d-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px; border-radius: 50%;">
+                                        <i class="bi bi-person-workspace fs-2"></i>
+                                    </div>
+                                    <h4>Lebenslauf hochgeladen</h4>
+                                    <p class="text-muted mb-0">Wir verwenden Ihren Lebenslauf, um ein passendes Anschreiben zu erstellen.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="glass-card h-100 action-card">
+                                <div class="card-body d-flex flex-column align-items-center justify-content-center text-center p-4">
+                                    <div class="icon-circle bg-success-light text-success d-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px; border-radius: 50%;">
+                                        <i class="bi bi-briefcase fs-2"></i>
+                                    </div>
+                                    <h4>Stellenanzeige analysiert</h4>
+                                    <p class="text-muted mb-0">Ihre Stellenanzeige wurde analysiert, um die wichtigsten Anforderungen zu erfassen.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="glass-card action-card">
+                        <div class="card-body d-flex flex-column align-items-center justify-content-center text-center p-5">
+                            <div class="icon-circle bg-warning-light text-warning d-flex align-items-center justify-content-center mb-3" style="width: 100px; height: 100px; border-radius: 50%;">
+                                <i class="bi bi-magic fs-1"></i>
+                            </div>
+                            <h3>Perfektes Anschreiben mit KI</h3>
+                            <p class="text-muted mb-4">Wählen Sie links einen Stil aus und erstellen Sie mit einem Klick ein überzeugendes Anschreiben, das perfekt zu Ihrem Profil und der Stellenanzeige passt.</p>
+                            <button class="btn btn-future btn-primary-gradient" id="startGenerationBtn">
+                                <i class="bi bi-wand-magic-sparkles me-2"></i>Jetzt Anschreiben erstellen
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Add Skill Modal -->
+    <div class="modal fade" id="addSkillModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Fähigkeit hinzufügen</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="skillInput" class="form-label">Fähigkeit oder Qualifikation</label>
+                        <input type="text" class="form-control" id="skillInput" placeholder="z.B. Projektmanagement">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Abbrechen</button>
+                    <button type="button" class="btn btn-primary" id="confirmAddSkillBtn">Hinzufügen</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Edit Letter Modal -->
+    <div class="modal fade" id="editLetterModal" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Anschreiben bearbeiten</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <textarea id="letterEditor" class="form-control" style="min-height: 500px; font-family: 'Inter', sans-serif; line-height: 1.6;"></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Abbrechen</button>
+                    <button type="button" class="btn btn-primary" id="saveLetterBtn">Änderungen speichern</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Export Modal -->
+    <div class="modal fade" id="exportModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Anschreiben exportieren</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="card text-center p-4">
+                                <i class="bi bi-file-earmark-pdf text-danger mb-3" style="font-size: 3rem;"></i>
+                                <h5>PDF Format</h5>
+                                <p class="small text-muted mb-3">Ideal für den Versand per E-Mail oder Online-Bewerbungsportale</p>
+                                <button class="btn btn-outline-danger" id="exportPdfBtn">
+                                    <i class="bi bi-download me-2"></i>Als PDF herunterladen
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card text-center p-4">
+                                <i class="bi bi-file-earmark-word text-primary mb-3" style="font-size: 3rem;"></i>
+                                <h5>Word Format</h5>
+                                <p class="small text-muted mb-3">Perfekt zum weiteren Bearbeiten in Microsoft Word</p>
+                                <button class="btn btn-outline-primary" id="exportWordBtn">
+                                    <i class="bi bi-download me-2"></i>Als DOCX herunterladen
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Toast -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+        <div class="toast" id="toast" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body" id="toastMessage">
+                    Nachricht wird hier angezeigt.
+                </div>
+                <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/standalone-upload.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Elemente referenzieren
+            const styleOptions = document.querySelectorAll('.style-option');
+            const generateLetterBtn = document.getElementById('generateLetterBtn');
+            const startGenerationBtn = document.getElementById('startGenerationBtn');
+            const generatedLetter = document.getElementById('generatedLetter');
+            const actionCards = document.getElementById('actionCards');
+            const editLetterBtn = document.getElementById('editLetterBtn');
+            const regenerateLetterBtn = document.getElementById('regenerateLetterBtn');
+            const addSkillBtn = document.getElementById('addSkillBtn');
+            const confirmAddSkillBtn = document.getElementById('confirmAddSkillBtn');
+            const skillInput = document.getElementById('skillInput');
+            const darkModeToggle = document.getElementById('darkModeToggle');
+            
+            // Modals
+            const addSkillModal = new bootstrap.Modal(document.getElementById('addSkillModal'));
+            const editLetterModal = new bootstrap.Modal(document.getElementById('editLetterModal'));
+            const exportModal = new bootstrap.Modal(document.getElementById('exportModal'));
+            
+            // Stil-Optionen
+            styleOptions.forEach(option => {
+                option.addEventListener('click', function() {
+                    // Remove active class from all options
+                    styleOptions.forEach(opt => opt.classList.remove('active'));
+                    // Add active class to clicked option
+                    this.classList.add('active');
+                });
+            });
+            
+            // Anschreiben generieren
+            const generateLetter = function() {
+                // Show loading state
+                generateLetterBtn.disabled = true;
+                generateLetterBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Generiere...';
+                
+                // Simulate generation
+                setTimeout(function() {
+                    // Hide action cards and show generated letter
+                    actionCards.classList.add('d-none');
+                    generatedLetter.classList.remove('d-none');
+                    
+                    // Reset button
+                    generateLetterBtn.disabled = false;
+                    generateLetterBtn.innerHTML = '<i class="bi bi-magic me-2"></i>Anschreiben generieren';
+                    
+                    showToast('Anschreiben erfolgreich generiert!', 'success');
+                }, 3000);
+            };
+            
+            // Event listener für die Buttons
+            if (generateLetterBtn) {
+                generateLetterBtn.addEventListener('click', generateLetter);
+            }
+            
+            if (startGenerationBtn) {
+                startGenerationBtn.addEventListener('click', function() {
+                    window.scrollTo(0, 0);
+                    generateLetter();
+                });
+            }
+            
+            // Add skill
+            if (addSkillBtn) {
+                addSkillBtn.addEventListener('click', function() {
+                    addSkillModal.show();
+                });
+            }
+            
+            if (confirmAddSkillBtn) {
+                confirmAddSkillBtn.addEventListener('click', function() {
+                    const skill = skillInput.value.trim();
+                    if (skill) {
+                        const skillsContainer = document.getElementById('skillsEmphasis');
+                        const newSkill = document.createElement('div');
+                        newSkill.className = 'col-auto';
+                        newSkill.innerHTML = `<span class="badge light-badge py-2 px-3">${skill} <i class="bi bi-x ms-1"></i></span>`;
+                        
+                        skillsContainer.insertBefore(newSkill, addSkillBtn.parentNode);
+                        
+                        // Add event listener to remove skill
+                        newSkill.querySelector('.bi-x').addEventListener('click', function() {
+                            newSkill.remove();
+                        });
+                        
+                        // Clear input and close modal
+                        skillInput.value = '';
+                        addSkillModal.hide();
+                    }
+                });
+            }
+            
+            // Edit letter
+            if (editLetterBtn) {
+                editLetterBtn.addEventListener('click', function() {
+                    const letterContent = document.querySelector('.letter-preview').innerHTML;
+                    document.getElementById('letterEditor').value = letterContent.replace(/<br>/g, '\n').replace(/<[^>]*>/g, '');
+                    editLetterModal.show();
+                });
+            }
+            
+            const saveLetterBtn = document.getElementById('saveLetterBtn');
+            if (saveLetterBtn) {
+                saveLetterBtn.addEventListener('click', function() {
+                    const newContent = document.getElementById('letterEditor').value;
+                    let formattedContent = newContent.replace(/\n/g, '<br>');
+                    
+                    // Update letter preview
+                    document.querySelector('.letter-preview').innerHTML = formattedContent;
+                    
+                    // Close modal
+                    editLetterModal.hide();
+                    
+                    showToast('Änderungen gespeichert!', 'success');
+                });
+            }
+            
+            // Regenerate letter
+            if (regenerateLetterBtn) {
+                regenerateLetterBtn.addEventListener('click', function() {
+                    showToast('Anschreiben wird neu generiert...', 'primary');
+                    
+                    setTimeout(function() {
+                        showToast('Anschreiben erfolgreich neu generiert!', 'success');
+                    }, 2000);
+                });
+            }
+            
+            // Dark Mode Toggle
+            if (darkModeToggle) {
+                darkModeToggle.addEventListener('click', function() {
+                    document.body.classList.toggle('dark-mode');
+                    
+                    // Speichere Präferenz
+                    if (document.body.classList.contains('dark-mode')) {
+                        localStorage.setItem('darkMode', 'enabled');
+                    } else {
+                        localStorage.setItem('darkMode', 'disabled');
+                    }
+                });
+            }
+            
+            // Check for existing dark mode preference
+            if (localStorage.getItem('darkMode') === 'enabled') {
+                document.body.classList.add('dark-mode');
+            }
+            
+            // Toast function
+            window.showToast = function(message, type = 'primary') {
+                const toast = document.getElementById('toast');
+                const toastMessage = document.getElementById('toastMessage');
+                
+                toast.classList.remove('bg-primary', 'bg-success', 'bg-danger', 'bg-warning');
+                toast.classList.add('bg-' + type);
+                
+                toastMessage.textContent = message;
+                
+                const bsToast = new bootstrap.Toast(toast);
+                bsToast.show();
+            };
+            
+            // Lade Daten aus dem localStorage
+            const loadData = function() {
+                const resumeData = localStorage.getItem('resumeData');
+                const jobData = localStorage.getItem('jobData');
+                
+                if (resumeData) {
+                    try {
+                        const data = JSON.parse(resumeData);
+                        if (data.fileName) {
+                            document.getElementById('resumeFileNameDisplay').textContent = data.fileName;
+                        }
+                    } catch (error) {
+                        console.error('Fehler beim Parsen der Lebenslaufdaten:', error);
+                    }
+                }
+                
+                if (jobData) {
+                    try {
+                        const data = JSON.parse(jobData);
+                        if (data.jobTitle) {
+                            document.getElementById('jobTitleDisplay').textContent = data.jobTitle;
+                        }
+                    } catch (error) {
+                        console.error('Fehler beim Parsen der Job-Daten:', error);
+                    }
+                }
+                
+                if (!resumeData || !jobData) {
+                    showToast('Für ein optimales Anschreiben benötigen wir Ihren Lebenslauf und eine Stellenanzeige.', 'warning');
+                }
+            };
+            
+            // Lade Daten
+            loadData();
+        });
+    </script>
+</body>
+</html> 

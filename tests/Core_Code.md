@@ -44,7 +44,7 @@ Danach gehe ich in den nächsten Schleifen weiter vor.
 ini
 Kopieren
 Bearbeiten
-OPENAI_API_KEY=dein_openai_api_schlüssel_hier
+OPENAI_API_KEY=dein_openai_api_schlüssel
 🔹 Verzeichnisstruktur vorbereiten:
 bash
 Kopieren
