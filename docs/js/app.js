@@ -15,6 +15,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/fi
 import { ref, set } from "firebase/database";
 import { db, testFirebaseConnection } from './firebase-config.js';
 import AdminService from './services/admin-service.js';
+import ResumeAnalyzer from './resume-analyzer.js';
 
 // Auth state listener
 onAuthStateChanged(auth, (user) => {
@@ -81,6 +82,31 @@ document.addEventListener('DOMContentLoaded', async function() {
         setupAdminUI();
         
         initializeExplanationButtons();
+        
+        // Lebenslauf-Analyzer initialisieren, wenn Container vorhanden
+        const analyzerContainer = document.getElementById('resume-analyzer-container');
+        if (analyzerContainer) {
+            ResumeAnalyzer.init('resume-analyzer-container');
+            console.log('Lebenslauf-Analyzer initialisiert');
+        }
+        
+        // Tab-Wechsel-Handler für Resume-Analyzer
+        const resumeAnalyzerTab = document.getElementById('resume-analyzer-tab');
+        if (resumeAnalyzerTab) {
+            resumeAnalyzerTab.addEventListener('shown.bs.tab', function() {
+                // Verzögerte Initialisierung, falls noch nicht geschehen
+                if (!window.resumeAnalyzerInitialized) {
+                    setTimeout(() => {
+                        const analyzerContainer = document.getElementById('resume-analyzer-container');
+                        if (analyzerContainer && typeof ResumeAnalyzer !== 'undefined') {
+                            ResumeAnalyzer.init('resume-analyzer-container');
+                            window.resumeAnalyzerInitialized = true;
+                            console.log('Lebenslauf-Analyzer bei Tab-Wechsel initialisiert');
+                        }
+                    }, 100);
+                }
+            });
+        }
         
         console.log('Application initialized successfully');
     } catch (error) {

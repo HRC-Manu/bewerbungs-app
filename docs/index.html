@@ -12,6 +12,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet" crossorigin="anonymous">
     <link href="css/style.css" rel="stylesheet">
+    <link href="css/resume-analyzer.css" rel="stylesheet">
 </head>
 <body class="bg-light">
     <!-- Navbar mit Auth -->
@@ -49,6 +50,17 @@
         <div class="text-center mb-5">
             <h1 class="display-4 mb-3">KI-gestützter Bewerbungsassistent</h1>
             <p class="lead mb-4">Erstellen Sie professionelle Bewerbungen mit Unterstützung künstlicher Intelligenz</p>
+        </div>
+
+        <!-- Nach dem Hero-Abschnitt und vor den Workflow-Steps -->
+        <div class="alert alert-info text-center mb-4">
+            <div class="d-flex justify-content-center align-items-center">
+                <i class="bi bi-gift fs-4 me-3"></i>
+                <div>
+                    <strong>2 kostenlose KI-Bewerbungen für neue Nutzer!</strong>
+                    <div class="small">Registrieren Sie sich jetzt und erstellen Sie Ihre ersten beiden Bewerbungen kostenlos mit unserer KI.</div>
+                </div>
+            </div>
         </div>
 
         <!-- Workflow Steps -->
@@ -194,6 +206,8 @@
                                 Passwort vergessen?
                             </button>
                         </div>
+                        <div class="alert alert-danger d-none mt-3" id="loginError"></div>
+                        <div id="loginHelp" class="d-none"></div>
                     </div>
                 </div>
                 
@@ -563,5 +577,18 @@
             }
         }
     </style>
+
+    <!-- In der entsprechenden Sektion der Haupt-HTML-Datei -->
+    <div class="tab-pane fade" id="resume-analysis" role="tabpanel">
+        <div class="container py-4">
+            <div class="row justify-content-center">
+                <div class="col-lg-10">
+                    <div id="resume-analyzer-container">
+                        <!-- ResumeAnalyzer wird hier initialisiert -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 </html> 

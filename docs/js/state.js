@@ -7,7 +7,14 @@ export const globalState = {
     jobAnalysis: null,
     selectedAIProvider: 'openai',
     selectedCoverLetterStyle: 'formal',
-    elements: {}
+    elements: {},
+    resumeAnalyzer: {
+        initialized: false,
+        currentFile: null,
+        analysisResults: null,
+        improvedResume: null,
+        lastAnalysisDate: null
+    }
 };
 
 // Constants
@@ -71,5 +78,38 @@ export const IMPROVEMENT_PATTERNS = {
     weak: {
         pattern: /vielleicht|eventuell|möglicherweise|könnte|würde/g,
         suggestion: 'Nutzen Sie stärkere Formulierungen für mehr Überzeugungskraft'
+    }
+};
+
+// Funktion zum Speichern des Analyzer-Status
+globalState.updateResumeAnalyzerState = function(updates) {
+    this.resumeAnalyzer = {
+        ...this.resumeAnalyzer,
+        ...updates
+    };
+    
+    // Optional: Speichere im localStorage
+    try {
+        localStorage.setItem('resumeAnalyzerState', JSON.stringify(this.resumeAnalyzer));
+    } catch (e) {
+        console.warn('Konnte ResumeAnalyzer-Status nicht speichern:', e);
+    }
+};
+
+// Funktion zum Wiederherstellen des Analyzer-Status
+globalState.loadResumeAnalyzerState = function() {
+    try {
+        const saved = localStorage.getItem('resumeAnalyzerState');
+        if (saved) {
+            const parsed = JSON.parse(saved);
+            this.resumeAnalyzer = {
+                ...this.resumeAnalyzer,
+                ...parsed,
+                // Entferne die Datei aus dem gespeicherten Zustand, da sie nicht serialisierbar ist
+                currentFile: null
+            };
+        }
+    } catch (e) {
+        console.warn('Konnte ResumeAnalyzer-Status nicht laden:', e);
     }
 }; 

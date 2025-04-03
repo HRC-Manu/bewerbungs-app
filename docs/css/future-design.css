@@ -1,1 +1,268 @@
- 
+:root {
+  --primary-gradient: linear-gradient(135deg, #1e3a8a 0%, #172554 100%);
+  --secondary-gradient: linear-gradient(135deg, #0c4a6e 0%, #075985 100%);
+  --success-gradient: linear-gradient(135deg, #064e3b 0%, #065f46 100%);
+  --warning-gradient: linear-gradient(135deg, #854d0e 0%, #a16207 100%);
+  --danger-gradient: linear-gradient(135deg, #991b1b 0%, #7f1d1d 100%);
+  --glass-bg: rgba(255, 255, 255, 0.25);
+  --glass-border: rgba(255, 255, 255, 0.18);
+  --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+  --card-radius: 16px;
+  --btn-radius: 10px;
+  --transition-main: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --primary-color: #1e3a8a;
+  --primary-hover: #172554;
+  --primary-light: rgba(30, 58, 138, 0.1);
+}
+
+body {
+  background: #f8fafc;
+  background-image: 
+    radial-gradient(at 40% 20%, rgba(79, 70, 229, 0.1) 0px, transparent 50%),
+    radial-gradient(at 80% 0%, rgba(125, 34, 206, 0.1) 0px, transparent 50%),
+    radial-gradient(at 0% 50%, rgba(14, 165, 233, 0.1) 0px, transparent 50%);
+  background-attachment: fixed;
+  min-height: 100vh;
+}
+
+/* Glassmorphism Cards */
+.glass-card {
+  background: var(--glass-bg);
+  border-radius: var(--card-radius);
+  box-shadow: var(--glass-shadow);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid var(--glass-border);
+  transition: var(--transition-main);
+}
+
+.glass-card:hover {
+  box-shadow: 0 10px 40px 0 rgba(31, 38, 135, 0.25);
+  transform: translateY(-5px);
+}
+
+/* Modern Buttons */
+.btn-future {
+  border-radius: var(--btn-radius);
+  padding: 0.6rem 1.5rem;
+  font-weight: 600;
+  letter-spacing: 0.015em;
+  transition: var(--transition-main);
+  border: none;
+  position: relative;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.btn-future:before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.1);
+  z-index: -1;
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-future:hover:before {
+  transform: scaleX(1);
+  transform-origin: left;
+}
+
+.btn-primary, .btn-primary-gradient {
+  background: var(--primary-gradient);
+  color: white;
+}
+
+.btn-outline-primary {
+  color: var(--primary-color);
+  border: 1px solid var(--primary-color);
+  background: transparent;
+}
+
+.btn-outline-primary:hover {
+  background-color: var(--primary-light);
+}
+
+/* Progress States */
+.step-progress {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 3rem;
+  position: relative;
+}
+
+.step-progress:before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  height: 2px;
+  width: 100%;
+  background: #e5e7eb;
+  z-index: 1;
+}
+
+.step-item {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: white;
+  border: 2px solid #e5e7eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  position: relative;
+  z-index: 2;
+  transition: var(--transition-main);
+}
+
+.step-item.active {
+  border-color: #4f46e5;
+  background: #4f46e5;
+  color: white;
+  box-shadow: 0 0 0 5px rgba(79, 70, 229, 0.2);
+}
+
+.step-item.completed {
+  border-color: #10b981;
+  background: #10b981;
+  color: white;
+}
+
+/* Floating Action Button */
+.fab {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: var(--primary-gradient);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 20px rgba(79, 70, 229, 0.3);
+  cursor: pointer;
+  transition: var(--transition-main);
+  z-index: 1000;
+}
+
+.fab:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 25px rgba(79, 70, 229, 0.4);
+}
+
+/* Animation Effects */
+@keyframes float {
+  0% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+  100% { transform: translateY(0); }
+}
+
+.float-animation {
+  animation: float 4s ease-in-out infinite;
+}
+
+/* Advanced Tooltip */
+.tooltip-future {
+  position: relative;
+}
+
+.tooltip-future:after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 120%;
+  left: 50%;
+  transform: translateX(-50%) translateY(-5px);
+  background: #1e293b;
+  color: white;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: var(--transition-main);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  pointer-events: none;
+}
+
+.tooltip-future:before {
+  content: '';
+  position: absolute;
+  bottom: 120%;
+  left: 50%;
+  transform: translateX(-50%) translateY(5px);
+  border-width: 5px;
+  border-style: solid;
+  border-color: #1e293b transparent transparent transparent;
+  opacity: 0;
+  visibility: hidden;
+  transition: var(--transition-main);
+  pointer-events: none;
+}
+
+.tooltip-future:hover:after,
+.tooltip-future:hover:before {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* Dunkelblaue Hervorhebung bei aktiven Elementen */
+.menu-item.active {
+  border-left: 3px solid var(--primary-color);
+}
+
+/* Progress Bar Anpassung */
+.progress-bar {
+  background-color: var(--primary-color);
+}
+
+/* Badge-Farben anpassen */
+.bg-primary {
+  background-color: var(--primary-color) !important;
+}
+
+/* Global Button-Überschreibungen */
+.btn-primary {
+  background-color: var(--primary-color) !important;
+  border-color: var(--primary-color) !important;
+}
+
+.btn-light:hover {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+
+.btn-success {
+  background-color: #064e3b !important;
+  border-color: #064e3b !important;
+}
+
+/* Anpassungen für die AI-assistant-card */
+.ai-assistant-card {
+  background: var(--primary-gradient);
+}
+
+/* Avatar-Kreis in Profil dunkelblau */
+.avatar .rounded-circle.bg-primary {
+  background-color: var(--primary-color) !important;
+}
+
+/* Links im Dunkelblau */
+a {
+  color: var(--primary-color);
+}
+
+a:hover {
+  color: var(--primary-hover);
+} 

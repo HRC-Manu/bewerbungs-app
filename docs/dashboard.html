@@ -9,6 +9,9 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
     <link href="css/style.css" rel="stylesheet">
+    <link href="css/dashboard.css" rel="stylesheet">
+    <link href="css/resume-analyzer.css" rel="stylesheet">
+    <link href="css/improved-ux.css" rel="stylesheet">
 </head>
 <body class="bg-light">
     <!-- Navbar -->
@@ -42,32 +45,131 @@
         <div class="row">
             <!-- Linke Spalte: Upload und Eingabe -->
             <div class="col-lg-8">
-                <!-- Lebenslauf Upload -->
-                <div class="card mb-4 fade-in">
-                    <div class="card-body">
-                        <h5 class="card-title">
-                            <i class="bi bi-file-person text-primary me-2"></i>
-                            Lebenslauf
-                        </h5>
-                        <div class="upload-area p-4 text-center border rounded mt-3" id="resumeUploadArea">
-                            <i class="bi bi-cloud-upload display-4 text-primary mb-3"></i>
-                            <p class="mb-3">Ziehen Sie Ihren Lebenslauf hierher oder klicken Sie zum Auswählen</p>
-                            <input type="file" id="resumeUpload" class="d-none" accept=".pdf,.doc,.docx">
-                            <button class="btn btn-primary" onclick="document.getElementById('resumeUpload').click()">
-                                <i class="bi bi-upload me-2"></i>
-                                Lebenslauf hochladen
-                            </button>
+                <!-- Optimierter Workflow-Bereich -->
+                <div class="workflow-container mt-4">
+                    <div class="workflow-steps mb-4">
+                        <div class="progress">
+                            <div class="progress-bar progress-bar-striped progress-bar-animated bg-primary" role="progressbar" style="width: 20%" aria-valuenow="20" aria-valuemin="0" aria-valuemax="100" id="workflowProgress"></div>
                         </div>
-                        <div class="file-preview d-none mt-3">
-                            <div class="d-flex align-items-center p-2 border rounded">
-                                <i class="bi bi-file-pdf text-primary me-3 h4 mb-0"></i>
-                                <div class="flex-grow-1">
-                                    <div class="file-name fw-bold"></div>
-                                    <small class="text-muted file-size"></small>
+                        
+                        <div class="d-flex justify-content-between mt-2 small text-muted">
+                            <span>Lebenslauf</span>
+                            <span>Stellenanzeige</span>
+                            <span>Analyse</span>
+                            <span>Anschreiben</span>
+                            <span>Fertigstellen</span>
+                        </div>
+                    </div>
+                    
+                    <div class="row workflow-active-step fade-in" id="step1">
+                        <div class="col-lg-8">
+                            <div class="card mb-4">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <h5 class="mb-0">
+                                        <i class="bi bi-file-person text-primary me-2"></i>
+                                        Lebenslauf hochladen
+                                    </h5>
+                                    <span class="badge bg-primary">Schritt 1 von 5</span>
                                 </div>
-                                <button class="btn btn-outline-danger btn-sm" id="removeFile">
-                                    <i class="bi bi-trash"></i>
-                                </button>
+                                <div class="card-body">
+                                    <p class="card-text text-muted mb-4">Laden Sie Ihren aktuellen Lebenslauf hoch. Unterstützte Formate: PDF, DOC, DOCX.</p>
+                                    
+                                    <div class="upload-area p-5 text-center border rounded mt-3" id="resumeUploadArea">
+                                        <i class="bi bi-cloud-upload display-4 text-primary mb-3"></i>
+                                        <p class="mb-3">Ziehen Sie Ihren Lebenslauf hierher oder klicken Sie zum Auswählen</p>
+                                        <input type="file" id="resumeUpload" class="d-none" accept=".pdf,.doc,.docx">
+                                        <button class="btn btn-primary px-4 py-2" onclick="document.getElementById('resumeUpload').click()">
+                                            <i class="bi bi-upload me-2"></i>
+                                            Lebenslauf hochladen
+                                        </button>
+                                        
+                                        <div class="supported-formats small text-muted mt-3">
+                                            <span class="badge bg-light text-dark me-2">PDF</span>
+                                            <span class="badge bg-light text-dark me-2">DOC</span>
+                                            <span class="badge bg-light text-dark">DOCX</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="progress mt-3 d-none">
+                                        <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                                    </div>
+                                    
+                                    <div class="file-preview d-none mt-3">
+                                        <div class="d-flex align-items-center p-3 border rounded bg-light">
+                                            <i class="bi bi-file-earmark-check text-success fs-3 me-3"></i>
+                                            <div class="flex-grow-1">
+                                                <div class="file-name fw-bold"></div>
+                                                <small class="text-muted file-size"></small>
+                                            </div>
+                                            <button class="btn btn-outline-danger btn-sm" id="removeFile">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </div>
+                                        
+                                        <div class="text-center mt-4">
+                                            <button class="btn btn-success px-4" id="continueBtn" disabled>
+                                                <i class="bi bi-arrow-right me-2"></i>
+                                                Weiter zu Schritt 2
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="card mb-4 d-none" id="aiAnalysisCard">
+                                <div class="card-header bg-light">
+                                    <h5 class="mb-0">
+                                        <i class="bi bi-robot text-primary me-2"></i>
+                                        KI-Voranalyse Ihres Lebenslaufs
+                                    </h5>
+                                </div>
+                                <div class="card-body" id="resumeAiPreview">
+                                    <div class="d-flex justify-content-center">
+                                        <div class="spinner-border text-primary" role="status">
+                                            <span class="visually-hidden">Laden...</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-lg-4">
+                            <div class="card">
+                                <div class="card-header bg-light">
+                                    <h5 class="mb-0">
+                                        <i class="bi bi-info-circle text-primary me-2"></i>
+                                        Tipps für Ihren Lebenslauf
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <ul class="list-group list-group-flush">
+                                        <li class="list-group-item d-flex">
+                                            <i class="bi bi-check-circle-fill text-success me-2"></i>
+                                            <span>Verwenden Sie ein klares, professionelles Format</span>
+                                        </li>
+                                        <li class="list-group-item d-flex">
+                                            <i class="bi bi-check-circle-fill text-success me-2"></i>
+                                            <span>Heben Sie relevante Erfahrungen hervor</span>
+                                        </li>
+                                        <li class="list-group-item d-flex">
+                                            <i class="bi bi-check-circle-fill text-success me-2"></i>
+                                            <span>Fügen Sie messbare Erfolge hinzu</span>
+                                        </li>
+                                        <li class="list-group-item d-flex">
+                                            <i class="bi bi-check-circle-fill text-success me-2"></i>
+                                            <span>Passen Sie Keywords an die Stellenanzeige an</span>
+                                        </li>
+                                        <li class="list-group-item d-flex">
+                                            <i class="bi bi-check-circle-fill text-success me-2"></i>
+                                            <span>Überprüfen Sie Rechtschreibung und Grammatik</span>
+                                        </li>
+                                    </ul>
+                                    
+                                    <div class="alert alert-primary mt-3">
+                                        <i class="bi bi-lightbulb-fill me-2"></i>
+                                        Wussten Sie? Unsere KI analysiert Ihren Lebenslauf und gibt Ihnen personalisierte Optimierungsvorschläge.
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -341,5 +443,195 @@
             }
         });
     </script>
+
+    <!-- Nach den bestehenden Tabs in der Navigation -->
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="resume-analyzer-tab" data-bs-toggle="tab" data-bs-target="#resume-analyzer-content" type="button" role="tab" aria-controls="resume-analyzer-content" aria-selected="false">
+            <i class="bi bi-magic me-2"></i>Lebenslauf-Analyse
+        </button>
+    </li>
+
+    <!-- Im Tab-Content-Bereich -->
+    <div class="tab-pane fade" id="resume-analyzer-content" role="tabpanel" aria-labelledby="resume-analyzer-tab">
+        <div class="container-fluid p-4">
+            <h2 class="mb-4">KI-Lebenslaufanalyse</h2>
+            <div id="resume-analyzer-container">
+                <!-- ResumeAnalyzer wird hier initialisiert -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal für Lebenslauf-Verbesserungen -->
+    <div class="modal fade" id="improveResumeModal" tabindex="-1" aria-labelledby="improveResumeModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="improveResumeModalLabel">
+                        <i class="bi bi-tools me-2"></i>
+                        Lebenslauf optimieren
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Schließen"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="improvement-suggestions">
+                        <div class="alert alert-warning">
+                            <h6 class="d-flex align-items-center">
+                                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                                Kritische Verbesserungen
+                            </h6>
+                            <ul class="list-unstyled mb-0 ps-4">
+                                <li class="mb-2">
+                                    <strong>Berufserfahrung:</strong> Fügen Sie konkrete Erfolge mit Zahlen und Metriken hinzu
+                                    <div class="small text-muted mt-1">Beispiele: "Steigerung der Konversionsrate um 25%", "Reduzierung der Serverkosten um 30%"</div>
+                                </li>
+                            </ul>
+                        </div>
+                        
+                        <div class="alert alert-primary">
+                            <h6 class="d-flex align-items-center">
+                                <i class="bi bi-info-circle-fill me-2"></i>
+                                Wichtige Verbesserungen
+                            </h6>
+                            <ul class="list-unstyled mb-0 ps-4">
+                                <li class="mb-2">
+                                    <strong>Fähigkeiten:</strong> Gruppieren Sie Ihre Fähigkeiten in relevante Kategorien
+                                    <div class="small text-muted mt-1">Beispiele: "Frontend: React, JavaScript, HTML/CSS", "Backend: Node.js, Express, MongoDB"</div>
+                                </li>
+                            </ul>
+                        </div>
+                        
+                        <div class="alert alert-light">
+                            <h6 class="d-flex align-items-center">
+                                <i class="bi bi-lightbulb-fill me-2"></i>
+                                Nice-to-have Verbesserungen
+                            </h6>
+                            <ul class="list-unstyled mb-0 ps-4">
+                                <li class="mb-2">
+                                    <strong>Formatierung:</strong> Verbessern Sie die visuelle Hierarchie durch konsistente Überschriftenformatierung
+                                </li>
+                            </ul>
+                        </div>
+                        
+                        <h5 class="mt-4 mb-3">Fehlende Schlüsselwörter</h5>
+                        <div class="mb-4">
+                            <span class="badge bg-light text-dark p-2 me-2 mb-2">Docker</span>
+                            <span class="badge bg-light text-dark p-2 me-2 mb-2">CI/CD</span>
+                            <span class="badge bg-light text-dark p-2 me-2 mb-2">Cloud</span>
+                        </div>
+                        
+                        <h5 class="mt-4 mb-3">Optimierungsvorschau</h5>
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="preview-toggle mb-3">
+                                    <div class="btn-group w-100">
+                                        <button class="btn btn-outline-primary active" id="beforeBtn">Vorher</button>
+                                        <button class="btn btn-outline-primary" id="afterBtn">Nachher</button>
+                                    </div>
+                                </div>
+                                
+                                <div id="beforeContent">
+                                    <pre class="bg-light p-3 border rounded" style="white-space: pre-wrap; font-family: monospace;">Max Mustermann
+Senior Developer
+
+Berufserfahrung:
+- Senior Developer bei TechCorp GmbH (2019-heute)
+- Junior Developer bei StartUp AG (2016-2019)
+
+Fähigkeiten:
+- JavaScript, React, Node.js
+- Python, SQL, Git
+
+Ausbildung:
+- Bachelor of Science - Informatik, TU München, 2015
+
+Sprachen:
+- Deutsch (Muttersprache)
+- Englisch (C1)</pre>
+                                </div>
+                                
+                                <div id="afterContent" class="d-none">
+                                    <div class="improved-resume p-3 border rounded">
+                                        <h1 style="font-size: 1.5rem; margin-bottom: 0.5rem;">Max Mustermann</h1>
+                                        <h2 style="font-size: 1.2rem; color: #6c757d; margin-bottom: 1rem;">Senior Fullstack-Entwickler</h2>
+                                        
+                                        <p class="lead">Erfahrener Entwickler mit nachweisbarem Erfolg in der Leitung agiler Teams und der Entwicklung skalierbarer Webanwendungen.</p>
+                                        
+                                        <h3 style="font-size: 1.1rem; border-bottom: 1px solid #dee2e6; padding-bottom: 0.5rem; margin-top: 1.5rem;">Berufserfahrung</h3>
+                                        
+                                        <div class="mb-3">
+                                            <h4 style="font-size: 1rem; font-weight: bold;">Senior Developer | TechCorp GmbH | 2019-heute</h4>
+                                            <ul>
+                                                <li>Leitete ein Team von 5 Entwicklern bei der Neugestaltung einer E-Commerce-Plattform mit React und Node.js</li>
+                                                <li>Steigerte die Seitengeschwindigkeit um 45% durch Implementierung moderner Frontend-Techniken</li>
+                                                <li>Reduzierte Serverkosten um 30% durch Optimierung der Backend-Architektur</li>
+                                            </ul>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <h4 style="font-size: 1rem; font-weight: bold;">Junior Developer | StartUp AG | 2016-2019</h4>
+                                            <ul>
+                                                <li>Entwickelte und wartete mehrere kundenspezifische Webanwendungen</li>
+                                                <li>Implementierte eine neue Frontend-Architektur mit React, die die Entwicklungsgeschwindigkeit um 35% verbesserte</li>
+                                                <li>Führte Code-Reviews und Pair-Programming-Sessions für 3 Junior-Entwickler durch</li>
+                                            </ul>
+                                        </div>
+                                        
+                                        <h3 style="font-size: 1.1rem; border-bottom: 1px solid #dee2e6; padding-bottom: 0.5rem; margin-top: 1.5rem;">Technische Fähigkeiten</h3>
+                                        
+                                        <div class="mb-3">
+                                            <p><strong>Frontend:</strong> JavaScript/TypeScript, React, Redux, HTML5, CSS3/SASS</p>
+                                            <p><strong>Backend:</strong> Node.js, Express, Python, RESTful APIs</p>
+                                            <p><strong>Datenbanken:</strong> SQL, MongoDB</p>
+                                            <p><strong>Tools & Methoden:</strong> Git, Agile/Scrum, Code Reviews</p>
+                                        </div>
+                                        
+                                        <h3 style="font-size: 1.1rem; border-bottom: 1px solid #dee2e6; padding-bottom: 0.5rem; margin-top: 1.5rem;">Ausbildung</h3>
+                                        
+                                        <div class="mb-3">
+                                            <p><strong>Bachelor of Science - Informatik</strong><br>
+                                            Technische Universität München | 2015</p>
+                                        </div>
+                                        
+                                        <h3 style="font-size: 1.1rem; border-bottom: 1px solid #dee2e6; padding-bottom: 0.5rem; margin-top: 1.5rem;">Sprachen</h3>
+                                        
+                                        <div>
+                                            <p>Deutsch (Muttersprache), Englisch (Fließend, C1)</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Schließen</button>
+                    <button type="button" class="btn btn-primary" id="applyImprovementsBtn">
+                        <i class="bi bi-magic me-2"></i>
+                        Verbesserungen anwenden
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Am Ende von Dashboard, vor dem schließenden body-Tag -->
+    <script src="js/performance-optimizations.js" type="module"></script>
+    <script src="js/ai-resume-analyzer.js" type="module"></script>
+    <script src="js/dashboard-enhancements.js" type="module"></script>
+
+    <!-- Toast für Benachrichtigungen -->
+    <div class="toast-container position-fixed top-0 end-0 p-3">
+        <div id="messageToast" class="toast border-0 bg-primary text-white" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header bg-transparent text-white border-0">
+                <strong class="me-auto">Benachrichtigung</strong>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Schließen"></button>
+            </div>
+            <div class="toast-body"></div>
+        </div>
+    </div>
+
+    <!-- Am Ende des body-Tags -->
+    <script src="js/dashboard-main.js"></script>
+    <script src="js/resume-analyzer-fallback.js"></script>
 </body>
 </html> 

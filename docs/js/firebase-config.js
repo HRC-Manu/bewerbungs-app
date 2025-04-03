@@ -23,12 +23,14 @@ import {
     setDoc,
     getDocs,
     query,
-    limit 
+    limit,
+    addDoc,
+    serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { 
     getStorage, 
     connectStorageEmulator,
-    ref,
+    ref as storageRef,
     uploadBytes,
     getDownloadURL
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
@@ -67,6 +69,7 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 const database = getDatabase(app);
+const storage = getStorage(app);
 
 // Helper-Funktionen
 async function signIn(email, password) {
@@ -117,12 +120,52 @@ async function testFirebaseConnection() {
 
 // SINGLE EXPORT BLOCK - verhindert doppelte Exporte
 export {
+    app,
     auth,
     db,
     database,
+    storage,
     signIn,
     signUp,
     logOut,
     initAuthObserver,
     testFirebaseConnection
 };
+
+// Füge Hilfsfunktionen für den Lebenslauf-Upload hinzu
+export async function uploadResumeFile(file, userId) {
+    if (!file || !userId) return null;
+    
+    try {
+        const timestamp = new Date().getTime();
+        const path = `resumes/${userId}/${timestamp}_${file.name}`;
+        const fileRef = storageRef(storage, path);
+        
+        // Datei hochladen
+        const snapshot = await uploadBytes(fileRef, file);
+        
+        // Download-URL abrufen
+        const downloadURL = await getDownloadURL(fileRef);
+        
+        // Metadaten in Firestore speichern
+        const docRef = await addDoc(collection(db, "resumes"), {
+            userId: userId,
+            fileName: file.name,
+            filePath: path,
+            fileUrl: downloadURL,
+            contentType: file.type,
+            size: file.size,
+            uploadedAt: serverTimestamp()
+        });
+        
+        console.log("Lebenslauf hochgeladen, Dokument-ID:", docRef.id);
+        return {
+            id: docRef.id,
+            url: downloadURL,
+            path: path
+        };
+    } catch (error) {
+        console.error("Fehler beim Hochladen des Lebenslaufs:", error);
+        throw error;
+    }
+}
