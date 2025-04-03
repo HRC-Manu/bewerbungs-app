@@ -1,1 +1,492 @@
- 
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lebenslauf-Optimierer - KI-Bewerbungsmanager</title>
+    
+    <!-- Stylesheets -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="css/style.css" rel="stylesheet">
+    <link href="css/future-design.css" rel="stylesheet">
+    <link href="css/bootstrap-override.css" rel="stylesheet">
+    <link href="css/dark-mode.css" rel="stylesheet">
+    
+    <style>
+        .optimize-section {
+            padding: 20px;
+            border-left: 4px solid var(--primary-color);
+            background-color: var(--primary-light);
+            margin-bottom: 20px;
+            border-radius: 0 8px 8px 0;
+        }
+        
+        .resume-diff {
+            font-family: 'Courier New', monospace;
+            white-space: pre-wrap;
+            line-height: 1.5;
+        }
+        
+        .diff-add {
+            background-color: #d4edda;
+            color: #155724;
+            text-decoration: none;
+            padding: 2px 0;
+        }
+        
+        .diff-remove {
+            background-color: #f8d7da;
+            color: #721c24;
+            text-decoration: line-through;
+            padding: 2px 0;
+        }
+        
+        body.dark-mode .diff-add {
+            background-color: #133d2d;
+            color: #8fd1a8;
+        }
+        
+        body.dark-mode .diff-remove {
+            background-color: #482f2f;
+            color: #e99999;
+        }
+        
+        .ai-suggestion {
+            border-left: 3px solid var(--primary-color);
+            padding-left: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .editor-container {
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .editor-controls {
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        body.dark-mode .editor-controls {
+            background-color: #2d2d2d;
+            border-color: #444;
+        }
+        
+        .editor-area {
+            min-height: 300px;
+            padding: 20px;
+            outline: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="index.html">
+                <i class="bi bi-file-earmark-text me-2"></i>
+                KI-Bewerbungsmanager
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="index.html">Startseite</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="resume-analysis.html">Lebenslaufanalyse</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#">Lebenslauf-Optimierer</a>
+                    </li>
+                </ul>
+                <button class="btn btn-outline-light btn-sm" id="darkModeToggle">
+                    <i class="bi bi-moon-stars"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Main Content -->
+    <div class="container py-5">
+        <div class="row">
+            <div class="col-lg-8 mx-auto">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <h1 class="mb-0">Lebenslauf-Optimierer</h1>
+                        <p class="text-muted">Verbessern Sie Ihren Lebenslauf für maximale Wirkung</p>
+                    </div>
+                    <button class="btn btn-outline-primary" id="backToHomeBtn">
+                        <i class="bi bi-arrow-left me-2"></i>Zurück
+                    </button>
+                </div>
+                
+                <!-- Initialer Zustand: Optimierung starten -->
+                <div class="glass-card mb-4" id="startOptimizationCard">
+                    <div class="card-body text-center py-5">
+                        <i class="bi bi-wand-magic-sparkles text-primary mb-3" style="font-size: 3rem;"></i>
+                        <h3 class="mb-3">Lebenslauf mit KI optimieren</h3>
+                        <p class="mb-4">Die KI analysiert Ihren Lebenslauf und erstellt eine optimierte Version mit verbesserter Wirkung, klaren Erfolgen und passenden Keywords.</p>
+                        
+                        <div class="d-grid gap-2 col-lg-6 mx-auto">
+                            <button class="btn btn-future btn-primary-gradient" id="startOptimizationBtn">
+                                <i class="bi bi-magic me-2"></i>Optimierung starten
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Optimierungsprozess wird ausgeführt -->
+                <div class="glass-card mb-4 d-none" id="optimizationInProgressCard">
+                    <div class="card-body text-center py-5">
+                        <div class="spinner-border text-primary mb-4" style="width: 3rem; height: 3rem;" role="status">
+                            <span class="visually-hidden">Lädt...</span>
+                        </div>
+                        <h3 class="mb-3">KI-Optimierung läuft</h3>
+                        <p class="mb-4" id="optimizationProgressText">Die KI analysiert Ihren Lebenslauf und generiert Verbesserungen...</p>
+                        
+                        <div class="progress mb-4" style="height: 10px;">
+                            <div class="progress-bar progress-bar-striped progress-bar-animated" id="optimizationProgressBar" role="progressbar" style="width: 25%"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Optimierungsergebnisse -->
+                <div class="glass-card mb-4 d-none" id="optimizationResultsCard">
+                    <div class="card-body">
+                        <h3 class="card-title mb-4">Ergebnisse der KI-Optimierung</h3>
+                        
+                        <div class="alert alert-success mb-4">
+                            <i class="bi bi-check-circle-fill me-2"></i>
+                            <span>Ihr Lebenslauf wurde erfolgreich optimiert! Die Änderungen erhöhen Ihre Chancen um ca. <strong>37%</strong>.</span>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <h5 class="mb-3">Hauptverbesserungen</h5>
+                            <div class="optimize-section">
+                                <div class="row">
+                                    <div class="col-md-4 mb-3 mb-md-0">
+                                        <div class="d-flex align-items-center">
+                                            <div class="rounded bg-primary text-white d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px; min-width: 40px;">
+                                                <i class="bi bi-check"></i>
+                                            </div>
+                                            <div>
+                                                <h6 class="mb-0">Klarere Erfolge</h6>
+                                                <small class="text-muted">+15% Wirkung</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4 mb-3 mb-md-0">
+                                        <div class="d-flex align-items-center">
+                                            <div class="rounded bg-primary text-white d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px; min-width: 40px;">
+                                                <i class="bi bi-check"></i>
+                                            </div>
+                                            <div>
+                                                <h6 class="mb-0">Passende Keywords</h6>
+                                                <small class="text-muted">+12% Relevanz</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="d-flex align-items-center">
+                                            <div class="rounded bg-primary text-white d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px; min-width: 40px;">
+                                                <i class="bi bi-check"></i>
+                                            </div>
+                                            <div>
+                                                <h6 class="mb-0">Bessere Struktur</h6>
+                                                <small class="text-muted">+10% Lesbarkeit</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <ul class="nav nav-tabs mb-4" id="optimizationResultsTabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="changes-tab" data-bs-toggle="tab" data-bs-target="#changes" type="button" role="tab">Änderungen</button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="editor-tab" data-bs-toggle="tab" data-bs-target="#editor" type="button" role="tab">Editor</button>
+                            </li>
+                        </ul>
+                        
+                        <div class="tab-content">
+                            <!-- Änderungen Tab -->
+                            <div class="tab-pane fade show active" id="changes" role="tabpanel">
+                                <div class="mb-4">
+                                    <h5 class="mb-3">Berufserfahrung</h5>
+                                    <div class="ai-suggestion">
+                                        <p class="mb-1"><strong>Vorher:</strong></p>
+                                        <p class="resume-diff"><span class="diff-remove">Softwareentwickler bei XYZ GmbH (2018-2022)<br>- Entwicklung von Webanwendungen<br>- Pflege und Wartung der Systeme<br>- Teilnahme an Team-Meetings</span></p>
+                                        
+                                        <p class="mb-1"><strong>Nachher:</strong></p>
+                                        <p class="resume-diff"><span class="diff-add">Senior Softwareentwickler bei XYZ GmbH (2018-2022)<br>- Entwicklung und Implementierung von skalierbaren Webanwendungen mit React und Node.js<br>- Reduzierung der Systemausfallzeiten um 35% durch proaktive Wartung und Monitoring<br>- Leitung von Sprint-Planungen und Code-Reviews im 5-köpfigen Entwicklerteam</span></p>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-4">
+                                    <h5 class="mb-3">Fähigkeiten</h5>
+                                    <div class="ai-suggestion">
+                                        <p class="mb-1"><strong>Vorher:</strong></p>
+                                        <p class="resume-diff"><span class="diff-remove">JavaScript, HTML, CSS, React, Node.js, Git</span></p>
+                                        
+                                        <p class="mb-1"><strong>Nachher:</strong></p>
+                                        <p class="resume-diff"><span class="diff-add">Frontend: React, TypeScript, Redux, HTML5, CSS3, SASS<br>Backend: Node.js, Express, RESTful APIs, GraphQL<br>DevOps: Git, CI/CD, Docker, AWS<br>Methoden: Agile/Scrum, TDD, Code Reviews</span></p>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-4">
+                                    <h5 class="mb-3">Einleitung</h5>
+                                    <div class="ai-suggestion">
+                                        <p class="mb-1"><strong>Vorher:</strong></p>
+                                        <p class="resume-diff"><span class="diff-remove">Softwareentwickler mit 4 Jahren Erfahrung.</span></p>
+                                        
+                                        <p class="mb-1"><strong>Nachher:</strong></p>
+                                        <p class="resume-diff"><span class="diff-add">Erfahrener Fullstack-Entwickler mit 4+ Jahren Expertise in der Entwicklung von modernen Webanwendungen und skalierbare Lösungen. Nachweisliche Erfolge in der Optimierung von Systemleistung und Führung von agilen Entwicklungsteams.</span></p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Editor Tab -->
+                            <div class="tab-pane fade" id="editor" role="tabpanel">
+                                <div class="editor-container">
+                                    <div class="editor-controls">
+                                        <button class="btn btn-sm btn-outline-secondary" id="boldBtn" title="Fett">
+                                            <i class="bi bi-type-bold"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-secondary" id="italicBtn" title="Kursiv">
+                                            <i class="bi bi-type-italic"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-secondary" id="listBtn" title="Liste">
+                                            <i class="bi bi-list-ul"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-secondary ms-2" id="undoBtn" title="Rückgängig">
+                                            <i class="bi bi-arrow-counterclockwise"></i>
+                                        </button>
+                                    </div>
+                                    <div class="editor-area" contenteditable="true" id="resumeEditor">
+                                        <h2>Max Mustermann</h2>
+                                        <p>max.mustermann@example.com | +49 123 4567890 | Berlin, Deutschland | <a href="https://linkedin.com/in/maxmustermann">LinkedIn</a></p>
+                                        
+                                        <h3>Zusammenfassung</h3>
+                                        <p>Erfahrener Fullstack-Entwickler mit 4+ Jahren Expertise in der Entwicklung von modernen Webanwendungen und skalierbare Lösungen. Nachweisliche Erfolge in der Optimierung von Systemleistung und Führung von agilen Entwicklungsteams.</p>
+                                        
+                                        <h3>Berufserfahrung</h3>
+                                        <h4>Senior Softwareentwickler | XYZ GmbH | 2018-2022</h4>
+                                        <ul>
+                                            <li>Entwicklung und Implementierung von skalierbaren Webanwendungen mit React und Node.js</li>
+                                            <li>Reduzierung der Systemausfallzeiten um 35% durch proaktive Wartung und Monitoring</li>
+                                            <li>Leitung von Sprint-Planungen und Code-Reviews im 5-köpfigen Entwicklerteam</li>
+                                        </ul>
+                                        
+                                        <h4>Junior Entwickler | ABC Solutions | 2015-2018</h4>
+                                        <ul>
+                                            <li>Mitarbeit an der Entwicklung einer E-Commerce-Plattform mit über 50.000 monatlichen Nutzern</li>
+                                            <li>Implementierung responsiver Designs mit HTML5, CSS3 und jQuery</li>
+                                            <li>Optimierung der Ladezeit der Webseite um 40% durch Code-Refactoring</li>
+                                        </ul>
+                                        
+                                        <h3>Fähigkeiten</h3>
+                                        <p><strong>Frontend:</strong> React, TypeScript, Redux, HTML5, CSS3, SASS</p>
+                                        <p><strong>Backend:</strong> Node.js, Express, RESTful APIs, GraphQL</p>
+                                        <p><strong>DevOps:</strong> Git, CI/CD, Docker, AWS</p>
+                                        <p><strong>Methoden:</strong> Agile/Scrum, TDD, Code Reviews</p>
+                                        
+                                        <h3>Ausbildung</h3>
+                                        <p><strong>B.Sc. Informatik</strong> | Technische Universität Berlin | 2012-2015</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between mt-4">
+                            <button class="btn btn-outline-secondary" id="resetChangesBtn">
+                                <i class="bi bi-arrow-counterclockwise me-2"></i>Zurücksetzen
+                            </button>
+                            <div>
+                                <button class="btn btn-outline-primary me-2" id="downloadWordBtn">
+                                    <i class="bi bi-file-earmark-word me-2"></i>DOCX herunterladen
+                                </button>
+                                <button class="btn btn-primary" id="downloadPdfBtn">
+                                    <i class="bi bi-file-earmark-pdf me-2"></i>PDF herunterladen
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Toast-Benachrichtigung -->
+    <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 5">
+        <div id="toast" class="toast align-items-center text-white bg-primary border-0" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body" id="toastMessage">
+                    Benachrichtigung
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bootstrap und eigene Skripte -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // DOM-Elemente
+            const startOptimizationCard = document.getElementById('startOptimizationCard');
+            const optimizationInProgressCard = document.getElementById('optimizationInProgressCard');
+            const optimizationResultsCard = document.getElementById('optimizationResultsCard');
+            const optimizationProgressBar = document.getElementById('optimizationProgressBar');
+            const optimizationProgressText = document.getElementById('optimizationProgressText');
+            const startOptimizationBtn = document.getElementById('startOptimizationBtn');
+            const backToHomeBtn = document.getElementById('backToHomeBtn');
+            const darkModeToggle = document.getElementById('darkModeToggle');
+            const downloadPdfBtn = document.getElementById('downloadPdfBtn');
+            const downloadWordBtn = document.getElementById('downloadWordBtn');
+            const resetChangesBtn = document.getElementById('resetChangesBtn');
+            
+            // Start Optimization Button
+            if (startOptimizationBtn) {
+                startOptimizationBtn.addEventListener('click', function() {
+                    // Zeige den Fortschrittsbereich
+                    startOptimizationCard.classList.add('d-none');
+                    optimizationInProgressCard.classList.remove('d-none');
+                    
+                    // Simuliere Fortschritt
+                    let progress = 0;
+                    const progressInterval = setInterval(function() {
+                        progress += 5;
+                        
+                        if (progress <= 100) {
+                            optimizationProgressBar.style.width = progress + '%';
+                            
+                            // Aktualisiere Text basierend auf Fortschritt
+                            if (progress < 30) {
+                                optimizationProgressText.textContent = 'Analysiere Ihren Lebenslauf...';
+                            } else if (progress < 60) {
+                                optimizationProgressText.textContent = 'Identifiziere Verbesserungspotenziale...';
+                            } else if (progress < 90) {
+                                optimizationProgressText.textContent = 'Generiere optimierte Version...';
+                            } else {
+                                optimizationProgressText.textContent = 'Finalisiere Ergebnisse...';
+                            }
+                        } else {
+                            clearInterval(progressInterval);
+                            
+                            // Zeige Ergebnisse
+                            optimizationInProgressCard.classList.add('d-none');
+                            optimizationResultsCard.classList.remove('d-none');
+                            
+                            showToast('Lebenslauf erfolgreich optimiert!', 'success');
+                        }
+                    }, 200);
+                });
+            }
+            
+            // Back to Home Button
+            if (backToHomeBtn) {
+                backToHomeBtn.addEventListener('click', function() {
+                    window.location.href = 'index.html';
+                });
+            }
+            
+            // Editor Buttons
+            document.getElementById('boldBtn')?.addEventListener('click', function() {
+                document.execCommand('bold', false, null);
+            });
+            
+            document.getElementById('italicBtn')?.addEventListener('click', function() {
+                document.execCommand('italic', false, null);
+            });
+            
+            document.getElementById('listBtn')?.addEventListener('click', function() {
+                document.execCommand('insertUnorderedList', false, null);
+            });
+            
+            document.getElementById('undoBtn')?.addEventListener('click', function() {
+                document.execCommand('undo', false, null);
+            });
+            
+            // Download Buttons
+            if (downloadPdfBtn) {
+                downloadPdfBtn.addEventListener('click', function() {
+                    showToast('PDF wird generiert und heruntergeladen...', 'primary');
+                    
+                    // Simuliere Download nach 1.5 Sekunden
+                    setTimeout(function() {
+                        showToast('PDF erfolgreich heruntergeladen!', 'success');
+                    }, 1500);
+                });
+            }
+            
+            if (downloadWordBtn) {
+                downloadWordBtn.addEventListener('click', function() {
+                    showToast('DOCX wird generiert und heruntergeladen...', 'primary');
+                    
+                    // Simuliere Download nach 1.5 Sekunden
+                    setTimeout(function() {
+                        showToast('DOCX erfolgreich heruntergeladen!', 'success');
+                    }, 1500);
+                });
+            }
+            
+            // Reset Changes Button
+            if (resetChangesBtn) {
+                resetChangesBtn.addEventListener('click', function() {
+                    if (confirm('Möchten Sie alle Änderungen zurücksetzen?')) {
+                        // Zurück zum Ausgangszustand
+                        optimizationResultsCard.classList.add('d-none');
+                        startOptimizationCard.classList.remove('d-none');
+                        
+                        // Reset progress bar
+                        optimizationProgressBar.style.width = '25%';
+                        
+                        showToast('Änderungen wurden zurückgesetzt', 'primary');
+                    }
+                });
+            }
+            
+            // Dark Mode Toggle
+            if (darkModeToggle) {
+                darkModeToggle.addEventListener('click', function() {
+                    document.body.classList.toggle('dark-mode');
+                    
+                    // Speichere Präferenz
+                    if (document.body.classList.contains('dark-mode')) {
+                        localStorage.setItem('darkMode', 'enabled');
+                    } else {
+                        localStorage.setItem('darkMode', 'disabled');
+                    }
+                });
+            }
+            
+            // Check for existing dark mode preference
+            if (localStorage.getItem('darkMode') === 'enabled') {
+                document.body.classList.add('dark-mode');
+            }
+            
+            // Toast function
+            window.showToast = function(message, type = 'primary') {
+                const toast = document.getElementById('toast');
+                const toastMessage = document.getElementById('toastMessage');
+                
+                toast.classList.remove('bg-primary', 'bg-success', 'bg-danger', 'bg-warning');
+                toast.classList.add('bg-' + type);
+                
+                toastMessage.textContent = message;
+                
+                const bsToast = new bootstrap.Toast(toast);
+                bsToast.show();
+            };
+        });
+    </script>
+</body>
+</html> 

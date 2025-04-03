@@ -1,1 +1,299 @@
- 
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Datenschutzerklärung - KI-Bewerbungsmanager</title>
+    
+    <!-- Stylesheets -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="css/style.css" rel="stylesheet">
+    <link href="css/future-design.css" rel="stylesheet">
+    <link href="css/bootstrap-override.css" rel="stylesheet">
+    <link href="css/dark-mode.css" rel="stylesheet">
+    
+    <style>
+        .privacy-section {
+            margin-bottom: 2rem;
+        }
+        
+        .privacy-section h3 {
+            margin-bottom: 1rem;
+            color: var(--primary-color);
+            border-bottom: 1px solid #eee;
+            padding-bottom: 0.5rem;
+        }
+        
+        .toc-link {
+            color: var(--primary-color);
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+        
+        .toc-link:hover {
+            text-decoration: underline;
+        }
+        
+        .toc-nav {
+            position: sticky;
+            top: 2rem;
+        }
+        
+        .highlight-box {
+            background-color: var(--primary-light);
+            border-left: 4px solid var(--primary-color);
+            padding: 1.5rem;
+            border-radius: 0 8px 8px 0;
+            margin: 1.5rem 0;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="index.html">
+                <i class="bi bi-file-earmark-text me-2"></i>
+                KI-Bewerbungsmanager
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="index.html">Startseite</a>
+                    </li>
+                </ul>
+                <button class="btn btn-outline-light btn-sm" id="darkModeToggle">
+                    <i class="bi bi-moon-stars"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Main Content -->
+    <div class="container py-5">
+        <div class="row">
+            <div class="col-lg-8 order-lg-2">
+                <h1 class="mb-4">Datenschutzerklärung</h1>
+                <p class="lead">Stand: 03.04.2025</p>
+                
+                <!-- 1. Allgemeine Informationen -->
+                <div class="privacy-section" id="info">
+                    <h3>1. Allgemeine Informationen</h3>
+                    <p>Der Schutz und die Sicherheit Ihrer persönlichen Daten sind uns wichtig. Diese Datenschutzerklärung informiert Sie darüber, wie wir Ihre Daten sammeln, verwenden und schützen, wenn Sie den KI-Bewerbungsmanager nutzen.</p>
+                    
+                    <p>Verantwortlich für die Datenverarbeitung ist:</p>
+                    <p>
+                        KI-Bewerbungsmanager GmbH<br>
+                        Musterstraße 123<br>
+                        12345 Berlin<br>
+                        Deutschland<br>
+                        E-Mail: datenschutz@ki-bewerbungsmanager.de
+                    </p>
+                </div>
+                
+                <!-- 2. Datenerhebung -->
+                <div class="privacy-section" id="data-collection">
+                    <h3>2. Datenerhebung</h3>
+                    <p>Wir erheben und verarbeiten folgende Daten, die Sie uns freiwillig zur Verfügung stellen:</p>
+                    
+                    <ul>
+                        <li><strong>Bewerbungsunterlagen:</strong> Dazu gehören Ihr Lebenslauf, Anschreiben und alle darin enthaltenen persönlichen Daten wie Name, Kontaktdaten, Ausbildungsweg, berufliche Erfahrungen und Qualifikationen.</li>
+                        <li><strong>Stellenbeschreibungen:</strong> Texte von Stellenanzeigen, die Sie zur Analyse hochladen.</li>
+                        <li><strong>Account-Informationen:</strong> Falls Sie sich registrieren, erfassen wir Ihre E-Mail-Adresse und Ihr Passwort (verschlüsselt).</li>
+                        <li><strong>Nutzungsdaten:</strong> Anonymisierte Daten über Ihre Nutzung der Anwendung zur Verbesserung unserer Dienste.</li>
+                    </ul>
+                    
+                    <div class="highlight-box">
+                        <h5><i class="bi bi-shield-lock me-2"></i>Hinweis zur lokalen Verarbeitung</h5>
+                        <p>In der aktuellen Version des KI-Bewerbungsmanagers werden Ihre Dokumente vorrangig lokal auf Ihrem Gerät verarbeitet und nicht dauerhaft auf unseren Servern gespeichert. Dennoch werden für die KI-Analyse Daten an OpenAI übermittelt.</p>
+                    </div>
+                </div>
+                
+                <!-- 3. Verwendung von OpenAI-Diensten -->
+                <div class="privacy-section" id="openai">
+                    <h3>3. Verwendung von OpenAI-Diensten</h3>
+                    <p>Unsere Anwendung nutzt die API von OpenAI, um KI-gestützte Analyse und Optimierung von Bewerbungsunterlagen zu ermöglichen. Wenn Sie Dokumente hochladen, werden diese zur Verarbeitung an die Server von OpenAI übertragen.</p>
+                    
+                    <p><strong>Wichtige Informationen zur Datenverarbeitung durch OpenAI:</strong></p>
+                    <ul>
+                        <li>OpenAI speichert API-Anfragen, einschließlich Ihrer Dokumenteninhalte, für 30 Tage zur Missbrauchsüberwachung und Verbesserung der Dienste.</li>
+                        <li>Standardmäßig verwendet OpenAI diese Daten nicht zum Training ihrer Modelle, es sei denn, Sie haben dem ausdrücklich zugestimmt.</li>
+                        <li>OpenAI hat Sicherheitsmaßnahmen implementiert, um Ihre Daten zu schützen, aber eine Datenübertragung über das Internet kann nie vollkommen sicher sein.</li>
+                        <li>Die Server von OpenAI befinden sich hauptsächlich in den USA. Durch die Nutzung unseres Dienstes stimmen Sie zu, dass Ihre Daten in Länder außerhalb Ihres Wohnsitzlandes übertragen werden können.</li>
+                        <li>Wir haben eine Datenverarbeitungsvereinbarung mit OpenAI abgeschlossen, die den Schutz Ihrer Daten gemäß EU-Datenschutzstandards gewährleistet.</li>
+                    </ul>
+                    
+                    <p>Weitere Informationen finden Sie in der <a href="https://openai.com/policies/privacy-policy" target="_blank" rel="noopener noreferrer">Datenschutzrichtlinie von OpenAI</a> und den <a href="https://openai.com/policies/api-data-usage-policies" target="_blank" rel="noopener noreferrer">Datennutzungsrichtlinien für die API</a>.</p>
+                    
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                        <strong>Wichtiger Hinweis:</strong> Da Ihre Bewerbungsunterlagen sensible persönliche Daten enthalten, empfehlen wir Ihnen dringend, keine vertraulichen Informationen wie Sozialversicherungsnummern, Bankverbindungen, Gesundheitsinformationen oder andere nicht bewerbungsrelevante persönliche Daten in den hochgeladenen Dokumenten zu belassen.
+                    </div>
+                </div>
+                
+                <!-- 4. Datensicherheit -->
+                <div class="privacy-section" id="security">
+                    <h3>4. Datensicherheit</h3>
+                    <p>Wir setzen technische und organisatorische Sicherheitsmaßnahmen ein, um Ihre Daten gegen Verlust, Zerstörung, Manipulation und unberechtigten Zugriff zu schützen. Unsere Sicherheitsmaßnahmen umfassen:</p>
+                    
+                    <ul>
+                        <li>Verschlüsselung der Datenübertragung (SSL/TLS)</li>
+                        <li>Verschlüsselung gespeicherter Daten, wo anwendbar</li>
+                        <li>Zugangsbeschränkungen und Authentifizierungsmechanismen</li>
+                        <li>Regelmäßige Sicherheitsupdates</li>
+                        <li>Lokale Datenspeicherung, wo möglich, um Serverübertragungen zu minimieren</li>
+                    </ul>
+                    
+                    <p>Bitte beachten Sie, dass trotz unserer Bemühungen keine Methode der Datenübertragung über das Internet oder der elektronischen Speicherung zu 100% sicher ist. Wir streben jedoch danach, angemessene Maßnahmen zum Schutz Ihrer persönlichen Daten zu implementieren.</p>
+                </div>
+                
+                <!-- 5. Rechte des Nutzers -->
+                <div class="privacy-section" id="user-rights">
+                    <h3>5. Rechte des Nutzers</h3>
+                    <p>Gemäß der Datenschutz-Grundverordnung (DSGVO) haben Sie folgende Rechte:</p>
+                    
+                    <ul>
+                        <li><strong>Recht auf Auskunft:</strong> Sie können Auskunft über Ihre bei uns gespeicherten personenbezogenen Daten verlangen.</li>
+                        <li><strong>Recht auf Berichtigung:</strong> Sie können die Berichtigung unrichtiger Daten verlangen.</li>
+                        <li><strong>Recht auf Löschung:</strong> Sie können die Löschung Ihrer Daten verlangen, soweit keine gesetzlichen Aufbewahrungspflichten entgegenstehen.</li>
+                        <li><strong>Recht auf Einschränkung der Verarbeitung:</strong> Sie können verlangen, dass wir die Verarbeitung Ihrer Daten einschränken.</li>
+                        <li><strong>Recht auf Datenübertragbarkeit:</strong> Sie können verlangen, dass wir Ihnen Ihre Daten in einem strukturierten, gängigen und maschinenlesbaren Format übermitteln.</li>
+                        <li><strong>Widerspruchsrecht:</strong> Sie können der Verarbeitung Ihrer Daten jederzeit widersprechen, wenn diese auf Grundlage berechtigter Interessen erfolgt.</li>
+                        <li><strong>Recht auf Widerruf der Einwilligung:</strong> Sie können Ihre Einwilligung jederzeit mit Wirkung für die Zukunft widerrufen.</li>
+                        <li><strong>Beschwerderecht:</strong> Sie haben das Recht, sich bei einer Datenschutzaufsichtsbehörde zu beschweren.</li>
+                    </ul>
+                    
+                    <p>Um Ihre Rechte auszuüben, kontaktieren Sie uns bitte unter datenschutz@ki-bewerbungsmanager.de.</p>
+                </div>
+                
+                <!-- 6. Verarbeitung von Bewerbungsdaten -->
+                <div class="privacy-section" id="data-processing">
+                    <h3>6. Verarbeitung von Bewerbungsdaten</h3>
+                    <p>Die Verarbeitung Ihrer Bewerbungsdaten erfolgt zum Zweck der Analysierung, Optimierung und Erstellung von Bewerbungsunterlagen. Die Rechtsgrundlage für diese Verarbeitung ist Ihre Einwilligung gemäß Art. 6 Abs. 1 lit. a DSGVO, die Sie durch aktives Anklicken des entsprechenden Kästchens bei der Nutzung unseres Dienstes erteilen.</p>
+                    
+                    <p>Wichtige Aspekte der Datenverarbeitung:</p>
+                    <ul>
+                        <li>Ihre Daten werden nur für den angegebenen Zweck verwendet und nicht an Dritte weitergegeben, mit Ausnahme von OpenAI als technischem Dienstleister.</li>
+                        <li>In der aktuellen Version werden Ihre Daten vorwiegend lokal auf Ihrem Gerät gespeichert und nur temporär zur Verarbeitung an OpenAI übermittelt.</li>
+                        <li>Wir speichern Ihre Anwendungsdaten so lange, wie es für die Bereitstellung des Dienstes erforderlich ist oder bis Sie die Löschung Ihrer Daten anfordern.</li>
+                    </ul>
+                </div>
+                
+                <!-- 7. Cookies und lokale Speicherung -->
+                <div class="privacy-section" id="cookies">
+                    <h3>7. Cookies und lokale Speicherung</h3>
+                    <p>Unsere Anwendung verwendet lokale Speichertechnologien wie Local Storage und SessionStorage, um Ihre Einstellungen und hochgeladenen Daten temporär zu speichern und eine optimale Nutzererfahrung zu gewährleisten.</p>
+                    
+                    <p>Im Gegensatz zu traditionellen Cookies werden diese Daten ausschließlich auf Ihrem Gerät gespeichert und nicht automatisch bei jeder Anfrage an einen Server übermittelt. Sie können diese lokalen Daten jederzeit löschen, indem Sie den Browsercache leeren oder die entsprechenden Datenschutzeinstellungen Ihres Browsers nutzen.</p>
+                </div>
+                
+                <!-- 8. Änderungen der Datenschutzerklärung -->
+                <div class="privacy-section" id="changes">
+                    <h3>8. Änderungen der Datenschutzerklärung</h3>
+                    <p>Wir behalten uns vor, diese Datenschutzerklärung anzupassen, um sie an veränderte Rechtslagen oder bei Änderungen unseres Dienstes anzupassen. Die jeweils aktuelle Version wird auf unserer Website veröffentlicht. Wesentliche Änderungen werden wir Ihnen mitteilen, sofern dies technisch möglich ist.</p>
+                </div>
+                
+                <!-- 9. Kontakt -->
+                <div class="privacy-section" id="contact">
+                    <h3>9. Kontakt</h3>
+                    <p>Bei Fragen zur Erhebung, Verarbeitung oder Nutzung Ihrer personenbezogenen Daten, bei Auskünften, Berichtigung, Sperrung oder Löschung von Daten sowie Widerruf erteilter Einwilligungen wenden Sie sich bitte an:</p>
+                    
+                    <p>
+                        KI-Bewerbungsmanager GmbH<br>
+                        Datenschutzbeauftragter<br>
+                        Musterstraße 123<br>
+                        12345 Berlin<br>
+                        E-Mail: datenschutz@ki-bewerbungsmanager.de<br>
+                        Telefon: +49 30 123456789
+                    </p>
+                </div>
+            </div>
+            
+            <!-- Inhaltsverzeichnis (sticky auf Desktop) -->
+            <div class="col-lg-4 order-lg-1 mb-4 mb-lg-0">
+                <div class="card toc-nav">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3">Inhaltsverzeichnis</h5>
+                        <ol class="ps-3">
+                            <li class="mb-2"><a href="#info" class="toc-link">Allgemeine Informationen</a></li>
+                            <li class="mb-2"><a href="#data-collection" class="toc-link">Datenerhebung</a></li>
+                            <li class="mb-2"><a href="#openai" class="toc-link">OpenAI-Dienste</a></li>
+                            <li class="mb-2"><a href="#security" class="toc-link">Datensicherheit</a></li>
+                            <li class="mb-2"><a href="#user-rights" class="toc-link">Rechte des Nutzers</a></li>
+                            <li class="mb-2"><a href="#data-processing" class="toc-link">Bewerbungsdaten</a></li>
+                            <li class="mb-2"><a href="#cookies" class="toc-link">Cookies & lokale Speicherung</a></li>
+                            <li class="mb-2"><a href="#changes" class="toc-link">Änderungen</a></li>
+                            <li class="mb-2"><a href="#contact" class="toc-link">Kontakt</a></li>
+                        </ol>
+                        
+                        <div class="mt-4">
+                            <a href="index.html" class="btn btn-outline-primary w-100">
+                                <i class="bi bi-arrow-left me-2"></i>Zurück zur Startseite
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Toast-Benachrichtigung -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+        <div class="toast align-items-center text-white bg-primary border-0" id="toast" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body" id="toastMessage">
+                    Benachrichtigung
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bootstrap und eigene Skripte -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Dark Mode Toggle
+            const darkModeToggle = document.getElementById('darkModeToggle');
+            if (darkModeToggle) {
+                darkModeToggle.addEventListener('click', function() {
+                    document.body.classList.toggle('dark-mode');
+                    
+                    // Speichere Präferenz
+                    if (document.body.classList.contains('dark-mode')) {
+                        localStorage.setItem('darkMode', 'enabled');
+                    } else {
+                        localStorage.setItem('darkMode', 'disabled');
+                    }
+                });
+            }
+            
+            // Check for existing dark mode preference
+            if (localStorage.getItem('darkMode') === 'enabled') {
+                document.body.classList.add('dark-mode');
+            }
+            
+            // Smooth scrolling für Inhaltsverzeichnis-Links
+            document.querySelectorAll('.toc-link').forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    const targetId = this.getAttribute('href').substring(1);
+                    const targetElement = document.getElementById(targetId);
+                    
+                    if (targetElement) {
+                        window.scrollTo({
+                            top: targetElement.offsetTop - 80,
+                            behavior: 'smooth'
+                        });
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html> 
