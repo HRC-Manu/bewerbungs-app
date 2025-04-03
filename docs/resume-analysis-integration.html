@@ -1,1 +1,29 @@
- 
+<!-- Direkt vor dem schließenden </body> Tag -->
+<script type="module">
+    // Importiere den DocumentService
+    import documentService from './js/document-service.js';
+    
+    // Mache ihn global verfügbar
+    window.documentService = documentService;
+    
+    // Aktualisiere die analyzeResume-Funktion, falls sie existiert
+    if (typeof window.analyzeResume === 'function') {
+        const originalAnalyzeResume = window.analyzeResume;
+        window.analyzeResume = async function() {
+            try {
+                const fileInput = document.getElementById('resumeFileInput');
+                if (fileInput && fileInput.files && fileInput.files.length > 0) {
+                    const file = fileInput.files[0];
+                    return await documentService.analyzeResume(file);
+                } else {
+                    return originalAnalyzeResume();
+                }
+            } catch (error) {
+                console.error('Fehler in der integrierten analyzeResume-Funktion:', error);
+                return originalAnalyzeResume();
+            }
+        };
+    }
+    
+    console.log('DocumentService erfolgreich integriert');
+</script> 
