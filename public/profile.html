@@ -1,1 +1,362 @@
- 
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mein Profil - KI-Bewerbungsmanager</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/dark-mode.css">
+    <link rel="icon" href="assets/favicon.ico">
+    <meta name="description" content="Verwalten Sie Ihr Benutzerprofil und Ihre persönlichen Daten im KI-Bewerbungsmanager.">
+</head>
+<body id="profilePage">
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="index.html">
+                <i class="bi bi-file-earmark-text me-2"></i>
+                KI-Bewerbungsmanager
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarMain">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="index.html">Startseite</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="resume-analysis.html">Lebenslaufanalyse</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="job-matching.html">Job-Matching</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="cover-letter.html">Anschreiben</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="dashboard.html">Dashboard</a>
+                    </li>
+                </ul>
+                <div class="d-flex">
+                    <button id="darkModeToggle" class="btn btn-outline-light me-2">
+                        <i class="bi bi-moon-stars"></i>
+                    </button>
+                    <div class="auth-buttons">
+                        <button id="loginBtn" class="btn btn-outline-light me-2">Anmelden</button>
+                        <button id="registerBtn" class="btn btn-light">Registrieren</button>
+                    </div>
+                    <div class="user-profile d-none">
+                        <div class="dropdown">
+                            <button class="btn btn-outline-light dropdown-toggle" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="bi bi-person-circle me-1"></i>
+                                <span id="userName">Benutzer</span>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                                <li><a class="dropdown-item" href="profile.html">Profil</a></li>
+                                <li><a class="dropdown-item" href="dashboard.html">Meine Bewerbungen</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="#" id="logoutBtn">Abmelden</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Header-Bereich -->
+    <div class="page-header py-4 bg-light">
+        <div class="container">
+            <h1 class="page-title">Mein Profil</h1>
+            <p class="lead">Verwalten Sie Ihre persönlichen Daten und Einstellungen.</p>
+        </div>
+    </div>
+
+    <!-- Hauptinhalt -->
+    <main class="container py-4">
+        <!-- Login-Hinweis für nicht angemeldete Benutzer -->
+        <div id="loginRequestSection" class="d-none">
+            <div class="card text-center">
+                <div class="card-body py-5">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">
+                            <i class="bi bi-person-lock"></i>
+                        </div>
+                        <h2 class="empty-state-title">Anmeldung erforderlich</h2>
+                        <p class="empty-state-description">Bitte melden Sie sich an, um Ihr Profil zu verwalten.</p>
+                        <button id="loginRequestBtn" class="btn btn-primary btn-lg">
+                            <i class="bi bi-box-arrow-in-right me-2"></i>Jetzt anmelden
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Profil-Inhalt für angemeldete Benutzer -->
+        <div id="profileContent" class="d-none">
+            <div class="row">
+                <!-- Profilübersicht -->
+                <div class="col-lg-4 mb-4">
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <div class="profile-header mb-4">
+                                <div class="profile-avatar mx-auto">
+                                    <i class="bi bi-person"></i>
+                                </div>
+                            </div>
+                            
+                            <h3 id="profileName" class="h4 mb-2">Max Mustermann</h3>
+                            <p id="profileEmail" class="text-muted mb-3">max.mustermann@example.com</p>
+                            
+                            <div class="d-grid">
+                                <button id="changePasswordBtn" class="btn btn-outline-primary mb-2">
+                                    <i class="bi bi-key me-1"></i>Passwort ändern
+                                </button>
+                                <button id="deleteAccountBtn" class="btn btn-outline-danger">
+                                    <i class="bi bi-trash me-1"></i>Konto löschen
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card mt-4">
+                        <div class="card-header">
+                            <h4 class="h5 mb-0">Konto-Informationen</h4>
+                        </div>
+                        <div class="card-body">
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span>Mitglied seit</span>
+                                    <span id="memberSince" class="text-muted">01.01.2023</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span>Letzte Anmeldung</span>
+                                    <span id="lastLogin" class="text-muted">01.01.2023</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span>Gespeicherte Bewerbungen</span>
+                                    <span id="savedApplications" class="badge bg-primary rounded-pill">0</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Profil-Formular -->
+                <div class="col-lg-8">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h3 class="h5 mb-0">Persönliche Informationen</h3>
+                            <span id="formStatusBadge" class="badge bg-secondary d-none">Gespeichert</span>
+                        </div>
+                        <div class="card-body">
+                            <form id="profileForm">
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="firstName" class="form-label">Vorname</label>
+                                        <input type="text" class="form-control" id="firstName" name="firstName">
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="lastName" class="form-label">Nachname</label>
+                                        <input type="text" class="form-control" id="lastName" name="lastName">
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="displayName" class="form-label">Anzeigename</label>
+                                    <input type="text" class="form-control" id="displayName" name="displayName">
+                                    <div class="form-text">Wird in der Anwendung angezeigt.</div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="phoneNumber" class="form-label">Telefonnummer</label>
+                                    <input type="tel" class="form-control" id="phoneNumber" name="phoneNumber">
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="address" class="form-label">Adresse</label>
+                                    <textarea class="form-control" id="address" name="address" rows="3"></textarea>
+                                </div>
+                                
+                                <h4 class="h6 mt-4 mb-3">Berufliche Informationen</h4>
+                                
+                                <div class="mb-3">
+                                    <label for="profession" class="form-label">Beruf / Position</label>
+                                    <input type="text" class="form-control" id="profession" name="profession">
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="company" class="form-label">Unternehmen</label>
+                                    <input type="text" class="form-control" id="company" name="company">
+                                </div>
+                                
+                                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                    <button type="button" id="cancelChangesBtn" class="btn btn-outline-secondary d-none">Änderungen verwerfen</button>
+                                    <button type="submit" id="saveProfileBtn" class="btn btn-primary">Speichern</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <div class="card mt-4">
+                        <div class="card-header">
+                            <h4 class="h5 mb-0">Einstellungen</h4>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-check form-switch mb-3">
+                                <input class="form-check-input" type="checkbox" id="darkModeSwitch">
+                                <label class="form-check-label" for="darkModeSwitch">Dark Mode aktivieren</label>
+                            </div>
+                            
+                            <div class="form-check form-switch mb-3">
+                                <input class="form-check-input" type="checkbox" id="emailNotificationsSwitch">
+                                <label class="form-check-label" for="emailNotificationsSwitch">E-Mail-Benachrichtigungen erhalten</label>
+                                <div class="form-text">Wir senden Ihnen Benachrichtigungen über Ihre Bewerbungen.</div>
+                            </div>
+                            
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="saveUserDataSwitch">
+                                <label class="form-check-label" for="saveUserDataSwitch">Benutzerdaten speichern</label>
+                                <div class="form-text">Speichert Ihre Benutzerdaten für zukünftige Anschreiben und Analysen.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="py-4 bg-dark text-white">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <h5>KI-Bewerbungsmanager</h5>
+                    <p>Optimieren Sie Ihre Bewerbungen mit KI-Unterstützung.</p>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <h5>Links</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="index.html" class="text-white">Startseite</a></li>
+                        <li><a href="resume-analysis.html" class="text-white">Lebenslaufanalyse</a></li>
+                        <li><a href="job-matching.html" class="text-white">Job-Matching</a></li>
+                        <li><a href="cover-letter.html" class="text-white">Anschreiben</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <h5>Kontakt</h5>
+                    <ul class="list-unstyled">
+                        <li><i class="bi bi-envelope me-2"></i> info@ki-bewerbungsmanager.de</li>
+                        <li><i class="bi bi-shield-lock me-2"></i> <a href="#" class="text-white">Datenschutz</a></li>
+                        <li><i class="bi bi-info-circle me-2"></i> <a href="#" class="text-white">Impressum</a></li>
+                    </ul>
+                </div>
+            </div>
+            <hr>
+            <div class="text-center">
+                <p class="mb-0">&copy; 2023 KI-Bewerbungsmanager. Alle Rechte vorbehalten.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Modals -->
+    <!-- Modal: Passwort ändern -->
+    <div class="modal fade" id="changePasswordModal" tabindex="-1" aria-labelledby="changePasswordModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="changePasswordModalLabel">Passwort ändern</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="changePasswordForm">
+                        <div class="mb-3">
+                            <label for="currentPassword" class="form-label">Aktuelles Passwort</label>
+                            <input type="password" class="form-control" id="currentPassword" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="newPassword" class="form-label">Neues Passwort</label>
+                            <input type="password" class="form-control" id="newPassword" required>
+                            <div class="form-text">Mindestens 8 Zeichen, mit Zahlen und Sonderzeichen.</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="confirmPassword" class="form-label">Passwort bestätigen</label>
+                            <input type="password" class="form-control" id="confirmPassword" required>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Abbrechen</button>
+                    <button type="button" class="btn btn-primary" id="savePasswordBtn">Passwort ändern</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Konto löschen -->
+    <div class="modal fade" id="deleteAccountModal" tabindex="-1" aria-labelledby="deleteAccountModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deleteAccountModalLabel">Konto löschen</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                        <strong>Warnung:</strong> Das Löschen Ihres Kontos ist endgültig und kann nicht rückgängig gemacht werden.
+                    </div>
+                    <p>Alle Ihre Daten, einschließlich gespeicherter Bewerbungen, Analysen und Anschreiben, werden dauerhaft gelöscht.</p>
+                    <form id="deleteAccountForm">
+                        <div class="mb-3">
+                            <label for="deleteConfirmPassword" class="form-label">Passwort eingeben, um zu bestätigen</label>
+                            <input type="password" class="form-control" id="deleteConfirmPassword" required>
+                        </div>
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" id="confirmDeleteCheck" required>
+                            <label class="form-check-label" for="confirmDeleteCheck">
+                                Ich verstehe, dass diese Aktion nicht rückgängig gemacht werden kann.
+                            </label>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Abbrechen</button>
+                    <button type="button" class="btn btn-danger" id="confirmDeleteAccountBtn">Konto endgültig löschen</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast für Benachrichtigungen -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+        <div id="toastNotification" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header">
+                <strong class="me-auto" id="toastTitle">Benachrichtigung</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body" id="toastMessage">
+                Hello, world! This is a toast message.
+            </div>
+        </div>
+    </div>
+
+    <!-- Skripte -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-storage-compat.js"></script>
+    
+    <script src="js/app.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/profile.js"></script>
+</body>
+</html> 
