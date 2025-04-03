@@ -1,1 +1,194 @@
- 
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lebenslaufanalyse - KI-Bewerbungsmanager</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="icon" href="assets/favicon.ico">
+    <meta name="description" content="Analysieren Sie Ihren Lebenslauf mit KI und erhalten Sie Verbesserungsvorschläge für Ihren Bewerbungserfolg.">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="index.html">
+                <i class="bi bi-file-earmark-text me-2"></i>
+                KI-Bewerbungsmanager
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarMain">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="index.html">Startseite</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="resume-analysis.html">Lebenslaufanalyse</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="job-matching.html">Job-Matching</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="cover-letter.html">Anschreiben</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="dashboard.html">Dashboard</a>
+                    </li>
+                </ul>
+                <div class="d-flex">
+                    <button id="darkModeToggle" class="btn btn-outline-light me-2">
+                        <i class="bi bi-moon-stars"></i>
+                    </button>
+                    <div class="auth-buttons">
+                        <button id="loginBtn" class="btn btn-outline-light me-2">Anmelden</button>
+                        <button id="registerBtn" class="btn btn-light">Registrieren</button>
+                    </div>
+                    <div class="user-profile d-none">
+                        <div class="dropdown">
+                            <button class="btn btn-outline-light dropdown-toggle" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="bi bi-person-circle me-1"></i>
+                                <span id="userName">Benutzer</span>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                                <li><a class="dropdown-item" href="profile.html">Profil</a></li>
+                                <li><a class="dropdown-item" href="dashboard.html">Meine Bewerbungen</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="#" id="logoutBtn">Abmelden</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Header-Bereich -->
+    <div class="page-header py-4 bg-light">
+        <div class="container">
+            <h1 class="page-title">Lebenslaufanalyse</h1>
+            <p class="lead">Laden Sie Ihren Lebenslauf hoch und erhalten Sie eine detaillierte Analyse mit Verbesserungsvorschlägen.</p>
+        </div>
+    </div>
+
+    <!-- Hauptinhalt -->
+    <main class="container py-4">
+        <div class="row">
+            <div class="col-lg-8 mx-auto">
+                <!-- Upload-Bereich -->
+                <div class="card mb-4" id="uploadCard">
+                    <div class="card-body">
+                        <h2 class="card-title mb-3">Lebenslauf hochladen</h2>
+                        <p class="card-text text-muted">Unterstützte Formate: PDF, DOCX, DOC, TXT (max. 5MB)</p>
+
+                        <div class="upload-area p-4 text-center border rounded" id="dropZone">
+                            <div class="upload-icon mb-3">
+                                <i class="bi bi-cloud-arrow-up"></i>
+                            </div>
+                            <p>Ziehen Sie Ihren Lebenslauf hierher oder</p>
+                            <input type="file" id="fileInput" class="d-none" accept=".pdf,.docx,.doc,.txt">
+                            <button id="browseButton" class="btn btn-primary">Datei auswählen</button>
+                        </div>
+
+                        <div id="fileInfo" class="mt-3 d-none">
+                            <div class="alert alert-success d-flex align-items-center justify-content-between">
+                                <div>
+                                    <i class="bi bi-file-earmark-text me-2"></i>
+                                    <span id="fileName">document.pdf</span>
+                                </div>
+                                <button class="btn btn-sm btn-outline-danger" id="removeFile">
+                                    <i class="bi bi-x-lg"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="mt-3 d-grid">
+                            <button id="analyzeButton" class="btn btn-success" disabled>
+                                <i class="bi bi-search me-2"></i>Lebenslauf analysieren
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Lade-Indikator -->
+                <div id="loadingIndicator" class="text-center my-5 d-none">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Wird analysiert...</span>
+                    </div>
+                    <p class="mt-3">Ihr Lebenslauf wird analysiert. Dies kann einen Moment dauern...</p>
+                </div>
+
+                <!-- Ergebnisbereich -->
+                <div id="resultsSection" class="d-none mb-4">
+                    <!-- Dieser Bereich wird dynamisch mit den Analyseergebnissen gefüllt -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="py-4 bg-dark text-white">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <h5>KI-Bewerbungsmanager</h5>
+                    <p>Optimieren Sie Ihre Bewerbungen mit KI-Unterstützung.</p>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <h5>Links</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="index.html" class="text-white">Startseite</a></li>
+                        <li><a href="resume-analysis.html" class="text-white">Lebenslaufanalyse</a></li>
+                        <li><a href="job-matching.html" class="text-white">Job-Matching</a></li>
+                        <li><a href="cover-letter.html" class="text-white">Anschreiben</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <h5>Kontakt</h5>
+                    <ul class="list-unstyled">
+                        <li><i class="bi bi-envelope me-2"></i> info@ki-bewerbungsmanager.de</li>
+                        <li><i class="bi bi-shield-lock me-2"></i> <a href="#" class="text-white">Datenschutz</a></li>
+                        <li><i class="bi bi-info-circle me-2"></i> <a href="#" class="text-white">Impressum</a></li>
+                    </ul>
+                </div>
+            </div>
+            <hr>
+            <div class="text-center">
+                <p class="mb-0">&copy; 2023 KI-Bewerbungsmanager. Alle Rechte vorbehalten.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Toast für Benachrichtigungen -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+        <div id="toastNotification" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header">
+                <strong class="me-auto" id="toastTitle">Benachrichtigung</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body" id="toastMessage">
+                Hello, world! This is a toast message.
+            </div>
+        </div>
+    </div>
+
+    <!-- Skripte -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-storage-compat.js"></script>
+    
+    <script src="js/app.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/document-processor.js"></script>
+    <script src="js/resume-analyzer.js"></script>
+</body>
+</html> 
